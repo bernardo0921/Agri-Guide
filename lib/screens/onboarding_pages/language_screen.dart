@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LanguageScreen extends StatefulWidget {
-  const LanguageScreen({Key? key}) : super(key: key);
+  const LanguageScreen({super.key});
 
   @override
   State<LanguageScreen> createState() => _LanguageScreenState();

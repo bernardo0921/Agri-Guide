@@ -7,7 +7,7 @@ void main() {
 }
 
 class HarvestAnalyticsApp extends StatelessWidget {
-  const HarvestAnalyticsApp({Key? key}) : super(key: key);
+  const HarvestAnalyticsApp({super.key});
 
   @override
   Widget build(BuildContext context) {

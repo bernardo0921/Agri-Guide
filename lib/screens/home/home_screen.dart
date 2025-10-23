@@ -2,7 +2,7 @@ import 'package:agri_guide/screens/home/drawer_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // Home Page Content
 class HomePageContent extends StatelessWidget {
-  const HomePageContent({Key? key}) : super(key: key);
+  const HomePageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +94,7 @@ class HomePageContent extends StatelessWidget {
 
 // Marketplace Page Content
 class MarketplacePageContent extends StatelessWidget {
-  const MarketplacePageContent({Key? key}) : super(key: key);
+  const MarketplacePageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +117,7 @@ class MarketplacePageContent extends StatelessWidget {
 
 // Orders Page Content
 class OrdersPageContent extends StatelessWidget {
-  const OrdersPageContent({Key? key}) : super(key: key);
+  const OrdersPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +140,7 @@ class OrdersPageContent extends StatelessWidget {
 
 // Profile Page Content
 class ProfilePageContent extends StatelessWidget {
-  const ProfilePageContent({Key? key}) : super(key: key);
+  const ProfilePageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
