@@ -1,4 +1,5 @@
 import 'package:agri_guide/screens/home/Navigation_pages/drawer_screen.dart';
+import 'package:agri_guide/screens/home/Navigation_pages/widgets/buttom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,10 +14,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // List of screens for each navigation item
   final List<Widget> _screens = [
-    const HomePageContent(),
-    const MarketplacePageContent(),
-    const OrdersPageContent(),
-    const ProfilePageContent(),
+    const DashboardPageContent(),
+    const AIAdvisoryPageContent(),
+    const CommunityPageContent(),
+    const LMSPageContent(),
   ];
 
   void _onNavItemTapped(int index) {
@@ -30,43 +31,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       drawer: const AppDrawer(),
       body: _screens[_selectedIndex],
-      bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onNavItemTapped,
-          type: BottomNavigationBarType.fixed,
-          enableFeedback: false,
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.store),
-              label: 'Marketplace',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart),
-              label: 'Orders',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-        ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onNavItemTapped,
       ),
     );
   }
 }
 
-// Home Page Content
-class HomePageContent extends StatelessWidget {
-  const HomePageContent({super.key});
+// Dashboard Page Content
+class DashboardPageContent extends StatelessWidget {
+  const DashboardPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -74,14 +49,14 @@ class HomePageContent extends StatelessWidget {
       children: [
         AppBar(
           title: Text(
-            'Home',
+            'Dashboard',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
         ),
         Expanded(
           child: Center(
             child: Text(
-              'Home Page',
+              'Dashboard Page',
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ),
@@ -90,24 +65,23 @@ class HomePageContent extends StatelessWidget {
     );
   }
 }
- 
 
-// Marketplace Page Content
-class MarketplacePageContent extends StatelessWidget {
-  const MarketplacePageContent({super.key});
+// AI Advisory Page Content
+class AIAdvisoryPageContent extends StatelessWidget {
+  const AIAdvisoryPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Marketplace',
+          'AI Advisory',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
       body: Center(
         child: Text(
-          'Marketplace Page',
+          'AI Advisory Page',
           style: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
@@ -115,22 +89,22 @@ class MarketplacePageContent extends StatelessWidget {
   }
 }
 
-// Orders Page Content
-class OrdersPageContent extends StatelessWidget {
-  const OrdersPageContent({super.key});
+// Community Page Content
+class CommunityPageContent extends StatelessWidget {
+  const CommunityPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'My Orders',
+          'Community',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
       body: Center(
         child: Text(
-          'Orders Page',
+          'Community Page',
           style: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
@@ -138,26 +112,25 @@ class OrdersPageContent extends StatelessWidget {
   }
 }
 
-// Profile Page Content
-class ProfilePageContent extends StatelessWidget {
-  const ProfilePageContent({super.key});
+// LMS Page Content
+class LMSPageContent extends StatelessWidget {
+  const LMSPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Profile',
+          'Learning Management',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
       body: Center(
         child: Text(
-          'Profile Page',
+          'LMS Page',
           style: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
     );
   }
 }
-
