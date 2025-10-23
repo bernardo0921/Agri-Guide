@@ -25,18 +25,19 @@ class _LanguageScreenState extends State<LanguageScreen> {
           child: Column(
             children: [
               // Logo/Icon
-              Icon(
-                Icons.eco,
-                size: 60,
-                color: Theme.of(context).primaryColor,
+              Image.asset(
+                'assets/images/logo.png',
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 32),
               // Title
               Text(
                 'Select Language',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -77,24 +78,17 @@ class _LanguageScreenState extends State<LanguageScreen> {
                               children: [
                                 Text(
                                   language['name']!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   language['subtitle']!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
+                                  style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
-                                        color: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.color,
+                                        color: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall?.color,
                                       ),
                                 ),
                               ],
@@ -138,9 +132,9 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   child: Text(
                     'Continue',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -155,9 +149,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                     height: 6,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Theme.of(context)
-                          .primaryColor
-                          .withOpacity(0.3),
+                      color: Theme.of(context).primaryColor.withOpacity(0.3),
                     ),
                   );
                 }),
