@@ -22,5 +22,3 @@ class HarvestAnalyticsApp extends StatelessWidget {
     );
   }
 }
-
-// Temporary HomeScreen - will be replaced with actual screens

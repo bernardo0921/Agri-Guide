@@ -73,8 +73,8 @@ class _SplashScreenState extends State<SplashScreen>
                   // Logo
                   Image.asset(
                     'assets/images/logo.png',
-                    width: 100,
-                    height: 100,
+                    width: 200,
+                    height: 200,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 32),
@@ -82,10 +82,10 @@ class _SplashScreenState extends State<SplashScreen>
                   Text(
                     'HARVEST ANALYTICS',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: AppColors.textDark,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
+                      color: AppColors.textDark,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
@@ -93,9 +93,9 @@ class _SplashScreenState extends State<SplashScreen>
                   Text(
                     'Grow Smarter. Yield More',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.textMedium,
-                          letterSpacing: 0.5,
-                        ),
+                      color: AppColors.textMedium,
+                      letterSpacing: 0.5,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -111,15 +111,14 @@ class _SplashScreenState extends State<SplashScreen>
                       builder: (context, child) {
                         // Calculate delay for each dot
                         final delay = index * 0.12;
-                        final animValue =
-                            (_dotController.value - delay) % 1.0;
+                        final animValue = (_dotController.value - delay) % 1.0;
 
                         // Opacity animation
                         final opacity = (animValue < 0.3)
                             ? animValue / 0.3
                             : (animValue > 0.7)
-                                ? 1 - (animValue - 0.7) / 0.3
-                                : 1.0;
+                            ? 1 - (animValue - 0.7) / 0.3
+                            : 1.0;
 
                         return Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -127,8 +126,9 @@ class _SplashScreenState extends State<SplashScreen>
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.primaryGreen
-                                .withOpacity(opacity * 0.8 + 0.2),
+                            color: AppColors.primaryGreen.withOpacity(
+                              opacity * 0.8 + 0.2,
+                            ),
                           ),
                         );
                       },
