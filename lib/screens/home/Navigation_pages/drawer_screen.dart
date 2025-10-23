@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 // App Drawer
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  // Callback function to switch tabs
+  final Function(int)? onNavigate;
+
+  const AppDrawer({super.key, this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -71,18 +74,52 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Menu Items
+            // Menu Items - Main navigation items that switch tabs
             _buildMenuItem(
               context,
-              icon: Icons.home_rounded,
-              title: 'Home',
-              onTap: () => Navigator.pop(context),
+              icon: Icons.dashboard_rounded,
+              title: 'Dashboard',
+              onTap: () {
+                Navigator.pop(context);
+                if (onNavigate != null) onNavigate!(0);
+              },
+            ),
+            _buildMenuItem(
+              context,
+              icon: Icons.psychology_rounded,
+              title: 'AI Advisory',
+              onTap: () {
+                Navigator.pop(context);
+                if (onNavigate != null) onNavigate!(1);
+              },
             ),
             _buildMenuItem(
               context,
               icon: Icons.store_rounded,
-              title: 'Marketplace',
+              title: 'Market Info',
               onTap: () => Navigator.pop(context),
+            ),
+            _buildMenuItem(
+              context,
+              icon: Icons.people_rounded,
+              title: 'Community',
+              onTap: () {
+                Navigator.pop(context);
+                if (onNavigate != null) onNavigate!(2);
+              },
+            ),
+            _buildMenuItem(
+              context,
+              icon: Icons.school_rounded,
+              title: 'Learning LMS',
+              onTap: () {
+                Navigator.pop(context);
+                if (onNavigate != null) onNavigate!(3);
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Divider(color: Color(0xFFE0E0E0), height: 1),
             ),
             _buildMenuItem(
               context,
