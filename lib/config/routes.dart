@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../screens/splash_screen.dart';
+import '../screens/onboarding_pages/splash_screen.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/language_screen.dart';
+import '../screens/onboarding_pages/language_screen.dart';
 
 class AppRoutes {
   // Route names
