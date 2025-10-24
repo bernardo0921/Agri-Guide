@@ -1,24 +1,43 @@
 import 'package:flutter/material.dart';
-import 'config/theme.dart';
-import 'config/routes.dart';
+import 'services/gemini_service.dart';
 
 void main() {
-  runApp(const HarvestAnalyticsApp());
+  runApp(const MyApp());
 }
 
-class HarvestAnalyticsApp extends StatelessWidget {
-  const HarvestAnalyticsApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final gemini = GeminiService();
+  String response = 'Waiting...';
+
+  @override
+  void initState() {
+    super.initState();
+    _getGeminiResponse();
+  }
+
+  Future<void> _getGeminiResponse() async {
+    try {
+      final res = await gemini.generateResponse('Hello Gemini!');
+      setState(() => response = res);
+    } catch (e) {
+      setState(() => response = e.toString());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Harvest Analytics',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
-      routes: AppRoutes.getRoutes(),
-      initialRoute: AppRoutes.splash,
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Gemini Test')),
+        body: Center(child: Text(response)),
+      ),
     );
   }
 }
