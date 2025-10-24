@@ -24,9 +24,11 @@ flutter:
   assets:
     - assets/images/splash_image.png
     - assets/images/logo.png
+    - lib/assets/system_instruction.json
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/icon.png"
+  
 
   
