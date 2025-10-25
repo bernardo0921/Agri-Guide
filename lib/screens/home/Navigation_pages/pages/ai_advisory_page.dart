@@ -42,6 +42,8 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     await prefs.setString('ai_chat_messages', json.encode(_messages));
   }
 
+  // Replace your existing _sendMessage method with this:
+
   Future<void> _sendMessage() async {
     final prompt = _controller.text.trim();
     if (prompt.isEmpty) return;
@@ -55,7 +57,11 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     await _saveMessages();
     _scrollToBottom();
 
-    final response = await GeminiService.askGemini(prompt);
+    // Convert conversation history to API format (optional - for better context)
+    final history = GeminiService.convertHistoryToApiFormat(_messages);
+
+    // Send message with history for better context awareness
+    final response = await GeminiService.askGemini(prompt, history: history);
 
     setState(() {
       _messages.add({'text': response, 'isUser': false});
@@ -65,6 +71,8 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     await _saveMessages();
     _scrollToBottom();
   }
+
+  // Also update your _clearChat method to clear the session:
 
   Future<void> _clearChat() async {
     final confirmed = await showDialog<bool>(
@@ -91,6 +99,9 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       });
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('ai_chat_messages');
+
+      // Clear the server-side session as well
+      await GeminiService.clearSession();
     }
   }
 
