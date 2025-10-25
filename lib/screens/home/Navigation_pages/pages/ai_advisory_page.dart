@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../../../../services/gemini_service.dart';
-import '../widgets/chat_message_bubble.dart';
+import 'package:agri_guide/services/ai_text_formmater.dart'; // Import the AITextFormatter
 
 class AIAdvisoryPage extends StatefulWidget {
   const AIAdvisoryPage({super.key});
@@ -18,6 +19,29 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
   final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+  }
+
+  Future<void> _loadMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final messagesJson = prefs.getString('ai_chat_messages');
+    if (messagesJson != null) {
+      final List<dynamic> decoded = json.decode(messagesJson);
+      setState(() {
+        _messages.addAll(decoded.map((e) => Map<String, dynamic>.from(e)));
+      });
+      _scrollToBottom();
+    }
+  }
+
+  Future<void> _saveMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('ai_chat_messages', json.encode(_messages));
+  }
+
   Future<void> _sendMessage() async {
     final prompt = _controller.text.trim();
     if (prompt.isEmpty) return;
@@ -28,6 +52,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       _controller.clear();
     });
 
+    await _saveMessages();
     _scrollToBottom();
 
     final response = await GeminiService.askGemini(prompt);
@@ -37,7 +62,36 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       _isLoading = false;
     });
 
+    await _saveMessages();
     _scrollToBottom();
+  }
+
+  Future<void> _clearChat() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Chat History'),
+        content: const Text('Are you sure you want to clear all messages?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _messages.clear();
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('ai_chat_messages');
+    }
   }
 
   void _scrollToBottom() {
@@ -65,6 +119,14 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         elevation: 2,
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
+        actions: [
+          if (_messages.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _clearChat,
+              tooltip: 'Clear chat',
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -98,11 +160,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.eco,
-            size: 80,
-            color: Colors.green.shade300,
-          ),
+          Icon(Icons.eco, size: 80, color: Colors.green.shade300),
           const SizedBox(height: 16),
           Text(
             'Hello! I\'m your AgriGuide AI',
@@ -115,10 +173,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
           const SizedBox(height: 8),
           Text(
             'Ask me anything about farming and agriculture',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -156,10 +211,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       builder: (context, value, child) {
         final delay = index * 0.2;
         final animValue = (value + delay) % 1.0;
-        final opacity = (animValue < 0.5) 
-            ? animValue * 2 
+        final opacity = (animValue < 0.5)
+            ? animValue * 2
             : (1.0 - animValue) * 2;
-        
+
         return Opacity(
           opacity: opacity.clamp(0.3, 1.0),
           child: Container(
@@ -173,7 +228,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         );
       },
       onEnd: () {
-        if (_isLoading) {
+        if (_isLoading && mounted) {
           setState(() {});
         }
       },
@@ -204,8 +259,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
               decoration: InputDecoration(
                 hintText: 'Ask AgriGuide anything...',
                 hintStyle: TextStyle(color: Colors.grey.shade400),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 filled: true,
                 fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
@@ -218,7 +275,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.green.shade300, width: 2),
+                  borderSide: BorderSide(
+                    color: Colors.green.shade300,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -249,7 +309,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 }
 
-// Enhanced Chat Message Bubble with formatting
+// Enhanced Chat Message Bubble
 class EnhancedChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
@@ -260,45 +320,73 @@ class EnhancedChatMessageBubble extends StatelessWidget {
     required this.isUser,
   });
 
+  void _copyToClipboard(BuildContext context, String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Copied to clipboard'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) _buildAvatar(),
           const SizedBox(width: 8),
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isUser ? Colors.green.shade600 : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isUser ? 16 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 16),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade200,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+            child: GestureDetector(
+              onLongPress: () => _copyToClipboard(context, message),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isUser ? Colors.green.shade600 : Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isUser ? 16 : 4),
+                    bottomRight: Radius.circular(isUser ? 4 : 16),
                   ),
-                ],
-              ),
-              child: isUser
-                  ? Text(
-                      message,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade200,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: isUser
+                    ? Text(
+                        message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                      )
+                    : AITextFormatter(
+                        text: message,
+                        baseStyle: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontSize: 15,
+                          height: 1.4,
+                        ),
+                        linkColor: Colors.blue,
+                        codeBackgroundColor: Colors.grey.shade200,
+                        codeTextColor: Colors.red.shade700,
                       ),
-                    )
-                  : _buildFormattedText(context),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -317,107 +405,6 @@ class EnhancedChatMessageBubble extends StatelessWidget {
         size: 18,
         color: isUser ? Colors.white : Colors.green.shade700,
       ),
-    );
-  }
-
-  Widget _buildFormattedText(BuildContext context) {
-    final spans = <InlineSpan>[];
-    final urlPattern = RegExp(
-      r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)',
-    );
-    final boldPattern = RegExp(r'\*\*(.+?)\*\*');
-    final codePattern = RegExp(r'`([^`]+)`');
-    
-    int lastIndex = 0;
-    final text = message;
-
-    // Find all patterns
-    final matches = <MapEntry<int, Match>>[];
-    
-    for (final match in urlPattern.allMatches(text)) {
-      matches.add(MapEntry(0, match));
-    }
-    for (final match in boldPattern.allMatches(text)) {
-      matches.add(MapEntry(1, match));
-    }
-    for (final match in codePattern.allMatches(text)) {
-      matches.add(MapEntry(2, match));
-    }
-    
-    matches.sort((a, b) => a.value.start.compareTo(b.value.start));
-
-    for (final entry in matches) {
-      final type = entry.key;
-      final match = entry.value;
-      
-      if (match.start > lastIndex) {
-        spans.add(TextSpan(
-          text: text.substring(lastIndex, match.start),
-          style: TextStyle(color: Colors.grey.shade800, fontSize: 15),
-        ));
-      }
-
-      if (type == 0) {
-        // URL
-        final url = match.group(0)!;
-        spans.add(TextSpan(
-          text: url,
-          style: const TextStyle(
-            color: Colors.blue,
-            decoration: TextDecoration.underline,
-            fontSize: 15,
-          ),
-          recognizer: TapGestureRecognizer()
-            ..onTap = () async {
-              final uri = Uri.parse(url);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            },
-        ));
-      } else if (type == 1) {
-        // Bold
-        spans.add(TextSpan(
-          text: match.group(1),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade800,
-            fontSize: 15,
-          ),
-        ));
-      } else if (type == 2) {
-        // Code
-        spans.add(WidgetSpan(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              match.group(1)!,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                color: Colors.red.shade700,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ));
-      }
-
-      lastIndex = match.end;
-    }
-
-    if (lastIndex < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastIndex),
-        style: TextStyle(color: Colors.grey.shade800, fontSize: 15),
-      ));
-    }
-
-    return RichText(
-      text: TextSpan(children: spans),
     );
   }
 }
