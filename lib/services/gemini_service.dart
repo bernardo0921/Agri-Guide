@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 /// A service for sending prompts to the Django Gemini proxy API
 class GeminiService {
   /// Replace this with your backend endpoint
-  static const String _baseUrl = 'http://127.0.0.1:8000/api/gemini/ask/';
+  static const String _baseUrl = 'http://10.214.246.118:8000/api/gemini/ask/';
 
   /// Sends a user prompt to the backend and returns Gemini's text response.
   static Future<String> askGemini(String prompt) async {

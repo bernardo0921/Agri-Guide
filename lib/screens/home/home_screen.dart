@@ -3,7 +3,7 @@ import 'package:agri_guide/screens/home/Navigation_pages/pages/ai_advisory_page.
 import 'package:agri_guide/screens/home/Navigation_pages/pages/community_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/pages/dashboard_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/pages/lms_page.dart';
-import 'package:agri_guide/screens/home/Navigation_pages/widgets/buttom_navigation_bar.dart';
+import 'package:agri_guide/widgets/buttom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // List of screens for each navigation item
   final List<Widget> _screens = [
     const DashboardPageContent(),
-    const AIAdvisoryPageContent(),
+    const AIAdvisoryPage(),
     const CommunityPageContent(),
     const LMSPageContent(),
   ];

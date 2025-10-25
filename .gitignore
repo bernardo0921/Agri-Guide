@@ -48,4 +48,4 @@ app.*.map.json
 # secrets
 .env
 backend_ai\.env
-virtualenv/
+virtualenv/w
