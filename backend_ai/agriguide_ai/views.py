@@ -1,10 +1,13 @@
-# views.py
+# views.py (Updated with authentication)
 from google import genai
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 import json
 import os
+from .models import ChatSession, ChatMessage
 
 # Configure Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -77,49 +80,61 @@ Use these patterns to create the illusion of memory:
 Remember: You are a trusted farming companion helping users succeed in their agricultural endeavors. Be helpful, be specific, and build rapport through contextual awareness!
 """
 
-# Store active chat sessions (in production, use Redis or database)
-chat_sessions = {}
 
-
-@csrf_exempt
-@require_http_methods(["POST"])
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def chat_with_ai(request):
     """
-    Endpoint to chat with AgriGuide AI
+    Endpoint to chat with AgriGuide AI (requires authentication)
     Expected JSON body: 
     {
         "message": "user message",
-        "session_id": "unique_session_id",
-        "history": [  # Optional: conversation history
-            {"role": "user", "parts": ["message"]},
-            {"role": "model", "parts": ["response"]}
-        ]
+        "session_id": "unique_session_id" (optional, will create if not provided)
     }
     """
     try:
-        data = json.loads(request.body)
-        message = data.get('message', '').strip()
-        session_id = data.get('session_id')
-        history = data.get('history', [])
+        message = request.data.get('message', '').strip()
+        session_id = request.data.get('session_id')
         
         if not message:
-            return JsonResponse({
+            return Response({
                 'error': 'Message is required'
-            }, status=400)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get or create chat session
+        if session_id:
+            try:
+                chat_session = ChatSession.objects.get(
+                    session_id=session_id,
+                    user=request.user
+                )
+            except ChatSession.DoesNotExist:
+                return Response({
+                    'error': 'Session not found or access denied'
+                }, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # Create new session
+            import uuid
+            session_id = str(uuid.uuid4())
+            chat_session = ChatSession.objects.create(
+                user=request.user,
+                session_id=session_id
+            )
+        
+        # Get conversation history from database
+        history_messages = ChatMessage.objects.filter(
+            session=chat_session
+        ).order_by('created_at')
         
         # Build conversation contents
         contents = []
         
-        # Add history if provided
-        if history:
-            for msg in history:
-                role = msg.get('role', 'user')
-                parts = msg.get('parts', [])
-                if parts:
-                    contents.append({
-                        'role': role,
-                        'parts': [{'text': part} for part in parts]
-                    })
+        # Add history
+        for msg in history_messages:
+            contents.append({
+                'role': msg.role,
+                'parts': [{'text': msg.message}]
+            })
         
         # Add current message
         contents.append({
@@ -137,43 +152,150 @@ def chat_with_ai(request):
             }
         )
         
-        return JsonResponse({
-            'response': response.text,
+        ai_response = response.text
+        
+        # Save messages to database
+        ChatMessage.objects.create(
+            session=chat_session,
+            role='user',
+            message=message
+        )
+        
+        ChatMessage.objects.create(
+            session=chat_session,
+            role='model',
+            message=ai_response
+        )
+        
+        # Update session timestamp
+        chat_session.save()
+        
+        return Response({
+            'response': ai_response,
             'session_id': session_id
         })
         
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'error': 'Invalid JSON'
-        }, status=400)
     except Exception as e:
-        return JsonResponse({
+        return Response({
             'error': str(e)
-        }, status=500)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_chat_sessions(request):
+    """Get all chat sessions for the authenticated user"""
+    sessions = ChatSession.objects.filter(
+        user=request.user,
+        is_active=True
+    ).order_by('-updated_at')
+    
+    sessions_data = []
+    for session in sessions:
+        last_message = session.messages.last()
+        sessions_data.append({
+            'session_id': session.session_id,
+            'created_at': session.created_at,
+            'updated_at': session.updated_at,
+            'message_count': session.messages.count(),
+            'last_message': last_message.message if last_message else None
+        })
+    
+    return Response({'sessions': sessions_data})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_chat_history(request, session_id):
+    """Get chat history for a specific session"""
+    try:
+        chat_session = ChatSession.objects.get(
+            session_id=session_id,
+            user=request.user
+        )
+        
+        messages = ChatMessage.objects.filter(
+            session=chat_session
+        ).order_by('created_at')
+        
+        history = []
+        for msg in messages:
+            history.append({
+                'role': msg.role,
+                'message': msg.message,
+                'created_at': msg.created_at
+            })
+        
+        return Response({
+            'session_id': session_id,
+            'history': history
+        })
+        
+    except ChatSession.DoesNotExist:
+        return Response({
+            'error': 'Session not found or access denied'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def clear_chat_session(request):
     """
     Clear a chat session
     Expected JSON body: {"session_id": "unique_session_id"}
     """
     try:
-        data = json.loads(request.body)
-        session_id = data.get('session_id')
+        session_id = request.data.get('session_id')
         
-        if session_id and session_id in chat_sessions:
-            del chat_sessions[session_id]
-            return JsonResponse({'message': 'Session cleared'})
+        if not session_id:
+            return Response({
+                'error': 'session_id is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        return JsonResponse({'message': 'Session not found'}, status=404)
+        chat_session = ChatSession.objects.get(
+            session_id=session_id,
+            user=request.user
+        )
         
+        chat_session.is_active = False
+        chat_session.save()
+        
+        return Response({'message': 'Session cleared'})
+        
+    except ChatSession.DoesNotExist:
+        return Response({
+            'error': 'Session not found or access denied'
+        }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@require_http_methods(["GET"])
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_chat_session(request, session_id):
+    """Delete a chat session permanently"""
+    try:
+        chat_session = ChatSession.objects.get(
+            session_id=session_id,
+            user=request.user
+        )
+        
+        chat_session.delete()
+        
+        return Response({
+            'message': 'Session deleted successfully'
+        })
+        
+    except ChatSession.DoesNotExist:
+        return Response({
+            'error': 'Session not found or access denied'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def test_connection(request):
     """Test endpoint to verify Gemini API connection"""
     try:
@@ -184,12 +306,13 @@ def test_connection(request):
                 'system_instruction': 'Respond with: Connection successful!'
             }
         )
-        return JsonResponse({
+        return Response({
             'status': 'connected',
-            'response': response.text
+            'response': response.text,
+            'user': request.user.username
         })
     except Exception as e:
-        return JsonResponse({
+        return Response({
             'status': 'error',
             'error': str(e)
-        }, status=500)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
