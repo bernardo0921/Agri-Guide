@@ -5,20 +5,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Service for handling AI chat functionality with authentication
 class AIService {
   /// Base URL for your Django backend
-  static const String _baseUrl = 'http://10.214.246.118:8000/api';
-  
+  static const String _baseUrl = 'http://192.168.100.7:5000/api';
+
   /// Cached authentication token
   static String? _cachedToken;
-  
+
   /// Cached session ID
   static String? _cachedSessionId;
 
   /// Gets the authentication token from SharedPreferences
   static Future<String?> _getAuthToken() async {
     if (_cachedToken != null) return _cachedToken;
-    
+
     final prefs = await SharedPreferences.getInstance();
-    _cachedToken = prefs.getString('auth_token');
+    _cachedToken = prefs.getString('token');
     return _cachedToken;
   }
 
@@ -26,20 +26,20 @@ class AIService {
   static Future<void> setAuthToken(String token) async {
     _cachedToken = token;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
+    await prefs.setString('token', token);
   }
 
   /// Clears the authentication token (call this after logout)
   static Future<void> clearAuthToken() async {
     _cachedToken = null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await prefs.remove('token');
   }
 
   /// Gets the current session ID from SharedPreferences
   static Future<String?> _getSessionId() async {
     if (_cachedSessionId != null) return _cachedSessionId;
-    
+
     final prefs = await SharedPreferences.getInstance();
     _cachedSessionId = prefs.getString('ai_session_id');
     return _cachedSessionId;
@@ -60,7 +60,7 @@ class AIService {
   }
 
   /// Sends a message to the AI and returns the response
-  /// 
+  ///
   /// Returns a Map with:
   /// - 'success': bool
   /// - 'response': String (AI response text)
@@ -69,7 +69,7 @@ class AIService {
   static Future<Map<String, dynamic>> sendMessage(String message) async {
     try {
       final token = await _getAuthToken();
-      
+
       if (token == null) {
         return {
           'success': false,
@@ -78,33 +78,35 @@ class AIService {
       }
 
       final sessionId = await _getSessionId();
-      
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-        body: jsonEncode({
-          'message': message,
-          if (sessionId != null) 'session_id': sessionId,
-        }),
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw Exception('Request timeout. Please check your connection.');
-        },
-      );
+
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/chat/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+            body: jsonEncode({
+              'message': message,
+              if (sessionId != null) 'session_id': sessionId,
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Request timeout. Please check your connection.');
+            },
+          );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final newSessionId = data['session_id'];
-        
+
         // Cache the session ID for future requests
         if (newSessionId != null) {
           await _setSessionId(newSessionId);
         }
-        
+
         return {
           'success': true,
           'response': data['response'] ?? 'No response received.',
@@ -125,7 +127,9 @@ class AIService {
         final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'error': errorData['error'] ?? 'Error ${response.statusCode}: ${response.body}',
+          'error':
+              errorData['error'] ??
+              'Error ${response.statusCode}: ${response.body}',
         };
       }
     } on http.ClientException catch (e) {
@@ -139,10 +143,7 @@ class AIService {
         'error': 'Invalid response format: ${e.message}',
       };
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Request failed: $e',
-      };
+      return {'success': false, 'error': 'Request failed: $e'};
     }
   }
 
@@ -150,28 +151,24 @@ class AIService {
   static Future<Map<String, dynamic>> getChatSessions() async {
     try {
       final token = await _getAuthToken();
-      
+
       if (token == null) {
-        return {
-          'success': false,
-          'error': 'Authentication required.',
-        };
+        return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http.get(
-        Uri.parse('$_baseUrl/chat/sessions/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/chat/sessions/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return {
-          'success': true,
-          'sessions': data['sessions'] ?? [],
-        };
+        return {'success': true, 'sessions': data['sessions'] ?? []};
       } else if (response.statusCode == 401) {
         return {
           'success': false,
@@ -185,10 +182,7 @@ class AIService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Request failed: $e',
-      };
+      return {'success': false, 'error': 'Request failed: $e'};
     }
   }
 
@@ -196,21 +190,20 @@ class AIService {
   static Future<Map<String, dynamic>> getChatHistory(String sessionId) async {
     try {
       final token = await _getAuthToken();
-      
+
       if (token == null) {
-        return {
-          'success': false,
-          'error': 'Authentication required.',
-        };
+        return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http.get(
-        Uri.parse('$_baseUrl/chat/history/$sessionId/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/chat/history/$sessionId/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -226,10 +219,7 @@ class AIService {
           'requiresLogin': true,
         };
       } else if (response.statusCode == 404) {
-        return {
-          'success': false,
-          'error': 'Session not found.',
-        };
+        return {'success': false, 'error': 'Session not found.'};
       } else {
         return {
           'success': false,
@@ -237,10 +227,7 @@ class AIService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Request failed: $e',
-      };
+      return {'success': false, 'error': 'Request failed: $e'};
     }
   }
 
@@ -249,41 +236,32 @@ class AIService {
     try {
       final token = await _getAuthToken();
       final sessionId = await _getSessionId();
-      
+
       if (token == null) {
-        return {
-          'success': false,
-          'error': 'Authentication required.',
-        };
+        return {'success': false, 'error': 'Authentication required.'};
       }
 
       if (sessionId == null) {
         // No active session to clear
-        return {
-          'success': true,
-          'message': 'No active session.',
-        };
+        return {'success': true, 'message': 'No active session.'};
       }
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat/clear/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-        body: jsonEncode({
-          'session_id': sessionId,
-        }),
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/chat/clear/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+            body: jsonEncode({'session_id': sessionId}),
+          )
+          .timeout(const Duration(seconds: 15));
 
       // Clear local session ID regardless of server response
       await _clearSessionId();
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'Session cleared successfully.',
-        };
+        return {'success': true, 'message': 'Session cleared successfully.'};
       } else if (response.statusCode == 401) {
         return {
           'success': false,
@@ -292,18 +270,12 @@ class AIService {
         };
       } else {
         // Session cleared locally, but server returned error
-        return {
-          'success': true,
-          'message': 'Session cleared locally.',
-        };
+        return {'success': true, 'message': 'Session cleared locally.'};
       }
     } catch (e) {
       // Clear local session even if request fails
       await _clearSessionId();
-      return {
-        'success': true,
-        'message': 'Session cleared locally.',
-      };
+      return {'success': true, 'message': 'Session cleared locally.'};
     }
   }
 
@@ -311,21 +283,20 @@ class AIService {
   static Future<Map<String, dynamic>> deleteSession(String sessionId) async {
     try {
       final token = await _getAuthToken();
-      
+
       if (token == null) {
-        return {
-          'success': false,
-          'error': 'Authentication required.',
-        };
+        return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http.delete(
-        Uri.parse('$_baseUrl/chat/delete/$sessionId/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-      ).timeout(const Duration(seconds: 15));
+      final response = await http
+          .delete(
+            Uri.parse('$_baseUrl/chat/delete/$sessionId/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       // If deleting current session, clear local cache
       final currentSessionId = await _getSessionId();
@@ -334,10 +305,7 @@ class AIService {
       }
 
       if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': 'Session deleted successfully.',
-        };
+        return {'success': true, 'message': 'Session deleted successfully.'};
       } else if (response.statusCode == 401) {
         return {
           'success': false,
@@ -345,10 +313,7 @@ class AIService {
           'requiresLogin': true,
         };
       } else if (response.statusCode == 404) {
-        return {
-          'success': false,
-          'error': 'Session not found.',
-        };
+        return {'success': false, 'error': 'Session not found.'};
       } else {
         return {
           'success': false,
@@ -356,10 +321,7 @@ class AIService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Request failed: $e',
-      };
+      return {'success': false, 'error': 'Request failed: $e'};
     }
   }
 
@@ -367,21 +329,20 @@ class AIService {
   static Future<Map<String, dynamic>> testConnection() async {
     try {
       final token = await _getAuthToken();
-      
+
       if (token == null) {
-        return {
-          'success': false,
-          'error': 'Authentication required.',
-        };
+        return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http.get(
-        Uri.parse('$_baseUrl/test/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/test/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -403,10 +364,7 @@ class AIService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Connection failed: $e',
-      };
+      return {'success': false, 'error': 'Connection failed: $e'};
     }
   }
 
@@ -414,21 +372,20 @@ class AIService {
   static Future<Map<String, dynamic>> verifyToken() async {
     try {
       final token = await _getAuthToken();
-      
+
       if (token == null) {
-        return {
-          'success': false,
-          'error': 'No token found.',
-        };
+        return {'success': false, 'error': 'No token found.'};
       }
 
-      final response = await http.get(
-        Uri.parse('$_baseUrl/auth/verify-token/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/auth/verify-token/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -438,16 +395,10 @@ class AIService {
           'user': data['user'],
         };
       } else {
-        return {
-          'success': false,
-          'error': 'Token verification failed.',
-        };
+        return {'success': false, 'error': 'Token verification failed.'};
       }
     } catch (e) {
-      return {
-        'success': false,
-        'error': 'Verification failed: $e',
-      };
+      return {'success': false, 'error': 'Verification failed: $e'};
     }
   }
 

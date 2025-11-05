@@ -1,3 +1,4 @@
+// lib/screens/language_screen.dart
 import 'package:flutter/material.dart';
 
 class LanguageScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           child: Column(
             children: [
               // Logo/Icon
+              // Assuming 'assets/images/logo.png' is in your pubspec.yaml
               Image.asset(
                 'assets/images/logo.png',
                 width: 200,
@@ -47,80 +49,58 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   itemCount: languages.length,
                   itemBuilder: (context, index) {
                     final language = languages[index];
-                    final isSelected = _selectedLanguage == language['name'];
+                    final isSelected = language['name'] == _selectedLanguage;
 
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedLanguage = language['name']!;
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: isSelected
-                                ? Theme.of(context).primaryColor
-                                : Colors.transparent,
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                    return Card(
+                      elevation: isSelected ? 4 : 1,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
                           color: isSelected
-                              ? Theme.of(context).primaryColor.withOpacity(0.1)
-                              : Theme.of(context).cardTheme.color,
+                              ? Theme.of(context).primaryColor
+                              : Colors.grey.shade300,
+                          width: isSelected ? 2 : 1,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  language['name']!,
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  language['subtitle']!,
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall?.color,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            if (isSelected)
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                child: const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                          ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
                         ),
+                        title: Text(
+                          language['name']!,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          language['subtitle']!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        trailing: isSelected
+                            ? Icon(
+                                Icons.check_circle,
+                                color: Theme.of(context).primaryColor,
+                              )
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedLanguage = language['name']!;
+                          });
+                        },
                       ),
                     );
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               // Continue Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushReplacementNamed('/home');
+                    // Navigate to the AuthWrapper
+                    Navigator.of(context).pushReplacementNamed('/auth_wrapper');
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -149,7 +129,9 @@ class _LanguageScreenState extends State<LanguageScreen> {
                     height: 6,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Theme.of(context).primaryColor.withOpacity(0.3),
+                      // --- THIS IS THE FIX ---
+                      // Replaced withOpacity(0.3) with withAlpha(77)
+                      color: Theme.of(context).primaryColor.withAlpha(77),
                     ),
                   );
                 }),

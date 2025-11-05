@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:agri_guide/services/auth_service.dart';
 
 // App Drawer
 class AppDrawer extends StatelessWidget {
@@ -57,18 +59,32 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Farmer John',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'john@harvestanalytics.com',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  // Display user info from AuthService
+                  Consumer<AuthService>(
+                    builder: (context, authService, child) {
+                      final user = authService.user;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?['username'] ?? 'Farmer John',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            user?['email'] ?? 'john@harvestanalytics.com',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -165,7 +181,68 @@ class AppDrawer extends StatelessWidget {
               title: 'Logout',
               iconColor: const Color(0xFFE57373),
               textColor: const Color(0xFFE57373),
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+                Navigator.pop(context); // Close drawer
+                
+                // Show confirmation dialog
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Logout'),
+                    content: const Text('Are you sure you want to logout?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(true),
+                        child: const Text(
+                          'Logout',
+                          style: TextStyle(color: Color(0xFFE57373)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                // If user confirmed logout
+                if (shouldLogout == true && context.mounted) {
+                  try {
+                    // Get auth service and logout
+                    final authService = Provider.of<AuthService>(context, listen: false);
+                    await authService.logout();
+                    
+                    // Navigate to auth wrapper and clear all previous routes
+                    if (context.mounted) {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        '/auth_wrapper',
+                        (route) => false,
+                      );
+                      
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logged out successfully'),
+                          backgroundColor: Colors.green,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // Show error message
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error logging out: $e'),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
             ),
             const SizedBox(height: 20),
           ],
