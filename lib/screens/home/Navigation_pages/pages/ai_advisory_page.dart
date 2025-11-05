@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../../../../services/gemini_service.dart';
-import 'package:agri_guide/services/ai_text_formmater.dart'; // Import the AITextFormatter
+import '../../../../services/ai_service.dart';
+import 'package:agri_guide/services/ai_text_formmater.dart';
 
 class AIAdvisoryPage extends StatefulWidget {
   const AIAdvisoryPage({super.key});
@@ -18,68 +18,185 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
   final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
+    _verifyAuthentication();
   }
 
-  Future<void> _loadMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    final messagesJson = prefs.getString('ai_chat_messages');
-    if (messagesJson != null) {
-      final List<dynamic> decoded = json.decode(messagesJson);
-      setState(() {
-        _messages.addAll(decoded.map((e) => Map<String, dynamic>.from(e)));
-      });
-      _scrollToBottom();
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Verifies user authentication on page load
+  Future<void> _verifyAuthentication() async {
+    final result = await AIService.verifyToken();
+    
+    if (!result['success'] || result['valid'] != true) {
+      if (mounted) {
+        _showAuthenticationError();
+      }
     }
   }
 
-  Future<void> _saveMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('ai_chat_messages', json.encode(_messages));
+  /// Shows authentication error dialog
+  void _showAuthenticationError() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Authentication Required'),
+        content: const Text(
+          'You need to be logged in to use the AI Advisory. Please login and try again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to previous page
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
-  // Replace your existing _sendMessage method with this:
+  /// Loads messages from local storage
+  Future<void> _loadMessages() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final messagesJson = prefs.getString('ai_chat_messages');
+      
+      if (messagesJson != null) {
+        final List<dynamic> decoded = json.decode(messagesJson);
+        setState(() {
+          _messages.addAll(decoded.map((e) => Map<String, dynamic>.from(e)));
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      debugPrint('Error loading messages: $e');
+    }
+  }
 
+  /// Saves messages to local storage
+  Future<void> _saveMessages() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ai_chat_messages', json.encode(_messages));
+    } catch (e) {
+      debugPrint('Error saving messages: $e');
+    }
+  }
+
+  /// Sends a message to the AI
   Future<void> _sendMessage() async {
     final prompt = _controller.text.trim();
     if (prompt.isEmpty) return;
 
+    // Add user message
     setState(() {
       _messages.add({'text': prompt, 'isUser': true});
       _isLoading = true;
+      _errorMessage = null;
       _controller.clear();
     });
 
     await _saveMessages();
     _scrollToBottom();
 
-    // Convert conversation history to API format (optional - for better context)
-    final history = GeminiService.convertHistoryToApiFormat(_messages);
-
-    // Send message with history for better context awareness
-    final response = await GeminiService.askGemini(prompt, history: history);
+    // Send to backend
+    final result = await AIService.sendMessage(prompt);
 
     setState(() {
-      _messages.add({'text': response, 'isUser': false});
       _isLoading = false;
     });
 
-    await _saveMessages();
-    _scrollToBottom();
+    if (result['success']) {
+      // Add AI response
+      setState(() {
+        _messages.add({
+          'text': result['response'],
+          'isUser': false,
+        });
+      });
+      
+      await _saveMessages();
+      _scrollToBottom();
+    } else {
+      // Handle error
+      setState(() {
+        _errorMessage = result['error'] ?? 'Unknown error occurred';
+      });
+
+      // Show error dialog
+      if (mounted) {
+        _showErrorDialog(result['error'] ?? 'Failed to get response');
+      }
+
+      // If authentication error, handle logout
+      if (result['requiresLogin'] == true) {
+        _handleAuthenticationFailure();
+      }
+    }
   }
 
-  // Also update your _clearChat method to clear the session:
+  /// Shows error dialog
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
 
+  /// Handles authentication failure
+  void _handleAuthenticationFailure() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Session Expired'),
+        content: const Text(
+          'Your session has expired. Please login again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to login
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Clears the chat history
   Future<void> _clearChat() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Clear Chat History'),
-        content: const Text('Are you sure you want to clear all messages?'),
+        content: const Text(
+          'Are you sure you want to clear all messages? This will also clear the conversation on the server.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -94,17 +211,31 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     );
 
     if (confirmed == true) {
+      // Clear local messages
       setState(() {
         _messages.clear();
+        _errorMessage = null;
       });
+      
+      // Clear local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('ai_chat_messages');
 
-      // Clear the server-side session as well
-      await GeminiService.clearSession();
+      // Clear server-side session
+      final result = await AIService.clearCurrentSession();
+      
+      if (!result['success'] && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to clear server session'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
+  /// Scrolls to bottom of chat
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -142,6 +273,36 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       body: SafeArea(
         child: Column(
           children: [
+            // Error banner
+            if (_errorMessage != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                color: Colors.red.shade100,
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () {
+                        setState(() {
+                          _errorMessage = null;
+                        });
+                      },
+                      color: Colors.red.shade700,
+                    ),
+                  ],
+                ),
+              ),
+            
+            // Messages
             Expanded(
               child: _messages.isEmpty
                   ? _buildEmptyState()
@@ -158,7 +319,11 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
                       },
                     ),
             ),
+            
+            // Typing indicator
             if (_isLoading) _buildTypingIndicator(),
+            
+            // Message input
             _buildMessageInput(),
           ],
         ),
@@ -267,6 +432,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _sendMessage(),
               maxLines: null,
+              enabled: !_isLoading,
               decoration: InputDecoration(
                 hintText: 'Ask AgriGuide anything...',
                 hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -290,6 +456,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
                     color: Colors.green.shade300,
                     width: 2,
                   ),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
             ),
