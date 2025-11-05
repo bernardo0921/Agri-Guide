@@ -31,7 +31,7 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["10.214.246.118", "127.0.0.1", "localhost"]
+ALLOWED_HOSTS = ["192.168.100.7", "127.0.0.1", "localhost"]
 
 
 # Application definition
@@ -44,10 +44,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+
+#My installed apps
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'agriguide_ai',
+    
 
 ]
 
@@ -180,3 +183,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CORS_ALLOW_ALL_ORIGINS = True
+AUTH_USER_MODEL = 'agriguide_ai.User'

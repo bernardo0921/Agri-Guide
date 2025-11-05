@@ -131,44 +131,67 @@ class ExtensionWorkerRegistrationSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
+    username = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False)
     password = serializers.CharField(
         required=True,
         write_only=True,
         style={'input_type': 'password'}
     )
-    
+
     def validate(self, attrs):
         username = attrs.get('username')
+        email = attrs.get('email')
+        phone_number = attrs.get('phone_number')
         password = attrs.get('password')
-        
-        if username and password:
+
+        user = None
+
+        # Try login with username
+        if username:
             user = authenticate(
                 request=self.context.get('request'),
                 username=username,
                 password=password
             )
-            
-            if not user:
-                raise serializers.ValidationError(
-                    'Unable to log in with provided credentials.',
-                    code='authorization'
+        # Try login with email
+        elif email:
+            try:
+                user_obj = User.objects.get(email=email)
+                user = authenticate(
+                    request=self.context.get('request'),
+                    username=user_obj.username,
+                    password=password
                 )
-            
-            if not user.is_active:
-                raise serializers.ValidationError(
-                    'User account is disabled.',
-                    code='authorization'
+            except User.DoesNotExist:
+                pass
+        # Try login with phone number
+        elif phone_number:
+            try:
+                user_obj = User.objects.get(phone_number=phone_number)
+                user = authenticate(
+                    request=self.context.get('request'),
+                    username=user_obj.username,
+                    password=password
                 )
-        else:
+            except User.DoesNotExist:
+                pass
+
+        if not user:
             raise serializers.ValidationError(
-                'Must include "username" and "password".',
+                'Unable to log in with provided credentials.',
                 code='authorization'
             )
-        
+
+        if not user.is_active:
+            raise serializers.ValidationError(
+                'User account is disabled.',
+                code='authorization'
+            )
+
         attrs['user'] = user
         return attrs
-
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)

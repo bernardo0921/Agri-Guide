@@ -15,20 +15,26 @@ from .serializers import (
 )
 
 
+
+
+
 class FarmerRegistrationView(generics.CreateAPIView):
     """Register a new farmer"""
     queryset = User.objects.all()
     permission_classes = [AllowAny]
     serializer_class = FarmerRegistrationSerializer
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
+        farmer_profile = serializer.save()
+
+        # Extract the related user from the FarmerProfile
+        user = farmer_profile.user
+
         # Create token for the user
         token, created = Token.objects.get_or_create(user=user)
-        
+
         return Response({
             'message': 'Farmer registration successful',
             'user': UserSerializer(user).data,
@@ -41,21 +47,25 @@ class ExtensionWorkerRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [AllowAny]
     serializer_class = ExtensionWorkerRegistrationSerializer
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
+        worker_profile = serializer.save()
+
+        # Extract the related user from the ExtensionWorkerProfile
+        user = worker_profile.user
+
         # Create token for the user
         token, created = Token.objects.get_or_create(user=user)
-        
+
         return Response({
             'message': 'Extension worker registration successful. '
-                      'Your account is pending approval.',
+                       'Your account is pending approval.',
             'user': UserSerializer(user).data,
             'token': token.key
         }, status=status.HTTP_201_CREATED)
+
 
 
 @api_view(['POST'])
