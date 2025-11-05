@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
 
-// App Drawer
 class AppDrawer extends StatelessWidget {
-  // Callback function to switch tabs
   final Function(int)? onNavigate;
 
   const AppDrawer({super.key, this.onNavigate});
@@ -13,9 +11,7 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        color: const Color(
-          0xFFF5F5F5,
-        ), // Light background matching your screens
+        color: const Color(0xFFF5F5F5),
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -26,10 +22,7 @@ class AppDrawer extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF7CB342), // Matching green from your app
-                    Color(0xFF8BC34A),
-                  ],
+                  colors: [Color(0xFF7CB342), Color(0xFF8BC34A)],
                 ),
               ),
               child: Column(
@@ -67,7 +60,7 @@ class AppDrawer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?['username'] ?? 'Farmer John',
+                            user?['username'] ?? 'Farmer',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -76,7 +69,7 @@ class AppDrawer extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            user?['email'] ?? 'john@harvestanalytics.com',
+                            user?['email'] ?? 'user@agriguide.com',
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
@@ -90,7 +83,7 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            // Menu Items - Main navigation items that switch tabs
+            // Menu Items
             _buildMenuItem(
               context,
               icon: Icons.dashboard_rounded,
@@ -181,74 +174,88 @@ class AppDrawer extends StatelessWidget {
               title: 'Logout',
               iconColor: const Color(0xFFE57373),
               textColor: const Color(0xFFE57373),
-              onTap: () async {
-                Navigator.pop(context); // Close drawer
-                
-                // Show confirmation dialog
-                final shouldLogout = await showDialog<bool>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(true),
-                        child: const Text(
-                          'Logout',
-                          style: TextStyle(color: Color(0xFFE57373)),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-
-                // If user confirmed logout
-                if (shouldLogout == true && context.mounted) {
-                  try {
-                    // Get auth service and logout
-                    final authService = Provider.of<AuthService>(context, listen: false);
-                    await authService.logout();
-                    
-                    // Navigate to auth wrapper and clear all previous routes
-                    if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/auth_wrapper',
-                        (route) => false,
-                      );
-                      
-                      // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Logged out successfully'),
-                          backgroundColor: Colors.green,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    // Show error message
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error logging out: $e'),
-                          backgroundColor: Colors.red,
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    }
-                  }
-                }
-              },
+              onTap: () => _handleLogout(context),
             ),
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    // Close drawer first
+    Navigator.pop(context);
+
+    // Show confirmation dialog
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Color(0xFFE57373)),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // If user confirmed logout
+    if (shouldLogout == true && context.mounted) {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        // Get auth service and logout
+        final authService = Provider.of<AuthService>(context, listen: false);
+
+        print('🔐 Starting logout process...');
+        await authService.logout();
+
+        print('✅ Logout successful');
+
+        if (context.mounted) {
+          // Close loading indicator
+          Navigator.pop(context);
+
+          // SIMPLIFIED: No manual navigation needed!
+          // AuthWrapper will automatically detect the status change
+          // and show LoginScreen
+
+          // Optional: Navigate to root to clear any nested navigation
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } catch (e) {
+        print('❌ Logout error: $e');
+
+        if (context.mounted) {
+          // Close loading indicator
+          Navigator.pop(context);
+
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error logging out: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildMenuItem(

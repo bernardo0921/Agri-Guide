@@ -91,17 +91,32 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     """Logout endpoint - deletes user token"""
+    print(f"Logout requested for user: {request.user.username}")  # Debug
+    
     try:
-        request.user.auth_token.delete()
+        from rest_framework.authtoken.models import Token
+        
+        # Check if token exists
+        token_exists = Token.objects.filter(user=request.user).exists()
+        print(f"Token exists before logout: {token_exists}")  # Debug
+        
+        if token_exists:
+            Token.objects.filter(user=request.user).delete()
+            print("Token deleted successfully")  # Debug
+        
         logout(request)
+        print("Django logout completed")  # Debug
+        
         return Response({
-            'message': 'Successfully logged out'
+            'message': 'Successfully logged out',
+            'token_deleted': token_exists
         }, status=status.HTTP_200_OK)
+        
     except Exception as e:
+        print(f"Logout error: {str(e)}")  # Debug
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
