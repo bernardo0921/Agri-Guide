@@ -1,5 +1,6 @@
 // lib/services/auth_service.dart
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthService with ChangeNotifier {
-  // Replace with your Django server's URL
   final String _baseUrl = 'http://192.168.100.7:5000';
 
   String? _token;
@@ -20,13 +20,10 @@ class AuthService with ChangeNotifier {
   AuthStatus get status => _status;
 
   AuthService() {
-    // Don't block constructor - run async initialization
     _initialize();
   }
 
-  // Separate initialization method
   Future<void> _initialize() async {
-    // Add small delay to ensure UI is ready
     await Future.delayed(const Duration(milliseconds: 100));
     await _tryAutoLogin();
   }
@@ -34,7 +31,7 @@ class AuthService with ChangeNotifier {
   Future<void> _tryAutoLogin() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       if (!prefs.containsKey('token')) {
         _status = AuthStatus.unauthenticated;
         notifyListeners();
@@ -48,50 +45,46 @@ class AuthService with ChangeNotifier {
         return;
       }
 
-      // Validate token with server
       final url = Uri.parse('$_baseUrl/api/auth/profile/');
-      
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $storedToken',
-        },
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          return http.Response('{"error": "timeout"}', 408);
-        },
-      );
+
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $storedToken',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              return http.Response('{"error": "timeout"}', 408);
+            },
+          );
 
       if (response.statusCode == 200) {
-        // Token is valid
         _token = storedToken;
         final responseData = json.decode(response.body);
         _user = responseData;
 
-        // Refresh the user data in storage
         await prefs.setString('user', response.body);
-        
+
         _status = AuthStatus.authenticated;
         print('✅ Auto-login successful');
       } else if (response.statusCode == 401) {
-        // Token expired or invalid
         print('⚠️ Token invalid, clearing storage');
         await _clearStorage(prefs);
         _status = AuthStatus.unauthenticated;
       } else {
-        // Other error, still clear storage to be safe
         print('⚠️ Server error (${response.statusCode}), clearing storage');
         await _clearStorage(prefs);
         _status = AuthStatus.unauthenticated;
       }
     } catch (e) {
-      // Network error or other exception
       print('❌ Auto-login error: $e');
       _status = AuthStatus.unauthenticated;
     }
-    
+
     notifyListeners();
   }
 
@@ -109,10 +102,7 @@ class AuthService with ChangeNotifier {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'username': username,
-          'password': password,
-        }),
+        body: json.encode({'username': username, 'password': password}),
       );
 
       final responseData = json.decode(response.body);
@@ -128,7 +118,6 @@ class AuthService with ChangeNotifier {
         _status = AuthStatus.authenticated;
         notifyListeners();
       } else {
-        // Extract error message from response
         String errorMessage = 'Login failed';
         if (responseData is Map) {
           if (responseData.containsKey('error')) {
@@ -172,14 +161,15 @@ class AuthService with ChangeNotifier {
         _status = AuthStatus.authenticated;
         notifyListeners();
       } else {
-        // Extract error message
         String errorMessage = "Registration failed";
         if (responseData is Map) {
           if (responseData.containsKey('error')) {
             errorMessage = responseData['error'];
           } else if (responseData.isNotEmpty) {
             final firstError = responseData.values.first;
-            errorMessage = firstError is List ? firstError[0].toString() : firstError.toString();
+            errorMessage = firstError is List
+                ? firstError[0].toString()
+                : firstError.toString();
           }
         }
         throw Exception(errorMessage);
@@ -192,55 +182,61 @@ class AuthService with ChangeNotifier {
     }
   }
 
- Future<void> logout(BuildContext context) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+  Future<void> logout(BuildContext context) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
 
-    if (token == null) {
-      debugPrint('No token found. User may already be logged out.');
+      if (token == null) {
+        debugPrint('No token found. User may already be logged out.');
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/auth/logout/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await prefs.remove('token');
+        await prefs.remove('user_id');
+
+        _token = null;
+        _user = null;
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+
+        debugPrint('Logout successful');
+      } else {
+        debugPrint('Logout failed: ${response.body}');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Logout failed. Please try again.')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Logout error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error during logout: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> fetchProfile() async {
+    if (_token == null) {
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
       return;
     }
 
-    final response = await http.post(
-      Uri.parse('$_baseUrl/api/auth/logout/'),
-      headers: {
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      // Clear stored data
-      await prefs.remove('token');
-      await prefs.remove('user_id');
-
-      _token = null;
-      _user = null;
-      _status = AuthStatus.unauthenticated;
-      notifyListeners();
-
-      debugPrint('Logout successful');
-    } else {
-      debugPrint('Logout failed: ${response.body}');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logout failed. Please try again.')),
-      );
-    }
-  } catch (e) {
-    debugPrint('Logout error: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error during logout: $e')),
-    );
-  }
-}
-
-  // Optional: Method to refresh user profile
-  Future<void> refreshUserProfile() async {
-    if (_token == null) return;
-    
     final url = Uri.parse('$_baseUrl/api/auth/profile/');
-    
+
     try {
       final response = await http.get(
         url,
@@ -256,11 +252,101 @@ class AuthService with ChangeNotifier {
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user', response.body);
-        
+
+        _status = AuthStatus.authenticated;
         notifyListeners();
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        final prefs = await SharedPreferences.getInstance();
+        await _clearStorage(prefs);
+        throw Exception('Authentication failed. Please log in again.');
+      } else {
+        throw Exception(
+          'Failed to load profile (Status: ${response.statusCode})',
+        );
       }
     } catch (e) {
-      print('Error refreshing profile: $e');
+      debugPrint('Profile fetch error: $e');
+      throw Exception('Could not connect to the server or load profile data.');
+    }
+  }
+
+  /// Update profile with optional file upload
+  Future<void> updateProfile(Map<String, dynamic> updateData, {File? profilePicture}) async {
+    if (_token == null) {
+      throw Exception('User is not authenticated.');
+    }
+
+    final url = Uri.parse('$_baseUrl/api/auth/profile/update/');
+
+    try {
+      http.Response response;
+
+      if (profilePicture != null) {
+        // Use multipart request for file upload
+        var request = http.MultipartRequest('PATCH', url);
+        request.headers['Authorization'] = 'Token $_token';
+
+        // Add profile picture
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'profile_picture',
+            profilePicture.path,
+          ),
+        );
+
+        // Add text fields
+        updateData.forEach((key, value) {
+          if (key != 'farmer_profile') {
+            request.fields[key] = value.toString();
+          }
+        });
+
+        // Add nested farmer_profile fields with dot notation
+        if (updateData.containsKey('farmer_profile')) {
+          final farmerProfile = updateData['farmer_profile'] as Map<String, dynamic>;
+          farmerProfile.forEach((key, value) {
+            if (value != null) {
+              request.fields['farmer_profile.$key'] = value.toString();
+            }
+          });
+        }
+
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // Use JSON request for text-only updates
+        response = await http.patch(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token $_token',
+          },
+          body: json.encode(updateData),
+        );
+      }
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        _user = responseData['user'];
+        
+        // Update stored user data
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user', json.encode(_user));
+        
+        notifyListeners();
+      } else if (response.statusCode == 400) {
+        final errorData = json.decode(response.body);
+        String errorMessage = 'Validation Error: ';
+        errorData.forEach((key, value) {
+          errorMessage += '\n$key: ${value.join(", ")}';
+        });
+        throw Exception(errorMessage);
+      } else {
+        throw Exception('Failed to update profile (Status: ${response.statusCode})');
+      }
+    } catch (e) {
+      debugPrint('Profile update error: $e');
+      rethrow;
     }
   }
 }

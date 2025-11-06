@@ -25,8 +25,12 @@ class ExtensionWorkerProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # Use 'farmer_profile' as the source to match Django's related_name
     farmer_profile = FarmerProfileSerializer(required=False)
-    extension_worker_profile = ExtensionWorkerProfileSerializer(required=False)
+    extension_worker_profile = ExtensionWorkerProfileSerializer(
+        required=False, 
+        read_only=True
+    )
     
     class Meta:
         model = User
@@ -36,7 +40,37 @@ class UserSerializer(serializers.ModelSerializer):
             'is_verified', 'created_at', 'farmer_profile',
             'extension_worker_profile'
         ]
-        read_only_fields = ['id', 'created_at', 'is_verified']
+        read_only_fields = [
+            'id', 'created_at', 'is_verified', 
+            'user_type', 'username'
+        ]
+
+    def update(self, instance, validated_data):
+        # Pop nested data - use 'farmer_profile' since that's the field name
+        farmer_profile_data = validated_data.pop('farmer_profile', None)
+        # Pop extension worker profile (read-only, so shouldn't be in validated_data)
+        validated_data.pop('extension_worker_profile', None)
+        
+        # Update fields on the main User instance
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Handle nested FarmerProfile update
+        if farmer_profile_data and instance.user_type == 'farmer':
+            try:
+                # Access the farmer_profile using the related_name
+                profile_instance = instance.farmer_profile
+            except FarmerProfile.DoesNotExist:
+                # Create profile if it doesn't exist
+                profile_instance = FarmerProfile.objects.create(user=instance)
+
+            # Update farmer profile fields
+            for attr, value in farmer_profile_data.items():
+                setattr(profile_instance, attr, value)
+            profile_instance.save()
+        
+        return instance
 
 
 class FarmerRegistrationSerializer(serializers.ModelSerializer):
@@ -192,6 +226,7 @@ class LoginSerializer(serializers.Serializer):
 
         attrs['user'] = user
         return attrs
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)

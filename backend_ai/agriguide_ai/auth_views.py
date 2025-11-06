@@ -15,9 +15,6 @@ from .serializers import (
 )
 
 
-
-
-
 class FarmerRegistrationView(generics.CreateAPIView):
     """Register a new farmer"""
     queryset = User.objects.all()
@@ -67,7 +64,6 @@ class ExtensionWorkerRegistrationView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -91,21 +87,20 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     """Logout endpoint - deletes user token"""
-    print(f"Logout requested for user: {request.user.username}")  # Debug
+    print(f"Logout requested for user: {request.user.username}")
     
     try:
         from rest_framework.authtoken.models import Token
         
-        # Check if token exists
         token_exists = Token.objects.filter(user=request.user).exists()
-        print(f"Token exists before logout: {token_exists}")  # Debug
+        print(f"Token exists before logout: {token_exists}")
         
         if token_exists:
             Token.objects.filter(user=request.user).delete()
-            print("Token deleted successfully")  # Debug
+            print("Token deleted successfully")
         
         logout(request)
-        print("Django logout completed")  # Debug
+        print("Django logout completed")
         
         return Response({
             'message': 'Successfully logged out',
@@ -113,10 +108,11 @@ def logout_view(request):
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        print(f"Logout error: {str(e)}")  # Debug
+        print(f"Logout error: {str(e)}")
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -129,9 +125,36 @@ def profile_view(request):
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile_view(request):
-    """Update current user profile"""
+    """
+    Update current user profile
+    Supports both JSON and multipart/form-data (for file uploads)
+    """
     user = request.user
-    serializer = UserSerializer(user, data=request.data, partial=True)
+    
+    # Check if this is a multipart request (file upload)
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        # Handle multipart form data
+        data = request.data.copy()
+        
+        # Parse nested farmer_profile data if it exists
+        farmer_profile_data = {}
+        farmer_fields = [
+            'farm_name', 'farm_size', 'location', 'region',
+            'crops_grown', 'farming_method', 'years_of_experience'
+        ]
+        
+        for field in farmer_fields:
+            field_key = f'farmer_profile.{field}'
+            if field_key in data:
+                farmer_profile_data[field] = data.pop(field_key)[0]
+        
+        if farmer_profile_data:
+            data['farmer_profile'] = farmer_profile_data
+    else:
+        # Handle JSON data
+        data = request.data
+    
+    serializer = UserSerializer(user, data=data, partial=True)
     
     if serializer.is_valid():
         serializer.save()

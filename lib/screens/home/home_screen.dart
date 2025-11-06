@@ -7,6 +7,7 @@ import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/screens/auth_screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'profile/profile_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -86,9 +87,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _handleMenuSelection(String value) {
     switch (value) {
       case 'profile':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('View Profile - Coming soon')),
-        );
+        // 2. NAVIGATE TO THE NEW PROFILE PAGE
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
         break;
       case 'settings':
         ScaffoldMessenger.of(
@@ -108,7 +110,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // Helper widget to build the styled menu items
   PopupMenuItem<String> _buildMenuItem(
-      String value, IconData icon, String text, Color color) {
+    String value,
+    IconData icon,
+    String text,
+    Color color,
+  ) {
     return PopupMenuItem<String>(
       value: value,
       // Apply custom styling to the child widget
@@ -213,14 +219,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                   // Custom styling applied via _buildMenuItem
                   _buildMenuItem(
-                      'profile', Icons.person, 'View Profile', Colors.blue),
+                    'profile',
+                    Icons.person,
+                    'View Profile',
+                    Colors.blue,
+                  ),
                   _buildMenuItem(
-                      'settings', Icons.settings, 'Settings', Colors.grey.shade700),
+                    'settings',
+                    Icons.settings,
+                    'Settings',
+                    Colors.grey.shade700,
+                  ),
                   _buildMenuItem(
-                      'help', Icons.help_outline, 'Help & Support', Colors.orange),
+                    'help',
+                    Icons.help_outline,
+                    'Help & Support',
+                    Colors.orange,
+                  ),
                   const PopupMenuDivider(),
-                  _buildMenuItem(
-                      'logout', Icons.logout, 'Logout', Colors.red),
+                  _buildMenuItem('logout', Icons.logout, 'Logout', Colors.red),
                 ],
                 // Apply styling to the menu itself for better appearance
                 shape: RoundedRectangleBorder(

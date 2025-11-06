@@ -1,6 +1,5 @@
 // lib/screens/home/Navigation_pages/pages/dashboard_page.dart
 import 'package:flutter/material.dart';
-import 'package:agri_guide/widgets/logout_button.dart';
 
 class DashboardPageContent extends StatelessWidget {
   const DashboardPageContent({super.key});
