@@ -5,18 +5,11 @@ class CommunityPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Community',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Community Page',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+    // Scaffold and AppBar removed. Returning content directly.
+    return Center(
+      child: Text(
+        'Community Page',
+        style: Theme.of(context).textTheme.bodyLarge,
       ),
     );
   }

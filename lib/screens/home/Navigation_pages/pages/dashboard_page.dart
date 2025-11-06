@@ -7,64 +7,47 @@ class DashboardPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Dashboard',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-        elevation: 2,
-        backgroundColor: const Color(0xFF7CB342),
-        foregroundColor: Colors.white,
-        actions: const [
-          // Simple logout icon button
-          LogoutButton(),
+    // Scaffold and AppBar removed. Returning content directly.
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // AppBar content repurposed as a header section if needed, or removed.
+          // For now, removing the Appbar logic and just keeping the main content.
           
-          // OR use the user menu dropdown (uncomment to use)
-          // UserMenuButton(),
+          // Original Welcome Text
+          const Text(
+            'Welcome to Dashboard',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
           
-          SizedBox(width: 8),
+          // Add your dashboard widgets here
+          _buildStatCard(
+            'Total Crops',
+            '12',
+            Icons.agriculture,
+            Colors.green,
+          ),
+          const SizedBox(height: 12),
+          _buildStatCard(
+            'Active Tasks',
+            '5',
+            Icons.task_alt,
+            Colors.blue,
+          ),
+          const SizedBox(height: 12),
+          _buildStatCard(
+            'Weather Alerts',
+            '2',
+            Icons.wb_sunny,
+            Colors.orange,
+          ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Your existing dashboard content
-            const Text(
-              'Welcome to Dashboard',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Add your dashboard widgets here
-            _buildStatCard(
-              'Total Crops',
-              '12',
-              Icons.agriculture,
-              Colors.green,
-            ),
-            const SizedBox(height: 12),
-            _buildStatCard(
-              'Active Tasks',
-              '5',
-              Icons.task_alt,
-              Colors.blue,
-            ),
-            const SizedBox(height: 12),
-            _buildStatCard(
-              'Weather Alerts',
-              '2',
-              Icons.wb_sunny,
-              Colors.orange,
-            ),
-          ],
-        ),
       ),
     );
   }

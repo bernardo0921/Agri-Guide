@@ -192,39 +192,48 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  Future<void> logout() async {
-    final url = Uri.parse('$_baseUrl/api/auth/logout/');
-    
-    if (_token != null) {
-      try {
-        final response = await http.post(
-          url,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Token $_token',
-          },
-        ).timeout(const Duration(seconds: 5));
-        
-        print('🔐 Logout response: ${response.statusCode}');
-        
-        if (response.statusCode != 200) {
-          print('⚠️ Logout failed with status: ${response.statusCode}');
-          print('Response body: ${response.body}');
-        }
-      } catch (e) {
-        print("❌ Error logging out from server: $e");
-      }
+ Future<void> logout(BuildContext context) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    if (token == null) {
+      debugPrint('No token found. User may already be logged out.');
+      return;
     }
 
-    // Always clear local data even if server request fails
-    final prefs = await SharedPreferences.getInstance();
-    await _clearStorage(prefs);
+    final response = await http.post(
+      Uri.parse('$_baseUrl/api/auth/logout/'),
+      headers: {
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
-    _status = AuthStatus.unauthenticated;
-    notifyListeners();
-    
-    print('✅ Local logout completed');
+    if (response.statusCode == 200) {
+      // Clear stored data
+      await prefs.remove('token');
+      await prefs.remove('user_id');
+
+      _token = null;
+      _user = null;
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+
+      debugPrint('Logout successful');
+    } else {
+      debugPrint('Logout failed: ${response.body}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Logout failed. Please try again.')),
+      );
+    }
+  } catch (e) {
+    debugPrint('Logout error: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error during logout: $e')),
+    );
   }
+}
 
   // Optional: Method to refresh user profile
   Future<void> refreshUserProfile() async {

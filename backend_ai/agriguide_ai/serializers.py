@@ -78,9 +78,9 @@ class FarmerRegistrationSerializer(serializers.ModelSerializer):
             profile_picture=validated_data.get('profile_picture')
         )
         
-        FarmerProfile.objects.create(user=user, **farmer_profile_data)
+        farmer_profile = FarmerProfile.objects.create(user=user, **farmer_profile_data)
         
-        return user
+        return farmer_profile
 
 
 class ExtensionWorkerRegistrationSerializer(serializers.ModelSerializer):
@@ -122,12 +122,12 @@ class ExtensionWorkerRegistrationSerializer(serializers.ModelSerializer):
             profile_picture=validated_data.get('profile_picture')
         )
         
-        ExtensionWorkerProfile.objects.create(
+        extension_worker_profile = ExtensionWorkerProfile.objects.create(
             user=user,
             **extension_profile_data
         )
         
-        return user
+        return extension_worker_profile
 
 
 class LoginSerializer(serializers.Serializer):

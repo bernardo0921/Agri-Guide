@@ -186,29 +186,13 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     });
   }
 
+  // Scaffold and AppBar/Custom Header removed. Returning content directly.
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          'AgriGuide AI Advisor',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-        elevation: 2,
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
-        actions: [
-          if (_messages.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _clearChat,
-              tooltip: 'Clear chat',
-            ),
-        ],
-      ),
-      body: SafeArea(
+    return Container(
+      color: Colors.grey.shade50, // Background color
+      child: SafeArea(
+        // Keep SafeArea for screen boundaries
         child: Column(
           children: [
             // Error banner
