@@ -24,7 +24,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
   void initState() {
     super.initState();
     _loadMessages();
-    _verifyAuthentication();
+    // No need for _verifyAuthentication() - handled by HomeScreen
   }
 
   @override
@@ -34,46 +34,12 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     super.dispose();
   }
 
-  /// Verifies user authentication on page load
-  Future<void> _verifyAuthentication() async {
-    final result = await AIService.verifyToken();
-    
-    if (!result['success'] || result['valid'] != true) {
-      if (mounted) {
-        _showAuthenticationError();
-      }
-    }
-  }
-
-  /// Shows authentication error dialog
-  void _showAuthenticationError() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Authentication Required'),
-        content: const Text(
-          'You need to be logged in to use the AI Advisory. Please login and try again.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to previous page
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Loads messages from local storage
   Future<void> _loadMessages() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final messagesJson = prefs.getString('ai_chat_messages');
-      
+
       if (messagesJson != null) {
         final List<dynamic> decoded = json.decode(messagesJson);
         setState(() {
@@ -122,12 +88,9 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     if (result['success']) {
       // Add AI response
       setState(() {
-        _messages.add({
-          'text': result['response'],
-          'isUser': false,
-        });
+        _messages.add({'text': result['response'], 'isUser': false});
       });
-      
+
       await _saveMessages();
       _scrollToBottom();
     } else {
@@ -141,10 +104,8 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         _showErrorDialog(result['error'] ?? 'Failed to get response');
       }
 
-      // If authentication error, handle logout
-      if (result['requiresLogin'] == true) {
-        _handleAuthenticationFailure();
-      }
+      // If authentication error, HomeScreen will handle redirect
+      // No need to manually navigate to login
     }
   }
 
@@ -158,29 +119,6 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Handles authentication failure
-  void _handleAuthenticationFailure() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Session Expired'),
-        content: const Text(
-          'Your session has expired. Please login again.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to login
-            },
             child: const Text('OK'),
           ),
         ],
@@ -216,14 +154,14 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         _messages.clear();
         _errorMessage = null;
       });
-      
+
       // Clear local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('ai_chat_messages');
 
       // Clear server-side session
       final result = await AIService.clearCurrentSession();
-      
+
       if (!result['success'] && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -301,7 +239,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
                   ],
                 ),
               ),
-            
+
             // Messages
             Expanded(
               child: _messages.isEmpty
@@ -319,10 +257,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
                       },
                     ),
             ),
-            
+
             // Typing indicator
             if (_isLoading) _buildTypingIndicator(),
-            
+
             // Message input
             _buildMessageInput(),
           ],
