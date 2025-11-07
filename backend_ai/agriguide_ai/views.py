@@ -1,5 +1,5 @@
 # views.py (Updated with authentication)
-from google import genai
+import google.generativeai as genai
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -15,8 +15,11 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY not found in environment variables")
 
-# Initialize Gemini client
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Initialize Gemini API
+genai.configure(api_key=GEMINI_API_KEY)
+
+# Set up the model
+model = genai.GenerativeModel('gemini-pro')
 
 # System instruction
 SYSTEM_INSTRUCTION = """
@@ -143,14 +146,17 @@ def chat_with_ai(request):
         })
         
         # Generate response
-        response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
-            contents=contents,
-            config={
-                'system_instruction': SYSTEM_INSTRUCTION,
-                'temperature': 0.7,
-            }
-        )
+        chat = model.start_chat(history=[])
+        
+        # Add system instruction
+        chat.send_message(SYSTEM_INSTRUCTION)
+        
+        # Send the actual message and get response
+        response = chat.send_message(message, generation_config={
+            'temperature': 0.7,
+            'top_p': 0.8,
+            'top_k': 40
+        })
         
         ai_response = response.text
         
@@ -299,13 +305,7 @@ def delete_chat_session(request, session_id):
 def test_connection(request):
     """Test endpoint to verify Gemini API connection"""
     try:
-        response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
-            contents='Hello, test connection',
-            config={
-                'system_instruction': 'Respond with: Connection successful!'
-            }
-        )
+        response = model.generate_content('Hello, test connection')
         return Response({
             'status': 'connected',
             'response': response.text,
