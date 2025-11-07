@@ -67,36 +67,20 @@ class AIService {
   /// - 'sessionId': String (session ID for conversation continuity)
   /// - 'error': String (error message if failed)
   static Future<Map<String, dynamic>> sendMessage(String message) async {
+    final token = await _getAuthToken();
+    if (token == null) {
+      return {'success': false, 'error': 'Not authenticated'};
+    }
+
     try {
-      final token = await _getAuthToken();
-
-      if (token == null) {
-        return {
-          'success': false,
-          'error': 'Authentication required. Please login first.',
-        };
-      }
-
-      final sessionId = await _getSessionId();
-
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/chat/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-            body: jsonEncode({
-              'message': message,
-              if (sessionId != null) 'session_id': sessionId,
-            }),
-          )
-          .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () {
-              throw Exception('Request timeout. Please check your connection.');
-            },
-          );
+      final response = await http.post(
+        Uri.parse('$_baseUrl/chat/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'message': message}),
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

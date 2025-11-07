@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:provider/provider.dart';
 import '../../../../services/ai_service.dart';
 import '../../../../widgets/chat_history_panel.dart';
 import 'package:agri_guide/services/ai_text_formmater.dart';
+import 'package:agri_guide/services/auth_service.dart';
 
 class AIAdvisoryPage extends StatefulWidget {
   const AIAdvisoryPage({super.key});
 
   @override
-  State<AIAdvisoryPage> createState() => _AIAdvisoryPageState();
+  State<AIAdvisoryPage> createState() => AIAdvisoryPageState();
 }
 
-class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
+class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -22,10 +24,15 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
   bool _isLoading = false;
   String? _errorMessage;
   String? _currentSessionId;
+  bool _isChatHistoryPanelOpen = false;
 
   @override
   void initState() {
     super.initState();
+    // Check authentication when page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthentication();
+    });
     _loadMessages();
   }
 
@@ -76,6 +83,12 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
   /// Sends a message to the AI
   Future<void> _sendMessage() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (!authService.isLoggedIn) {
+      _showErrorDialog('Please log in to send messages');
+      return;
+    }
+
     final prompt = _controller.text.trim();
     if (prompt.isEmpty) return;
 
@@ -213,14 +226,14 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         _messages.clear();
         _errorMessage = null;
       });
-      
+
       // Clear local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('ai_chat_messages');
       await prefs.remove('current_session_id');
-      
+
       await AIService.startNewSession();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -244,26 +257,28 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
       // Fetch chat history
       final result = await AIService.getChatHistory(sessionId);
-      
+
       if (result['success'] == true) {
         final history = result['history'] as List<dynamic>? ?? [];
-        
+
         setState(() {
           _currentSessionId = sessionId;
           _messages.clear();
           _messages.addAll(
-            history.map((m) => {
-              'text': m['message'] as String,
-              'isUser': (m['role'] as String) == 'user',
-            }),
+            history.map(
+              (m) => {
+                'text': m['message'] as String,
+                'isUser': (m['role'] as String) == 'user',
+              },
+            ),
           );
           _isLoading = false;
         });
-        
+
         // Save to local storage
         await _saveMessages();
         _scrollToBottom();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -283,6 +298,34 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         _isLoading = false;
         _errorMessage = 'Error loading session: $e';
       });
+    }
+  }
+
+  /// Check authentication status
+  void _checkAuthentication() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    if (!authService.isLoggedIn) {
+      // Show error or redirect to login
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to use the AI Assistant'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+  }
+
+  /// Toggle the chat history panel
+  void toggleChatHistoryPanel() {
+    setState(() {
+      _isChatHistoryPanelOpen = !_isChatHistoryPanelOpen;
+    });
+    if (_isChatHistoryPanelOpen) {
+      _scaffoldKey.currentState?.openEndDrawer();
+    } else {
+      _scaffoldKey.currentState?.closeEndDrawer();
     }
   }
 
@@ -334,7 +377,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
                 ? _buildEmptyState()
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
+                    ),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final msg = _messages[index];
@@ -464,12 +510,11 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
         children: [
           // History button
           IconButton(
-            icon: Icon(Icons.history, color: Colors.grey.shade600),
+            icon: Icon(Icons.history, color: Colors.green.shade600),
             onPressed: openDrawer,
             tooltip: 'Chat History',
           ),
-          const SizedBox(width: 4),
-          
+
           // Text input
           Expanded(
             child: TextField(
@@ -510,7 +555,7 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
             ),
           ),
           const SizedBox(width: 8),
-          
+
           // Send button
           Container(
             decoration: BoxDecoration(

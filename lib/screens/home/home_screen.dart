@@ -18,16 +18,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
-  final GlobalKey<ScaffoldState> _aiAdvisoryScaffoldKey =
-      GlobalKey<ScaffoldState>();
 
   // List of screens for each navigation item
-  final List<Widget> _screens = [
-    const DashboardPageContent(),
-    const AIAdvisoryPage(),
-    const CommunityPage(),
-    const LMSPageContent(),
-  ];
+  late final List<Widget> _screens;
 
   // Page titles for AppBar
   final List<String> _pageTitles = [
@@ -42,6 +35,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkAuthentication();
+    
+    // Initialize screens
+    _screens = [
+      const DashboardPageContent(),
+      const AIAdvisoryPage(),
+      const CommunityPage(),
+      const LMSPageContent(),
+    ];
   }
 
   @override
@@ -82,14 +83,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _handleMenuSelection(String value) {
     switch (value) {
       case 'profile':
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
+        );
         break;
       case 'settings':
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Settings - Coming soon')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Settings - Coming soon')),
+        );
         break;
       case 'help':
         ScaffoldMessenger.of(context).showSnackBar(
@@ -175,14 +176,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return 'U';
   }
 
-  void _openAIDrawer() {
-    // Find the AI Advisory page's scaffold and open its drawer
-    final BuildContext? aiContext = _aiAdvisoryScaffoldKey.currentContext;
-    if (aiContext != null) {
-      final ScaffoldState? scaffoldState = aiContext
-          .findAncestorStateOfType<ScaffoldState>();
-      scaffoldState?.openDrawer();
-    }
+  List<Widget> _buildAppBarActions() {
+    List<Widget> actions = [];
+    
+    // Add profile button
+    actions.add(
+      IconButton(
+        icon: const Icon(Icons.person),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ProfilePage(),
+            ),
+          );
+        },
+      ),
+    );
+    
+    return actions;
   }
 
   @override
@@ -206,14 +218,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
         return Scaffold(
           appBar: AppBar(
-            // Show menu button only on AI Advisory page
-            leading: _selectedIndex == 1
-                ? IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: _openAIDrawer,
-                    color: Colors.green.shade700,
-                  )
-                : null,
+            // Don't show leading button, let AIAdvisoryPage handle its own drawer
+            automaticallyImplyLeading: false,
             title: Row(
               children: [
                 if (_selectedIndex == 1) ...[
@@ -223,64 +229,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 Text(_pageTitles[_selectedIndex]),
               ],
             ),
-            actions: [
-              // Profile menu
-              PopupMenuButton<String>(
-                onSelected: _handleMenuSelection,
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  _buildMenuItem(
-                    'profile',
-                    Icons.person,
-                    'View Profile',
-                    Colors.blue,
-                  ),
-                  _buildMenuItem(
-                    'settings',
-                    Icons.settings,
-                    'Settings',
-                    Colors.grey.shade700,
-                  ),
-                  _buildMenuItem(
-                    'help',
-                    Icons.help_outline,
-                    'Help & Support',
-                    Colors.orange,
-                  ),
-                  const PopupMenuDivider(),
-                  _buildMenuItem('logout', Icons.logout, 'Logout', Colors.red),
-                ],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 8,
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.blue,
-                    child: Text(
-                      _getInitials(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            actions: _buildAppBarActions(),
           ),
           body: IndexedStack(
             index: _selectedIndex,
-            children: _screens.map((screen) {
-              // Pass the scaffold key to AI Advisory page
-              if (screen is AIAdvisoryPage) {
-                return KeyedSubtree(key: _aiAdvisoryScaffoldKey, child: screen);
-              }
-              return screen;
-            }).toList(),
+            children: _screens,
           ),
           bottomNavigationBar: CustomBottomNavigationBar(
             currentIndex: _selectedIndex,

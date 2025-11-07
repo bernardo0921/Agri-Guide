@@ -19,7 +19,7 @@ if not GEMINI_API_KEY:
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Set up the model
-model = genai.GenerativeModel('gemini-2.5-pro')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 # System instruction
 SYSTEM_INSTRUCTION = """
