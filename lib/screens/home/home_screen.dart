@@ -16,17 +16,16 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// ... (imports and HomeScreen class remain the same)
-// ... (imports and HomeScreen class remain the same)
-
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _aiAdvisoryScaffoldKey =
+      GlobalKey<ScaffoldState>();
 
   // List of screens for each navigation item
   final List<Widget> _screens = [
     const DashboardPageContent(),
     const AIAdvisoryPage(),
-    const CommunityPageContent(),
+    const CommunityPage(),
     const LMSPageContent(),
   ];
 
@@ -80,14 +79,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  // --- START OF MODIFIED MENU LOGIC ---
-  // The _showProfileMenu method is now removed, and the logic is integrated
-  // directly into the AppBar using PopupMenuButton.
-
   void _handleMenuSelection(String value) {
     switch (value) {
       case 'profile':
-        // 2. NAVIGATE TO THE NEW PROFILE PAGE
         Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
@@ -108,7 +102,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // Helper widget to build the styled menu items
   PopupMenuItem<String> _buildMenuItem(
     String value,
     IconData icon,
@@ -117,7 +110,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   ) {
     return PopupMenuItem<String>(
       value: value,
-      // Apply custom styling to the child widget
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         child: Row(
@@ -135,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _handleLogout() async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -183,16 +174,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return 'U';
   }
-  // --- END OF MODIFIED MENU LOGIC ---
+
+  void _openAIDrawer() {
+    // Find the AI Advisory page's scaffold and open its drawer
+    final BuildContext? aiContext = _aiAdvisoryScaffoldKey.currentContext;
+    if (aiContext != null) {
+      final ScaffoldState? scaffoldState = aiContext
+          .findAncestorStateOfType<ScaffoldState>();
+      scaffoldState?.openDrawer();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Listen to auth changes
     return Consumer<AuthService>(
       builder: (context, authService, child) {
-        // If user logs out while on this screen, redirect to login
         if (!authService.isLoggedIn) {
-          // Use addPostFrameCallback to avoid calling setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               Navigator.of(context).pushAndRemoveUntil(
@@ -202,22 +199,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             }
           });
 
-          // Show loading while redirecting
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        // User is authenticated, show the home screen
         return Scaffold(
           appBar: AppBar(
-            title: Text(_pageTitles[_selectedIndex]),
+            // Show menu button only on AI Advisory page
+            leading: _selectedIndex == 1
+                ? IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: _openAIDrawer,
+                    color: Colors.green.shade700,
+                  )
+                : null,
+            title: Row(
+              children: [
+                if (_selectedIndex == 1) ...[
+                  Icon(Icons.eco, color: Colors.green.shade600, size: 24),
+                  const SizedBox(width: 8),
+                ],
+                Text(_pageTitles[_selectedIndex]),
+              ],
+            ),
             actions: [
-              // --- START OF NEW APPBAR ACTION WIDGET ---
+              // Profile menu
               PopupMenuButton<String>(
                 onSelected: _handleMenuSelection,
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  // Custom styling applied via _buildMenuItem
                   _buildMenuItem(
                     'profile',
                     Icons.person,
@@ -239,13 +249,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const PopupMenuDivider(),
                   _buildMenuItem('logout', Icons.logout, 'Logout', Colors.red),
                 ],
-                // Apply styling to the menu itself for better appearance
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 8,
-                color: Colors.white, // Background color of the menu
-                // The widget that is displayed in the AppBar
+                color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: CircleAvatar(
@@ -262,10 +270,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ),
               ),
-              // --- END OF NEW APPBAR ACTION WIDGET ---
             ],
           ),
-          body: _screens[_selectedIndex],
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: _screens.map((screen) {
+              // Pass the scaffold key to AI Advisory page
+              if (screen is AIAdvisoryPage) {
+                return KeyedSubtree(key: _aiAdvisoryScaffoldKey, child: screen);
+              }
+              return screen;
+            }).toList(),
+          ),
           bottomNavigationBar: CustomBottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: _onNavItemTapped,

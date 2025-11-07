@@ -406,4 +406,9 @@ class AIService {
   static Future<void> startNewSession() async {
     await _clearSessionId();
   }
+
+  /// Public setter to set the current session id (persists locally)
+  static Future<void> setSessionId(String sessionId) async {
+    await _setSessionId(sessionId);
+  }
 }

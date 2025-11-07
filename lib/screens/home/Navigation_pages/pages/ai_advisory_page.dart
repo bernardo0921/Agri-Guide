@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../../../services/ai_service.dart';
+import '../../../../widgets/chat_history_panel.dart';
 import 'package:agri_guide/services/ai_text_formmater.dart';
 
 class AIAdvisoryPage extends StatefulWidget {
@@ -15,16 +16,17 @@ class AIAdvisoryPage extends StatefulWidget {
 class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
   String? _errorMessage;
+  String? _currentSessionId;
 
   @override
   void initState() {
     super.initState();
     _loadMessages();
-    // No need for _verifyAuthentication() - handled by HomeScreen
   }
 
   @override
@@ -34,16 +36,23 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     super.dispose();
   }
 
+  /// Opens the chat history drawer
+  void openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
   /// Loads messages from local storage
   Future<void> _loadMessages() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final messagesJson = prefs.getString('ai_chat_messages');
+      final savedSessionId = prefs.getString('current_session_id');
 
       if (messagesJson != null) {
         final List<dynamic> decoded = json.decode(messagesJson);
         setState(() {
           _messages.addAll(decoded.map((e) => Map<String, dynamic>.from(e)));
+          _currentSessionId = savedSessionId;
         });
         _scrollToBottom();
       }
@@ -57,6 +66,9 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('ai_chat_messages', json.encode(_messages));
+      if (_currentSessionId != null) {
+        await prefs.setString('current_session_id', _currentSessionId!);
+      }
     } catch (e) {
       debugPrint('Error saving messages: $e');
     }
@@ -89,6 +101,10 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       // Add AI response
       setState(() {
         _messages.add({'text': result['response'], 'isUser': false});
+        // Update session ID if returned
+        if (result['session_id'] != null) {
+          _currentSessionId = result['session_id'];
+        }
       });
 
       await _saveMessages();
@@ -103,9 +119,6 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       if (mounted) {
         _showErrorDialog(result['error'] ?? 'Failed to get response');
       }
-
-      // If authentication error, HomeScreen will handle redirect
-      // No need to manually navigate to login
     }
   }
 
@@ -131,9 +144,9 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Chat History'),
+        title: const Text('Clear Chat'),
         content: const Text(
-          'Are you sure you want to clear all messages? This will also clear the conversation on the server.',
+          'Are you sure you want to clear this chat? This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -153,20 +166,22 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       setState(() {
         _messages.clear();
         _errorMessage = null;
+        _currentSessionId = null;
       });
 
       // Clear local storage
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('ai_chat_messages');
+      await prefs.remove('current_session_id');
 
-      // Clear server-side session
-      final result = await AIService.clearCurrentSession();
+      // Start new session on server
+      await AIService.startNewSession();
 
-      if (!result['success'] && mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['error'] ?? 'Failed to clear server session'),
-            backgroundColor: Colors.orange,
+            content: const Text('Chat cleared'),
+            backgroundColor: Colors.green.shade600,
           ),
         );
       }
@@ -186,69 +201,157 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
     });
   }
 
-  // Scaffold and AppBar/Custom Header removed. Returning content directly.
+  /// Handle selecting a session from the history panel
+  Future<void> _handleSessionSelect(String sessionId) async {
+    // Close the drawer
+    Navigator.of(context).pop();
+
+    if (sessionId == 'new') {
+      // Start fresh chat
+      setState(() {
+        _currentSessionId = null;
+        _messages.clear();
+        _errorMessage = null;
+      });
+      
+      // Clear local storage
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('ai_chat_messages');
+      await prefs.remove('current_session_id');
+      
+      await AIService.startNewSession();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Started new chat'),
+            backgroundColor: Colors.green.shade600,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Load selected session
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Set the session ID in the service
+      await AIService.setSessionId(sessionId);
+
+      // Fetch chat history
+      final result = await AIService.getChatHistory(sessionId);
+      
+      if (result['success'] == true) {
+        final history = result['history'] as List<dynamic>? ?? [];
+        
+        setState(() {
+          _currentSessionId = sessionId;
+          _messages.clear();
+          _messages.addAll(
+            history.map((m) => {
+              'text': m['message'] as String,
+              'isUser': (m['role'] as String) == 'user',
+            }),
+          );
+          _isLoading = false;
+        });
+        
+        // Save to local storage
+        await _saveMessages();
+        _scrollToBottom();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Loaded chat with ${history.length} messages'),
+              backgroundColor: Colors.green.shade600,
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = result['error'] ?? 'Failed to load chat history';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Error loading session: $e';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.grey.shade50, // Background color
-      child: SafeArea(
-        // Keep SafeArea for screen boundaries
-        child: Column(
-          children: [
-            // Error banner
-            if (_errorMessage != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                color: Colors.red.shade100,
-                child: Row(
-                  children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade700),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Colors.grey.shade50,
+      drawer: Drawer(
+        child: ChatHistoryPanel(
+          onSessionSelected: _handleSessionSelect,
+          currentSessionId: _currentSessionId,
+        ),
+      ),
+      body: Column(
+        children: [
+          // Error banner
+          if (_errorMessage != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: Colors.red.shade100,
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.red.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red.shade700),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: () {
-                        setState(() {
-                          _errorMessage = null;
-                        });
-                      },
-                      color: Colors.red.shade700,
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: () {
+                      setState(() {
+                        _errorMessage = null;
+                      });
+                    },
+                    color: Colors.red.shade700,
+                  ),
+                ],
               ),
-
-            // Messages
-            Expanded(
-              child: _messages.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        final msg = _messages[index];
-                        return EnhancedChatMessageBubble(
-                          message: msg['text'],
-                          isUser: msg['isUser'],
-                        );
-                      },
-                    ),
             ),
 
-            // Typing indicator
-            if (_isLoading) _buildTypingIndicator(),
+          // Messages
+          Expanded(
+            child: _messages.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[index];
+                      return EnhancedChatMessageBubble(
+                        message: msg['text'],
+                        isUser: msg['isUser'],
+                      );
+                    },
+                  ),
+          ),
 
-            // Message input
-            _buildMessageInput(),
-          ],
-        ),
+          // Typing indicator
+          if (_isLoading) _buildTypingIndicator(),
+
+          // Message input
+          _buildMessageInput(),
+        ],
       ),
     );
   }
@@ -272,6 +375,17 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
           Text(
             'Ask me anything about farming and agriculture',
             style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: openDrawer,
+            icon: const Icon(Icons.history),
+            label: const Text('View Chat History'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green.shade700,
+              side: BorderSide(color: Colors.green.shade300),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
           ),
         ],
       ),
@@ -348,6 +462,15 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
       ),
       child: Row(
         children: [
+          // History button
+          IconButton(
+            icon: Icon(Icons.history, color: Colors.grey.shade600),
+            onPressed: openDrawer,
+            tooltip: 'Chat History',
+          ),
+          const SizedBox(width: 4),
+          
+          // Text input
           Expanded(
             child: TextField(
               controller: _controller,
@@ -387,6 +510,8 @@ class _AIAdvisoryPageState extends State<AIAdvisoryPage> {
             ),
           ),
           const SizedBox(width: 8),
+          
+          // Send button
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
