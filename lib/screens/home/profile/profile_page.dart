@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'edit_profile_page.dart';
+import 'package:agri_guide/screens/auth_screens/login_screen.dart'; // Add import for LoginScreen
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -133,6 +134,14 @@ class _ProfilePageState extends State<ProfilePage> {
     if (confirmed == true && mounted) {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.logout(context);
+
+      // Ensure navigation to login page immediately after logout
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
