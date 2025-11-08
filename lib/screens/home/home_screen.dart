@@ -17,6 +17,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  // Base URL for constructing full image URLs
+  static const String baseUrl = 'http://192.168.100.7:5000';
+
   int _selectedIndex = 0;
 
   // List of screens for each navigation item
@@ -35,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkAuthentication();
-    
+
     // Initialize screens
     _screens = [
       const DashboardPageContent(),
@@ -83,14 +86,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _handleMenuSelection(String value) {
     switch (value) {
       case 'profile':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
         break;
       case 'settings':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings - Coming soon')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Settings - Coming soon')));
         break;
       case 'help':
         ScaffoldMessenger.of(context).showSnackBar(
@@ -152,8 +155,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  String _getInitials() {
-    final authService = Provider.of<AuthService>(context, listen: false);
+  /// Get user initials for avatar fallback
+  String _getInitials(AuthService authService) {
     final user = authService.user;
 
     if (user != null) {
@@ -176,25 +179,71 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return 'U';
   }
 
-  List<Widget> _buildAppBarActions() {
-    List<Widget> actions = [];
-    
-    // Add profile button
-    actions.add(
-      IconButton(
-        icon: const Icon(Icons.person),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ProfilePage(),
+  /// Get the full profile picture URL
+  String? _getProfilePictureUrl(AuthService authService) {
+    final user = authService.user;
+    if (user == null) return null;
+
+    final profilePicture = user['profile_picture'] as String?;
+    if (profilePicture != null && profilePicture.isNotEmpty) {
+      // If it's already a full URL, return it
+      if (profilePicture.startsWith('http')) {
+        return profilePicture;
+      }
+      // Otherwise, prepend the base URL
+      return '$baseUrl$profilePicture';
+    }
+    return null;
+  }
+
+  /// Build AppBar actions with profile avatar
+  List<Widget> _buildAppBarActions(AuthService authService) {
+    final profilePictureUrl = _getProfilePictureUrl(authService);
+    final initials = _getInitials(authService);
+
+    return [
+      Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            );
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.green.shade300, width: 2),
             ),
-          );
-        },
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.green.shade100,
+              backgroundImage: profilePictureUrl != null
+                  ? NetworkImage(profilePictureUrl)
+                  : null,
+              onBackgroundImageError: profilePictureUrl != null
+                  ? (exception, stackTrace) {
+                      debugPrint('Error loading profile image: $exception');
+                    }
+                  : null,
+              child: profilePictureUrl == null
+                  ? Text(
+                      initials,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade800,
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+        ),
       ),
-    );
-    
-    return actions;
+    ];
   }
 
   @override
@@ -229,12 +278,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 Text(_pageTitles[_selectedIndex]),
               ],
             ),
-            actions: _buildAppBarActions(),
+            actions: _buildAppBarActions(authService),
           ),
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: _screens,
-          ),
+          body: IndexedStack(index: _selectedIndex, children: _screens),
           bottomNavigationBar: CustomBottomNavigationBar(
             currentIndex: _selectedIndex,
             onTap: _onNavItemTapped,
