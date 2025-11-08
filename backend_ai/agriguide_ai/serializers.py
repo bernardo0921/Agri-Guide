@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User, FarmerProfile, ExtensionWorkerProfile
+from .models import User, FarmerProfile, ExtensionWorkerProfile, CommunityPost, PostLike, PostComment
 
 
 class FarmerProfileSerializer(serializers.ModelSerializer):
@@ -252,3 +252,86 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect.")
         return value
+
+# Add this to your existing serializers.py file (or replace the community serializers)
+
+class CommunityPostSerializer(serializers.ModelSerializer):
+    """Serializer for community posts"""
+    author_name = serializers.SerializerMethodField()
+    author_username = serializers.CharField(source='author.username', read_only=True)
+    author_profile_picture = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CommunityPost
+        fields = [
+            'id', 'author_name', 'author_username', 'author_profile_picture',
+            'content', 'image', 'tags', 'likes_count', 'comments_count',
+            'is_liked', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_author_name(self, obj):
+        """Get author's full name or username"""
+        if obj.author.first_name and obj.author.last_name:
+            return f"{obj.author.first_name} {obj.author.last_name}"
+        return obj.author.username
+    
+    def get_author_profile_picture(self, obj):
+        """Get author's profile picture URL"""
+        if obj.author.profile_picture:
+            return obj.author.profile_picture.url
+        return None
+    
+    def get_likes_count(self, obj):
+        """Get the number of likes for this post"""
+        return obj.likes_count
+    
+    def get_comments_count(self, obj):
+        """Get the number of comments for this post"""
+        return obj.comments_count
+    
+    def get_is_liked(self, obj):
+        """Check if the current user has liked this post"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return PostLike.objects.filter(
+                user=request.user,
+                post=obj
+            ).exists()
+        return False
+    
+    def create(self, validated_data):
+        """Create a new post with the current user as author"""
+        request = self.context.get('request')
+        validated_data['author'] = request.user
+        return super().create(validated_data)
+
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    """Serializer for post comments"""
+    user_name = serializers.SerializerMethodField()
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    user_profile_picture = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PostComment
+        fields = [
+            'id', 'user_name', 'user_username', 'user_profile_picture',
+            'content', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_user_name(self, obj):
+        """Get user's full name or username"""
+        if obj.user.first_name and obj.user.last_name:
+            return f"{obj.user.first_name} {obj.user.last_name}"
+        return obj.user.username
+    
+    def get_user_profile_picture(self, obj):
+        """Get user's profile picture URL"""
+        if obj.user.profile_picture:
+            return obj.user.profile_picture.url
+        return None

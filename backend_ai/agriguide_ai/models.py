@@ -168,3 +168,93 @@ class ChatMessage(models.Model):
     
     def __str__(self):
         return f"{self.role}: {self.message[:50]}..."
+
+# Add these models to your existing models.py file
+
+class CommunityPost(models.Model):
+    """Community post model for farmers to share information"""
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='community_posts'
+    )
+    content = models.TextField(
+        help_text="Post content"
+    )
+    image = models.ImageField(
+        upload_to='community_posts/',
+        blank=True,
+        null=True,
+        help_text="Optional image for the post"
+    )
+    tags = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of tags for the post"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'community_posts'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.author.username}: {self.content[:50]}..."
+    
+    @property
+    def likes_count(self):
+        """Get the number of likes for this post"""
+        return self.likes.count()
+    
+    @property
+    def comments_count(self):
+        """Get the number of comments for this post"""
+        return self.comments.count()
+
+
+class PostLike(models.Model):
+    """Model to track post likes"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='post_likes'
+    )
+    post = models.ForeignKey(
+        CommunityPost,
+        on_delete=models.CASCADE,
+        related_name='likes'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'post_likes'
+        unique_together = ['user', 'post']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} likes post {self.post.id}"
+
+
+class PostComment(models.Model):
+    """Model to track post comments"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='post_comments'
+    )
+    post = models.ForeignKey(
+        CommunityPost,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'post_comments'
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} on post {self.post.id}: {self.content[:30]}..."

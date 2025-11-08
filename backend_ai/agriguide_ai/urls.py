@@ -1,7 +1,8 @@
-# urls.py
+# agriguide_ai/urls.py
 from django.urls import path
 from . import views
 from . import auth_views
+from . import community_views
 
 urlpatterns = [
     # Authentication endpoints
@@ -30,7 +31,7 @@ urlpatterns = [
          auth_views.verify_token, 
          name='verify_token'),
     
-    # Chat endpoints (now authenticated)
+    # Chat endpoints
     path('api/chat/', 
          views.chat_with_ai, 
          name='chat_with_ai'),
@@ -49,4 +50,24 @@ urlpatterns = [
     path('api/test/', 
          views.test_connection, 
          name='test_connection'),
+         
+    # Community endpoints
+    path('api/community/posts/', 
+         community_views.CommunityPostListCreateView.as_view(), 
+         name='community_posts'),
+    path('api/community/posts/<int:pk>/', 
+         community_views.CommunityPostDetailView.as_view(), 
+         name='community_post_detail'),
+    path('api/community/posts/<int:pk>/like/', 
+         community_views.toggle_post_like, 
+         name='toggle_post_like'),
+    path('api/community/posts/<int:pk>/comments/', 
+         community_views.post_comments, 
+         name='post_comments'),
+    path('api/community/posts/<int:pk>/comments/<int:comment_id>/', 
+         community_views.delete_comment, 
+         name='delete_comment'),
+    path('api/community/my-posts/', 
+         community_views.my_posts, 
+         name='my_posts'),
 ]
