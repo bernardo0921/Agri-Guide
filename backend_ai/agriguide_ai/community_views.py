@@ -3,6 +3,7 @@ from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db.models import Q, Count
 from .models import CommunityPost, PostLike, PostComment
 from .serializers import CommunityPostSerializer, PostCommentSerializer
@@ -12,10 +13,11 @@ class CommunityPostListCreateView(generics.ListCreateAPIView):
     """
     List all posts or create a new post
     GET: List all posts with search capability
-    POST: Create a new post
+    POST: Create a new post (supports image upload)
     """
     serializer_class = CommunityPostSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]  # Add parsers for file upload
     pagination_class = None  # Disable pagination to return direct list
     
     def get_queryset(self):
@@ -46,6 +48,7 @@ class CommunityPostDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     serializer_class = CommunityPostSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]  # Add parsers for file upload
     
     def get_queryset(self):
         return CommunityPost.objects.select_related('author').prefetch_related('likes', 'comments')
