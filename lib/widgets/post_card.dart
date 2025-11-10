@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/community_api_service.dart';
+import '../widgets/comments_bottom_sheet.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
-  final VoidCallback onLike;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
 
   const PostCard({
     super.key,
     required this.post,
-    required this.onLike,
-    required this.onDelete,
+    this.onDelete,
   });
 
   @override
@@ -22,6 +21,12 @@ class _PostCardState extends State<PostCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _likeAnimationController;
   bool _isLikeAnimating = false;
+  
+  // Local state for likes and comments
+  late bool _isLiked;
+  late int _likesCount;
+  late int _commentsCount;
+  bool _isLikeLoading = false;
 
   @override
   void initState() {
@@ -30,6 +35,22 @@ class _PostCardState extends State<PostCard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+    
+    // Initialize local state from post
+    _isLiked = widget.post.isLiked;
+    _likesCount = widget.post.likesCount;
+    _commentsCount = widget.post.commentsCount;
+  }
+
+  @override
+  void didUpdateWidget(PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update local state if post data changes externally
+    if (oldWidget.post.id != widget.post.id) {
+      _isLiked = widget.post.isLiked;
+      _likesCount = widget.post.likesCount;
+      _commentsCount = widget.post.commentsCount;
+    }
   }
 
   @override
@@ -38,17 +59,71 @@ class _PostCardState extends State<PostCard>
     super.dispose();
   }
 
-  void _handleLike() {
+  Future<void> _handleLike() async {
+    if (_isLikeLoading) return;
+    
     setState(() {
+      _isLikeLoading = true;
       _isLikeAnimating = true;
     });
+    
     _likeAnimationController.forward().then((_) {
       _likeAnimationController.reverse();
       setState(() {
         _isLikeAnimating = false;
       });
     });
-    widget.onLike();
+
+    // Optimistically update UI
+    final previousLiked = _isLiked;
+    final previousCount = _likesCount;
+    
+    setState(() {
+      _isLiked = !_isLiked;
+      _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
+    });
+
+    try {
+      await CommunityApiService.toggleLike(widget.post.id);
+    } catch (e) {
+      // Revert on error
+      setState(() {
+        _isLiked = previousLiked;
+        _likesCount = previousCount;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update like: $e'),
+            backgroundColor: Colors.red[700],
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLikeLoading = false;
+        });
+      }
+    }
+  }
+
+  void _openComments() async {
+    final result = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsBottomSheet(post: widget.post),
+    );
+    
+    // Update comment count if returned from bottom sheet
+    if (result != null && mounted) {
+      setState(() {
+        _commentsCount = result;
+      });
+    }
   }
 
   @override
@@ -275,8 +350,8 @@ class _PostCardState extends State<PostCard>
                 ),
               ],
               onSelected: (value) {
-                if (value == 'delete') {
-                  widget.onDelete();
+                if (value == 'delete' && widget.onDelete != null) {
+                  widget.onDelete!();
                 }
               },
             ),
@@ -317,7 +392,7 @@ class _PostCardState extends State<PostCard>
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: AspectRatio(
-            aspectRatio: 16 / 9, // Maintain consistent aspect ratio
+            aspectRatio: 16 / 9,
             child: Image.network(
               postImageUrl,
               width: double.infinity,
@@ -364,8 +439,6 @@ class _PostCardState extends State<PostCard>
                 );
               },
               errorBuilder: (context, error, stackTrace) {
-                print('Error loading image: $error');
-                print('Image URL: $postImageUrl');
                 return Container(
                   height: 240,
                   decoration: BoxDecoration(
@@ -476,21 +549,21 @@ class _PostCardState extends State<PostCard>
         children: [
           _buildActionButton(
             icon: Icons.chat_bubble_outline,
-            label: _formatCount(widget.post.commentsCount),
-            onTap: () {},
+            label: _formatCount(_commentsCount),
+            onTap: _openComments,
             gradient: LinearGradient(
               colors: [Colors.blue[400]!, Colors.blue[600]!],
             ),
           ),
           const SizedBox(width: 8),
           _buildActionButton(
-            icon: widget.post.isLiked ? Icons.favorite : Icons.favorite_border,
-            label: _formatCount(widget.post.likesCount),
+            icon: _isLiked ? Icons.favorite : Icons.favorite_border,
+            label: _formatCount(_likesCount),
             onTap: _handleLike,
             gradient: LinearGradient(
               colors: [Colors.red[400]!, Colors.red[600]!],
             ),
-            isActive: widget.post.isLiked,
+            isActive: _isLiked,
             scale: _isLikeAnimating
                 ? Tween<double>(begin: 1.0, end: 1.3).animate(
                     CurvedAnimation(

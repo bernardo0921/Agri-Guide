@@ -13,8 +13,6 @@ class CommunityPage extends StatefulWidget {
 
 class _CommunityPageState extends State<CommunityPage> {
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final Map<int, GlobalKey> _postKeys = {};
   List<Post> _posts = [];
   List<Post> _filteredPosts = [];
   bool _isLoading = true;
@@ -29,11 +27,10 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   void dispose() {
     _searchController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadPosts({int? scrollToPostId}) async {
+  Future<void> _loadPosts() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -45,25 +42,7 @@ class _CommunityPageState extends State<CommunityPage> {
         _posts = posts;
         _filteredPosts = posts;
         _isLoading = false;
-
-        // Generate keys for each post
-        _postKeys.clear();
-        for (var post in posts) {
-          _postKeys[post.id] = GlobalKey();
-        }
       });
-
-      // Scroll to the specific post after the widget tree is built and images have loaded
-      if (scrollToPostId != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // Delay to allow images to start loading and establish proper heights
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              _scrollToPost(scrollToPostId);
-            }
-          });
-        });
-      }
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -76,32 +55,6 @@ class _CommunityPageState extends State<CommunityPage> {
             backgroundColor: Colors.red[700],
           ),
         );
-      }
-    }
-  }
-
-  void _scrollToPost(int postId) {
-    final key = _postKeys[postId];
-    if (key != null && key.currentContext != null) {
-      try {
-        Scrollable.ensureVisible(
-          key.currentContext!,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-          alignment: 0.1, // Position post near the top of the screen
-        );
-      } catch (e) {
-        // If scrolling fails, try again after a short delay
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && key.currentContext != null) {
-            Scrollable.ensureVisible(
-              key.currentContext!,
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-              alignment: 0.1,
-            );
-          }
-        });
       }
     }
   }
@@ -119,23 +72,6 @@ class _CommunityPageState extends State<CommunityPage> {
         }).toList();
       }
     });
-  }
-
-  Future<void> _toggleLike(Post post) async {
-    try {
-      await CommunityApiService.toggleLike(post.id);
-      // Reload posts and scroll back to the liked post
-      await _loadPosts(scrollToPostId: post.id);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update like: $e'),
-            backgroundColor: Colors.red[700],
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _deletePost(Post post) async {
@@ -205,10 +141,10 @@ class _CommunityPageState extends State<CommunityPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                  ? _buildErrorState()
-                  : _filteredPosts.isEmpty
-                  ? _buildEmptyState()
-                  : _buildPostsList(),
+                      ? _buildErrorState()
+                      : _filteredPosts.isEmpty
+                          ? _buildEmptyState()
+                          : _buildPostsList(),
             ),
           ],
         ),
@@ -267,25 +203,21 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget _buildPostsList() {
     return RefreshIndicator(
-      onRefresh: () => _loadPosts(),
+      onRefresh: _loadPosts,
       child: ListView.builder(
-        controller: _scrollController,
         padding: const EdgeInsets.only(
           left: 16,
           right: 16,
           top: 8,
-          bottom: 80, // Extra padding at bottom to clear the FAB
+          bottom: 80,
         ),
         itemCount: _filteredPosts.length,
         itemBuilder: (context, index) {
           final post = _filteredPosts[index];
-          return Container(
-            key: _postKeys[post.id],
-            child: PostCard(
-              post: post,
-              onLike: () => _toggleLike(post),
-              onDelete: () => _deletePost(post),
-            ),
+          return PostCard(
+            key: ValueKey(post.id),
+            post: post,
+            onDelete: () => _deletePost(post),
           );
         },
       ),
@@ -343,7 +275,7 @@ class _CommunityPageState extends State<CommunityPage> {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () => _loadPosts(),
+            onPressed: _loadPosts,
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
             style: ElevatedButton.styleFrom(

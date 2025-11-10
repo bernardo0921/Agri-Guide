@@ -1,7 +1,7 @@
-import 'package:agri_guide/screens/home/Navigation_pages/pages/ai_advisory_page.dart';
-import 'package:agri_guide/screens/home/Navigation_pages/pages/community_page.dart';
-import 'package:agri_guide/screens/home/Navigation_pages/pages/dashboard_page.dart';
-import 'package:agri_guide/screens/home/Navigation_pages/pages/lms_page.dart';
+import 'package:agri_guide/screens/home/Navigation_pages/ai_advisory_page.dart';
+import 'package:agri_guide/screens/home/Navigation_pages/community/community_page.dart';
+import 'package:agri_guide/screens/home/Navigation_pages/dashboard_page.dart';
+import 'package:agri_guide/screens/home/Navigation_pages/lms_page.dart';
 import 'package:agri_guide/widgets/buttom_navigation_bar.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/screens/auth_screens/login_screen.dart';

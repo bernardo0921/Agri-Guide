@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/post.dart';
+import '../models/comment.dart';
 
 class CommunityApiService {
   static const String baseUrl = 'http://192.168.100.7:5000';
@@ -10,6 +11,14 @@ class CommunityApiService {
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  static Future<Map<String, String>> _getHeaders() async {
+    final token = await _getToken();
+    return {
+      'Authorization': 'Token $token',
+      'Content-Type': 'application/json',
+    };
   }
 
   // Helper method to build complete image URL
@@ -25,6 +34,7 @@ class CommunityApiService {
     return '$baseUrl$imageUrl';
   }
 
+  // Get all posts with optional search
   static Future<List<Post>> getPosts({String? search}) async {
     final token = await _getToken();
     if (token == null) throw Exception('Not authenticated');
@@ -37,10 +47,7 @@ class CommunityApiService {
 
     final response = await http.get(
       uri,
-      headers: {
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
+      headers: await _getHeaders(),
     );
 
     print('Response status: ${response.statusCode}');
@@ -69,6 +76,7 @@ class CommunityApiService {
     }
   }
 
+  // Create a new post with optional image and tags
   static Future<Post> createPost({
     required String content,
     List<String>? tags,
@@ -99,10 +107,7 @@ class CommunityApiService {
       // Use JSON request for text-only posts
       response = await http.post(
         uri,
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
+        headers: await _getHeaders(),
         body: json.encode({'content': content, 'tags': tags ?? []}),
       );
     }
@@ -115,37 +120,85 @@ class CommunityApiService {
     }
   }
 
+  // Toggle like on a post
   static Future<void> toggleLike(int postId) async {
     final token = await _getToken();
     if (token == null) throw Exception('Not authenticated');
 
     final response = await http.post(
       Uri.parse('$baseUrl/api/community/posts/$postId/like/'),
-      headers: {
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to toggle like');
+      throw Exception('Failed to toggle like: ${response.body}');
     }
   }
 
+  // Delete a post
   static Future<void> deletePost(int postId) async {
     final token = await _getToken();
     if (token == null) throw Exception('Not authenticated');
 
     final response = await http.delete(
       Uri.parse('$baseUrl/api/community/posts/$postId/'),
-      headers: {
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
+      headers: await _getHeaders(),
     );
 
     if (response.statusCode != 204) {
-      throw Exception('Failed to delete post');
+      throw Exception('Failed to delete post: ${response.body}');
+    }
+  }
+
+  // Get comments for a post
+  static Future<List<Comment>> getComments(int postId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/community/posts/$postId/comments/'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Comment.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load comments: ${response.body}');
+    }
+  }
+
+  // Add a comment to a post
+  static Future<Comment> addComment(int postId, String content) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/community/posts/$postId/comments/'),
+      headers: await _getHeaders(),
+      body: json.encode({'content': content}),
+    );
+
+    if (response.statusCode == 201) {
+      final data = json.decode(response.body);
+      return Comment.fromJson(data);
+    } else {
+      throw Exception('Failed to add comment: ${response.body}');
+    }
+  }
+
+  // Delete a comment
+  static Future<void> deleteComment(int postId, int commentId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/community/posts/$postId/comments/$commentId/'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete comment: ${response.body}');
     }
   }
 }

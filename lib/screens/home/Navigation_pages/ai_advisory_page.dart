@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:provider/provider.dart';
-import '../../../../services/ai_service.dart';
-import '../../../../widgets/chat_history_panel.dart';
+import '../../../services/ai_service.dart';
+import '../../../widgets/chat_history_panel.dart';
 import 'package:agri_guide/services/ai_text_formmater.dart';
 import 'package:agri_guide/services/auth_service.dart';
 
