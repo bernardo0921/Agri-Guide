@@ -1,7 +1,15 @@
-# models.py
+# Updated models.py with S3 storage backends
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
+from .storage_backends import (
+    ProfilePictureStorage,
+    TutorialVideoStorage,
+    TutorialThumbnailStorage,
+    CommunityPostImageStorage,
+    VerificationDocumentStorage
+)
+
 
 class User(AbstractUser):
     """Extended User model for AgriGuide AI"""
@@ -25,7 +33,7 @@ class User(AbstractUser):
         unique=True
     )
     profile_picture = models.ImageField(
-        upload_to='profile_pics/',
+        storage=ProfilePictureStorage(),  # Use S3 storage
         blank=True,
         null=True
     )
@@ -33,7 +41,6 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
     is_verified = models.BooleanField(default=False)
     
-    # Fix for groups and user_permissions clash
     groups = models.ManyToManyField(
         'auth.Group',
         verbose_name='groups',
@@ -114,7 +121,7 @@ class ExtensionWorkerProfile(models.Model):
         help_text="Comma-separated list of regions"
     )
     verification_document = models.FileField(
-        upload_to='verification_docs/',
+        storage=VerificationDocumentStorage(),  # Use S3 storage
         blank=True,
         null=True
     )
@@ -169,7 +176,6 @@ class ChatMessage(models.Model):
     def __str__(self):
         return f"{self.role}: {self.message[:50]}..."
 
-# Add these models to your existing models.py file
 
 class CommunityPost(models.Model):
     """Community post model for farmers to share information"""
@@ -182,7 +188,7 @@ class CommunityPost(models.Model):
         help_text="Post content"
     )
     image = models.ImageField(
-        upload_to='community_posts/',
+        storage=CommunityPostImageStorage(),  # Use S3 storage
         blank=True,
         null=True,
         help_text="Optional image for the post"
@@ -258,3 +264,80 @@ class PostComment(models.Model):
     
     def __str__(self):
         return f"{self.user.username} on post {self.post.id}: {self.content[:30]}..."
+
+
+class Tutorial(models.Model):
+    """Tutorial model for extension farmers to post educational videos"""
+    
+    CATEGORY_CHOICES = (
+        ('crops', 'Crops'),
+        ('livestock', 'Livestock'),
+        ('irrigation', 'Irrigation'),
+        ('pest_control', 'Pest Control'),
+        ('soil_management', 'Soil Management'),
+        ('harvesting', 'Harvesting'),
+        ('post_harvest', 'Post-Harvest'),
+        ('farm_equipment', 'Farm Equipment'),
+        ('marketing', 'Marketing'),
+        ('other', 'Other'),
+    )
+    
+    uploader = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='tutorials',
+        help_text="User who uploaded the tutorial"
+    )
+    title = models.CharField(
+        max_length=200,
+        help_text="Tutorial title"
+    )
+    description = models.TextField(
+        help_text="Detailed description of the tutorial"
+    )
+    category = models.CharField(
+        max_length=50,
+        choices=CATEGORY_CHOICES,
+        default='other',
+        help_text="Tutorial category"
+    )
+    video = models.FileField(
+        storage=TutorialVideoStorage(),  # Use S3 storage
+        help_text="Tutorial video file"
+    )
+    thumbnail = models.ImageField(
+        storage=TutorialThumbnailStorage(),  # Use S3 storage
+        blank=True,
+        null=True,
+        help_text="Optional thumbnail image for the video"
+    )
+    view_count = models.IntegerField(
+        default=0,
+        help_text="Number of views"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'tutorials'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['category']),
+            models.Index(fields=['uploader']),
+        ]
+    
+    def __str__(self):
+        return f"{self.title} by {self.uploader.username}"
+    
+    def increment_view_count(self):
+        """Increment the view count for this tutorial"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+    
+    @property
+    def uploader_name(self):
+        """Get uploader's full name or username"""
+        if self.uploader.first_name and self.uploader.last_name:
+            return f"{self.uploader.first_name} {self.uploader.last_name}"
+        return self.uploader.username

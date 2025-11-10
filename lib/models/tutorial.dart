@@ -1,13 +1,14 @@
+// models/tutorial.dart - Updated for full S3 URLs (no getFullThumbnailUrl needed)
 class Tutorial {
   final int id;
   final String title;
   final String description;
   final String category;
-  final String videoUrl;
-  final String? thumbnailUrl;
+  final String videoUrl; // Full S3 URL from backend
+  final String? thumbnailUrl; // Full S3 URL from backend
   final int uploaderId;
   final String uploaderName;
-  final String? uploaderProfilePicture;
+  final String? uploaderProfilePictureUrl; // Full S3 URL from backend
   final int viewCount;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -21,7 +22,7 @@ class Tutorial {
     this.thumbnailUrl,
     required this.uploaderId,
     required this.uploaderName,
-    this.uploaderProfilePicture,
+    this.uploaderProfilePictureUrl,
     required this.viewCount,
     required this.createdAt,
     required this.updatedAt,
@@ -29,18 +30,19 @@ class Tutorial {
 
   factory Tutorial.fromJson(Map<String, dynamic> json) {
     return Tutorial(
-      id: json['id'] as int,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      category: json['category'] as String,
-      videoUrl: json['video_url'] as String,
-      thumbnailUrl: json['thumbnail_url'] as String?,
-      uploaderId: json['uploader_id'] as int,
-      uploaderName: json['uploader_name'] as String,
-      uploaderProfilePicture: json['uploader_profile_picture'] as String?,
-      viewCount: json['view_count'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      category: json['category'],
+      videoUrl: json['video_url'], // Already full S3 URL
+      thumbnailUrl: json['thumbnail_url'], // Already full S3 URL
+      uploaderId: json['uploader_id'],
+      uploaderName: json['uploader_name'],
+      uploaderProfilePictureUrl:
+          json['uploader_profile_picture'], // Already full S3 URL
+      viewCount: json['view_count'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
     );
   }
 
@@ -54,49 +56,16 @@ class Tutorial {
       'thumbnail_url': thumbnailUrl,
       'uploader_id': uploaderId,
       'uploader_name': uploaderName,
-      'uploader_profile_picture': uploaderProfilePicture,
+      'uploader_profile_picture': uploaderProfilePictureUrl,
       'view_count': viewCount,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
   }
 
-  // Get full URL for video
-  String getFullVideoUrl(String baseUrl) {
-    if (videoUrl.startsWith('http')) {
-      return videoUrl;
-    }
-    return '$baseUrl$videoUrl';
-  }
+  // === Utility Methods ===
 
-  // Get full URL for thumbnail
-  String? getFullThumbnailUrl(String baseUrl) {
-    if (thumbnailUrl == null) return null;
-    if (thumbnailUrl!.startsWith('http')) {
-      return thumbnailUrl;
-    }
-    return '$baseUrl$thumbnailUrl';
-  }
-
-  // Get full URL for uploader profile picture
-  String? getFullUploaderProfilePictureUrl(String baseUrl) {
-    if (uploaderProfilePicture == null) return null;
-    if (uploaderProfilePicture!.startsWith('http')) {
-      return uploaderProfilePicture;
-    }
-    return '$baseUrl$uploaderProfilePicture';
-  }
-
-  // Get uploader initials for avatar fallback
-  String getUploaderInitials() {
-    final parts = uploaderName.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return uploaderName.substring(0, uploaderName.length > 2 ? 2 : uploaderName.length).toUpperCase();
-  }
-
-  // Format view count
+  /// Formats the view count (e.g., 1.2K, 3.4M)
   String getFormattedViewCount() {
     if (viewCount >= 1000000) {
       return '${(viewCount / 1000000).toStringAsFixed(1)}M';
@@ -106,7 +75,7 @@ class Tutorial {
     return viewCount.toString();
   }
 
-  // Get relative time
+  /// Returns how long ago the tutorial was uploaded
   String getRelativeTime() {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
@@ -126,5 +95,16 @@ class Tutorial {
     } else {
       return 'Just now';
     }
+  }
+
+  /// Returns the uploader's initials (e.g., "BE" for "Bernard Ephraim")
+  String getUploaderInitials() {
+    final nameParts = uploaderName.split(' ');
+    if (nameParts.length >= 2) {
+      return '${nameParts[0][0]}${nameParts[1][0]}'.toUpperCase();
+    } else if (nameParts.isNotEmpty) {
+      return nameParts[0].substring(0, 1).toUpperCase();
+    }
+    return 'U';
   }
 }

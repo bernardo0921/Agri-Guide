@@ -1,8 +1,10 @@
-# serializers.py
+# Updated serializers.py - S3 URLs are now automatically handled
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User, FarmerProfile, ExtensionWorkerProfile, CommunityPost, PostLike, PostComment
+from .models import Tutorial
+import os
 
 
 class FarmerProfileSerializer(serializers.ModelSerializer):
@@ -25,7 +27,6 @@ class ExtensionWorkerProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # Use 'farmer_profile' as the source to match Django's related_name
     farmer_profile = FarmerProfileSerializer(required=False)
     extension_worker_profile = ExtensionWorkerProfileSerializer(
         required=False, 
@@ -46,26 +47,19 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
     def update(self, instance, validated_data):
-        # Pop nested data - use 'farmer_profile' since that's the field name
         farmer_profile_data = validated_data.pop('farmer_profile', None)
-        # Pop extension worker profile (read-only, so shouldn't be in validated_data)
         validated_data.pop('extension_worker_profile', None)
         
-        # Update fields on the main User instance
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         
-        # Handle nested FarmerProfile update
         if farmer_profile_data and instance.user_type == 'farmer':
             try:
-                # Access the farmer_profile using the related_name
                 profile_instance = instance.farmer_profile
             except FarmerProfile.DoesNotExist:
-                # Create profile if it doesn't exist
                 profile_instance = FarmerProfile.objects.create(user=instance)
 
-            # Update farmer profile fields
             for attr, value in farmer_profile_data.items():
                 setattr(profile_instance, attr, value)
             profile_instance.save()
@@ -182,14 +176,12 @@ class LoginSerializer(serializers.Serializer):
 
         user = None
 
-        # Try login with username
         if username:
             user = authenticate(
                 request=self.context.get('request'),
                 username=username,
                 password=password
             )
-        # Try login with email
         elif email:
             try:
                 user_obj = User.objects.get(email=email)
@@ -200,7 +192,6 @@ class LoginSerializer(serializers.Serializer):
                 )
             except User.DoesNotExist:
                 pass
-        # Try login with phone number
         elif phone_number:
             try:
                 user_obj = User.objects.get(phone_number=phone_number)
@@ -253,10 +244,9 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Old password is incorrect.")
         return value
 
-# Add this to your existing serializers.py file (or replace the community serializers)
 
 class CommunityPostSerializer(serializers.ModelSerializer):
-    """Serializer for community posts"""
+    """Serializer for community posts - S3 URLs handled automatically"""
     author_name = serializers.SerializerMethodField()
     author_username = serializers.CharField(source='author.username', read_only=True)
     author_profile_picture = serializers.SerializerMethodField()
@@ -274,27 +264,23 @@ class CommunityPostSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def get_author_name(self, obj):
-        """Get author's full name or username"""
         if obj.author.first_name and obj.author.last_name:
             return f"{obj.author.first_name} {obj.author.last_name}"
         return obj.author.username
     
     def get_author_profile_picture(self, obj):
-        """Get author's profile picture URL"""
+        """Returns S3 URL automatically"""
         if obj.author.profile_picture:
             return obj.author.profile_picture.url
         return None
     
     def get_likes_count(self, obj):
-        """Get the number of likes for this post"""
         return obj.likes_count
     
     def get_comments_count(self, obj):
-        """Get the number of comments for this post"""
         return obj.comments_count
     
     def get_is_liked(self, obj):
-        """Check if the current user has liked this post"""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return PostLike.objects.filter(
@@ -304,7 +290,6 @@ class CommunityPostSerializer(serializers.ModelSerializer):
         return False
     
     def create(self, validated_data):
-        """Create a new post with the current user as author"""
         request = self.context.get('request')
         validated_data['author'] = request.user
         return super().create(validated_data)
@@ -325,13 +310,98 @@ class PostCommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def get_user_name(self, obj):
-        """Get user's full name or username"""
         if obj.user.first_name and obj.user.last_name:
             return f"{obj.user.first_name} {obj.user.last_name}"
         return obj.user.username
     
     def get_user_profile_picture(self, obj):
-        """Get user's profile picture URL"""
+        """Returns S3 URL automatically"""
         if obj.user.profile_picture:
             return obj.user.profile_picture.url
         return None
+
+
+class TutorialSerializer(serializers.ModelSerializer):
+    """Serializer for Tutorial model - S3 URLs handled automatically"""
+    uploader_name = serializers.SerializerMethodField()
+    uploader_id = serializers.IntegerField(source='uploader.id', read_only=True)
+    uploader_profile_picture = serializers.SerializerMethodField()
+    video_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Tutorial
+        fields = [
+            'id', 'title', 'description', 'category', 'video', 'thumbnail',
+            'video_url', 'thumbnail_url', 'uploader_id', 'uploader_name',
+            'uploader_profile_picture', 'view_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'view_count', 'created_at', 'updated_at']
+    
+    def get_uploader_name(self, obj):
+        return obj.uploader_name
+    
+    def get_uploader_profile_picture(self, obj):
+        """Returns S3 URL automatically"""
+        if obj.uploader.profile_picture:
+            return obj.uploader.profile_picture.url
+        return None
+    
+    def get_video_url(self, obj):
+        """Returns S3 URL automatically"""
+        if obj.video:
+            return obj.video.url
+        return None
+    
+    def get_thumbnail_url(self, obj):
+        """Returns S3 URL automatically"""
+        if obj.thumbnail:
+            return obj.thumbnail.url
+        return None
+    
+    def validate_video(self, value):
+        if value:
+            if value.size > 100 * 1024 * 1024:
+                raise serializers.ValidationError(
+                    "Video file size must be under 100MB"
+                )
+            
+            allowed_extensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm']
+            file_extension = os.path.splitext(value.name)[1].lower()
+            if file_extension not in allowed_extensions:
+                raise serializers.ValidationError(
+                    f"Video file must be one of: {', '.join(allowed_extensions)}"
+                )
+        
+        return value
+    
+    def validate_thumbnail(self, value):
+        if value:
+            if value.size > 5 * 1024 * 1024:
+                raise serializers.ValidationError(
+                    "Thumbnail file size must be under 5MB"
+                )
+            
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+            file_extension = os.path.splitext(value.name)[1].lower()
+            if file_extension not in allowed_extensions:
+                raise serializers.ValidationError(
+                    f"Thumbnail must be one of: {', '.join(allowed_extensions)}"
+                )
+        
+        return value
+    
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if request and request.method == 'POST':
+            if request.user.user_type != 'extension_worker':
+                raise serializers.ValidationError(
+                    "Only extension workers can upload tutorials"
+                )
+        
+        return attrs
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['uploader'] = request.user
+        return super().create(validated_data)

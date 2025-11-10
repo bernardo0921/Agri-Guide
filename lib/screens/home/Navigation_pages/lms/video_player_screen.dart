@@ -23,8 +23,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   String? _errorMessage;
   bool _viewCountIncremented = false;
 
-  static const String baseUrl = 'http://192.168.100.7:5000';
-
   @override
   void initState() {
     super.initState();
@@ -41,7 +39,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   Future<void> _initializePlayer() async {
     try {
-      final videoUrl = widget.tutorial.getFullVideoUrl(baseUrl);
+      // Video URL is already a complete S3 URL from the backend
+      final videoUrl = widget.tutorial.videoUrl;
 
       _videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(videoUrl),
@@ -341,9 +340,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Widget _buildUploaderAvatar() {
-    final profilePictureUrl = widget.tutorial.getFullUploaderProfilePictureUrl(
-      baseUrl,
-    );
+    final profilePictureUrl = widget.tutorial.uploaderProfilePictureUrl;
     final initials = widget.tutorial.getUploaderInitials();
 
     return CircleAvatar(

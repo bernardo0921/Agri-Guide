@@ -68,9 +68,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -132,10 +130,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
         return false;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('My Tutorials'),
-          elevation: 0,
-        ),
+        appBar: AppBar(title: const Text('My Tutorials'), elevation: 0),
         body: _buildBody(),
       ),
     );
@@ -143,9 +138,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -155,11 +148,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red.shade300,
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
               Text(
                 'Error loading tutorials',
@@ -173,10 +162,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -219,10 +205,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               Text(
                 'Upload your first tutorial to get started',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
             ],
           ),
@@ -244,15 +227,14 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   }
 
   Widget _buildTutorialItem(Tutorial tutorial) {
-    final thumbnailUrl = tutorial.getFullThumbnailUrl(baseUrl);
+    final thumbnailUrl = tutorial.thumbnailUrl;
+    (baseUrl);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => _navigateToVideoPlayer(tutorial),
         child: Padding(
@@ -279,7 +261,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // Details
               Expanded(
                 child: Column(
@@ -297,7 +279,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    
+
                     // Category
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -318,7 +300,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    
+
                     // Stats
                     Row(
                       children: [
@@ -357,13 +339,10 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                   ],
                 ),
               ),
-              
+
               // Delete button
               IconButton(
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: Colors.red.shade600,
-                ),
+                icon: Icon(Icons.delete_outline, color: Colors.red.shade600),
                 onPressed: () => _deleteTutorial(tutorial),
                 tooltip: 'Delete',
               ),

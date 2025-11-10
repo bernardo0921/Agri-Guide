@@ -2,7 +2,7 @@
 from django.urls import path
 from . import views
 from . import auth_views
-from . import community_views
+from . import community_views, lms_views
 
 urlpatterns = [
     # Authentication endpoints
@@ -70,4 +70,19 @@ urlpatterns = [
     path('api/community/my-posts/', 
          community_views.my_posts, 
          name='my_posts'),
+     path('api/tutorials/', 
+         lms_views.TutorialListCreateView.as_view(), 
+         name='tutorial_list_create'),
+    path('api/tutorials/<int:pk>/', 
+         lms_views.TutorialDetailView.as_view(), 
+         name='tutorial_detail'),
+    path('api/tutorials/<int:pk>/increment_views/', 
+         lms_views.increment_views, 
+         name='increment_views'),
+    path('api/tutorials/my_tutorials/', 
+         lms_views.my_tutorials, 
+         name='my_tutorials'),
+    path('api/tutorials/categories/', 
+         lms_views.tutorial_categories, 
+         name='tutorial_categories'),
 ]

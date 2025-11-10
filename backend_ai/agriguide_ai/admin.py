@@ -2,7 +2,52 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CommunityPost, PostLike, PostComment
+from .models import CommunityPost, PostLike, PostComment, Tutorial
+# Add this to your existing admin.py file
+@admin.register(Tutorial)
+class TutorialAdmin(admin.ModelAdmin):
+    """Admin interface for tutorials"""
+    list_display = [
+        'id',
+        'title',
+        'uploader',
+        'category',
+        'view_count',
+        'created_at',
+        'has_thumbnail'
+    ]
+    list_filter = ['category', 'created_at', 'uploader']
+    search_fields = [
+        'title',
+        'description',
+        'uploader__username',
+        'uploader__first_name',
+        'uploader__last_name'
+    ]
+    readonly_fields = ['created_at', 'updated_at', 'view_count']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('uploader', 'title', 'description', 'category')
+        }),
+        ('Media Files', {
+            'fields': ('video', 'thumbnail')
+        }),
+        ('Statistics', {
+            'fields': ('view_count', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def has_thumbnail(self, obj):
+        """Check if tutorial has a thumbnail"""
+        return bool(obj.thumbnail)
+    has_thumbnail.boolean = True
+    has_thumbnail.short_description = 'Thumbnail'
+    
+    def get_queryset(self, request):
+        """Optimize queryset"""
+        return super().get_queryset(request).select_related('uploader')
 
 from .models import (
     User, 

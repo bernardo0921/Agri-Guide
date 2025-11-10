@@ -20,3 +20,7 @@ coverage>=7.3.0
 
 # API Testing
 requests>=2.31.0
+
+# Optional but recommended
+python-magic>=0.4.27  # For file type validation
+django-cleanup>=8.0.0  # Auto cleanup of old files

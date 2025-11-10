@@ -51,3 +51,4 @@ backend_ai\.env
 backend_ai/virtualenv/
 backend_ai/media/
 backend_ai/db.sqlite3
+backend_ai/file.av

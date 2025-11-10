@@ -50,8 +50,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'agriguide_ai',
-    
-
+    # 'sslserver',
 ]
 
 MIDDLEWARE = [
@@ -185,3 +184,40 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
 AUTH_USER_MODEL = 'agriguide_ai.User'
+# File upload settings (add these)
+# Maximum upload size for video files (100MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+
+# Allowed video file types
+ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mov', '.avi', '.mkv', '.webm']
+ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
+
+# Maximum file sizes
+MAX_VIDEO_UPLOAD_SIZE = 100 * 1024 * 1024  # 100MB
+MAX_THUMBNAIL_UPLOAD_SIZE = 5 * 1024 * 1024  # 5MB
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')  # Change to your region
+
+# S3 settings
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',  # 1 day cache
+}
+AWS_DEFAULT_ACL = 'public-read'  # Make files publicly accessible
+AWS_S3_FILE_OVERWRITE = False  # Don't overwrite files with same name
+AWS_QUERYSTRING_AUTH = False  # Don't add query parameter authentication
+
+# Storage backends
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+
+# Media files configuration (for user uploads)
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+
+# Optional: Separate buckets for different file types
+# AWS_STORAGE_BUCKET_NAME_STATIC = 'your-static-bucket'
+# AWS_STORAGE_BUCKET_NAME_MEDIA = 'your-media-bucket'
