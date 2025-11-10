@@ -8,10 +8,7 @@ import './comment_card.dart';
 class CommentsBottomSheet extends StatefulWidget {
   final Post post;
 
-  const CommentsBottomSheet({
-    super.key,
-    required this.post,
-  });
+  const CommentsBottomSheet({super.key, required this.post});
 
   @override
   State<CommentsBottomSheet> createState() => _CommentsBottomSheetState();
@@ -75,14 +72,14 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         widget.post.id,
         _commentController.text.trim(),
       );
-      
+
       if (mounted) {
         setState(() {
           _comments.insert(0, newComment);
           _commentController.clear();
           _isSubmitting = false;
         });
-        
+
         // Hide keyboard
         FocusScope.of(context).unfocus();
       }
@@ -153,31 +150,36 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         Navigator.of(context).pop(_comments.length);
         return false;
       },
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _comments.isEmpty
-                          ? _buildEmptyState()
-                          : _buildCommentsList(scrollController),
-                ),
-                _buildCommentInput(),
-              ],
-            ),
-          );
-        },
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _comments.isEmpty
+                        ? _buildEmptyState()
+                        : _buildCommentsList(scrollController),
+                  ),
+                  _buildCommentInput(),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -186,26 +188,19 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
       child: Row(
         children: [
           Text(
             'Comments (${_comments.length})',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const Spacer(),
           IconButton(
             onPressed: () => Navigator.of(context).pop(_comments.length),
             icon: const Icon(Icons.close),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.grey[100],
-            ),
+            style: IconButton.styleFrom(backgroundColor: Colors.grey[100]),
           ),
         ],
       ),
@@ -260,9 +255,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey[200]!)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -310,14 +303,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
-                      : const Icon(
-                          Icons.send,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                      : const Icon(Icons.send, color: Colors.white, size: 24),
                 ),
               ),
             ),

@@ -141,16 +141,16 @@ class _CommunityPageState extends State<CommunityPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? _buildErrorState()
-                      : _filteredPosts.isEmpty
-                          ? _buildEmptyState()
-                          : _buildPostsList(),
+                  ? _buildErrorState()
+                  : _filteredPosts.isEmpty
+                  ? _buildEmptyState()
+                  : _buildPostsList(),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.green[700],
+        backgroundColor: Colors.green.withOpacity(0.5),
         onPressed: _openCreatePostModal,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
@@ -205,12 +205,7 @@ class _CommunityPageState extends State<CommunityPage> {
     return RefreshIndicator(
       onRefresh: _loadPosts,
       child: ListView.builder(
-        padding: const EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 8,
-          bottom: 80,
-        ),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 80),
         itemCount: _filteredPosts.length,
         itemBuilder: (context, index) {
           final post = _filteredPosts[index];

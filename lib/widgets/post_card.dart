@@ -2,16 +2,13 @@ import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/community_api_service.dart';
 import '../widgets/comments_bottom_sheet.dart';
+import '../screens/image_viewer_screen.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
   final VoidCallback? onDelete;
 
-  const PostCard({
-    super.key,
-    required this.post,
-    this.onDelete,
-  });
+  const PostCard({super.key, required this.post, this.onDelete});
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -21,7 +18,7 @@ class _PostCardState extends State<PostCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _likeAnimationController;
   bool _isLikeAnimating = false;
-  
+
   // Local state for likes and comments
   late bool _isLiked;
   late int _likesCount;
@@ -35,7 +32,7 @@ class _PostCardState extends State<PostCard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     // Initialize local state from post
     _isLiked = widget.post.isLiked;
     _likesCount = widget.post.likesCount;
@@ -61,12 +58,12 @@ class _PostCardState extends State<PostCard>
 
   Future<void> _handleLike() async {
     if (_isLikeLoading) return;
-    
+
     setState(() {
       _isLikeLoading = true;
       _isLikeAnimating = true;
     });
-    
+
     _likeAnimationController.forward().then((_) {
       _likeAnimationController.reverse();
       setState(() {
@@ -77,7 +74,7 @@ class _PostCardState extends State<PostCard>
     // Optimistically update UI
     final previousLiked = _isLiked;
     final previousCount = _likesCount;
-    
+
     setState(() {
       _isLiked = !_isLiked;
       _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
@@ -91,7 +88,7 @@ class _PostCardState extends State<PostCard>
         _isLiked = previousLiked;
         _likesCount = previousCount;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -117,12 +114,36 @@ class _PostCardState extends State<PostCard>
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsBottomSheet(post: widget.post),
     );
-    
+
     // Update comment count if returned from bottom sheet
     if (result != null && mounted) {
       setState(() {
         _commentsCount = result;
       });
+    }
+  }
+
+  void _openImageViewer() async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (context) => ImageViewerScreen(post: widget.post),
+      ),
+    );
+
+    // Update state from image viewer
+    if (result != null && mounted) {
+      if (result['deleted'] == true) {
+        // Post was deleted, trigger parent refresh
+        if (widget.onDelete != null) {
+          widget.onDelete!();
+        }
+      } else {
+        setState(() {
+          _likesCount = result['likesCount'] ?? _likesCount;
+          _commentsCount = result['commentsCount'] ?? _commentsCount;
+          _isLiked = result['isLiked'] ?? _isLiked;
+        });
+      }
     }
   }
 
@@ -376,27 +397,27 @@ class _PostCardState extends State<PostCard>
   Widget _buildImage() {
     final postImageUrl = CommunityApiService.getImageUrl(widget.post.image);
 
-    return Hero(
-      tag: 'post_image_${widget.post.id}',
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
+    return GestureDetector(
+      onTap: _openImageViewer,
+      child: Hero(
+        tag: 'post_image_${widget.post.id}',
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
             child: Image.network(
               postImageUrl,
               width: double.infinity,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return Container(
@@ -459,7 +480,7 @@ class _PostCardState extends State<PostCard>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.red.withOpacity(0.2),
+                                color: Colors.red.withValues(alpha: 0.5),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
