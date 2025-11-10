@@ -4,9 +4,9 @@ import 'package:agri_guide/services/auth_service.dart';
 import '../../../../../../services/lms_api_service.dart';
 import '../../../../../../models/tutorial.dart';
 import '../../../../../../widgets/tutorial_card.dart';
-import '../video_player_screen.dart';
-import '../upload_tutorial_screen.dart';
-import '../my_tutorials_screen.dart';
+import 'video_player_screen.dart';
+import 'upload_tutorial_screen.dart';
+import 'my_tutorials_screen.dart';
 
 class LMSPageContent extends StatefulWidget {
   const LMSPageContent({super.key});

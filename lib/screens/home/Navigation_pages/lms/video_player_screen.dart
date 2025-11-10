@@ -4,8 +4,8 @@ import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
-import 'tutorial.dart';
-import 'lms_api_service.dart';
+import '../../../../../models/tutorial.dart';
+import '../../../../../services/lms_api_service.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final Tutorial tutorial;
