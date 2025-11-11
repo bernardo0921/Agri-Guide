@@ -7,9 +7,12 @@ import 'package:provider/provider.dart';
 // --- IMPORT YOUR APP'S FILES ---
 import 'config/theme.dart';
 import 'config/routes.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
-  // The Provider stays at the root, which is perfect
+void main() async {
+  await dotenv.load(fileName: ".env");
+  // The Provider stays a
+  //t the root, which is perfect
   runApp(
     ChangeNotifierProvider(
       create: (ctx) => AuthService(),

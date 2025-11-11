@@ -35,6 +35,7 @@ flutter:
     - assets/images/
     - assets/images/logo.png
     - lib/assets/system_instruction.json
+    - .env
 flutter_launcher_icons:
   android: true
   ios: true
