@@ -1,4 +1,4 @@
-// lib/services/auth_service.dart
+// lib/services/auth_service.dart - UPDATED
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -182,6 +182,91 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  /// Register as Extension Worker with optional verification document
+  Future<void> registerExtensionWorker(
+    Map<String, dynamic> registrationData, {
+    File? verificationDocument,
+  }) async {
+    final url = Uri.parse('$_baseUrl/api/auth/register/extension-worker/');
+
+    try {
+      http.Response response;
+
+      if (verificationDocument != null) {
+        // Use multipart request for file upload
+        var request = http.MultipartRequest('POST', url);
+
+        // Add verification document
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'extension_worker_profile.verification_document',
+            verificationDocument.path,
+          ),
+        );
+
+        // Add all text fields
+        registrationData.forEach((key, value) {
+          if (key != 'extension_worker_profile') {
+            request.fields[key] = value.toString();
+          }
+        });
+
+        // Add nested extension_worker_profile fields
+        if (registrationData.containsKey('extension_worker_profile')) {
+          final profile =
+              registrationData['extension_worker_profile'] as Map<String, dynamic>;
+          profile.forEach((key, value) {
+            if (value != null && key != 'verification_document') {
+              request.fields['extension_worker_profile.$key'] = value.toString();
+            }
+          });
+        }
+
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
+      } else {
+        // Use JSON request for registration without document
+        response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(registrationData),
+        );
+      }
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 201) {
+        _token = responseData['token'];
+        _user = responseData['user'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', _token!);
+        await prefs.setString('user', json.encode(_user));
+
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+      } else {
+        String errorMessage = "Registration failed";
+        if (responseData is Map) {
+          if (responseData.containsKey('error')) {
+            errorMessage = responseData['error'];
+          } else if (responseData.isNotEmpty) {
+            final firstError = responseData.values.first;
+            errorMessage = firstError is List
+                ? firstError[0].toString()
+                : firstError.toString();
+          }
+        }
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Registration failed: ${e.toString()}');
+    }
+  }
+
   Future<void> logout(BuildContext context) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -271,7 +356,10 @@ class AuthService with ChangeNotifier {
   }
 
   /// Update profile with optional file upload
-  Future<void> updateProfile(Map<String, dynamic> updateData, {File? profilePicture}) async {
+  Future<void> updateProfile(
+    Map<String, dynamic> updateData, {
+    File? profilePicture,
+  }) async {
     if (_token == null) {
       throw Exception('User is not authenticated.');
     }
@@ -328,11 +416,11 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         _user = responseData['user'];
-        
+
         // Update stored user data
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user', json.encode(_user));
-        
+
         notifyListeners();
       } else if (response.statusCode == 400) {
         final errorData = json.decode(response.body);
@@ -342,7 +430,9 @@ class AuthService with ChangeNotifier {
         });
         throw Exception(errorMessage);
       } else {
-        throw Exception('Failed to update profile (Status: ${response.statusCode})');
+        throw Exception(
+          'Failed to update profile (Status: ${response.statusCode})',
+        );
       }
     } catch (e) {
       debugPrint('Profile update error: $e');
