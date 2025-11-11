@@ -152,14 +152,16 @@ class _PostCardState extends State<PostCard>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -203,6 +205,11 @@ class _PostCardState extends State<PostCard>
       widget.post.authorProfilePicture,
     );
 
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final headerBgColor = isDarkMode
+        ? const Color(0xFF2A2A2A)
+        : Colors.green[50]!;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -210,8 +217,8 @@ class _PostCardState extends State<PostCard>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.green[50]!.withOpacity(0.3),
-            Colors.white.withOpacity(0.1),
+            headerBgColor.withOpacity(0.3),
+            (isDarkMode ? Colors.white : Colors.white).withOpacity(0.05),
           ],
         ),
       ),
@@ -260,10 +267,10 @@ class _PostCardState extends State<PostCard>
                     Flexible(
                       child: Text(
                         widget.post.authorName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color: Colors.black87,
+                          color: isDarkMode ? Colors.white : Colors.black87,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -294,12 +301,15 @@ class _PostCardState extends State<PostCard>
                     Icon(
                       Icons.alternate_email,
                       size: 12,
-                      color: Colors.grey[500],
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
                     ),
                     const SizedBox(width: 4),
                     Text(
                       widget.post.authorUsername,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        fontSize: 13,
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -307,16 +317,25 @@ class _PostCardState extends State<PostCard>
                         width: 3,
                         height: 3,
                         decoration: BoxDecoration(
-                          color: Colors.grey[400],
+                          color: isDarkMode
+                              ? Colors.grey[600]
+                              : Colors.grey[400],
                           shape: BoxShape.circle,
                         ),
                       ),
                     ),
-                    Icon(Icons.access_time, size: 12, color: Colors.grey[500]),
+                    Icon(
+                      Icons.access_time,
+                      size: 12,
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[500],
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       widget.post.timeAgo,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -329,12 +348,12 @@ class _PostCardState extends State<PostCard>
               icon: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.more_horiz,
-                  color: Colors.grey[700],
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
                   size: 20,
                 ),
               ),
@@ -387,6 +406,7 @@ class _PostCardState extends State<PostCard>
 
   Widget _buildContent() {
     final content = widget.post.content;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // Check if content needs truncation
     final textSpan = TextSpan(text: content);
@@ -406,10 +426,10 @@ class _PostCardState extends State<PostCard>
       children: [
         Text(
           content,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             height: 1.6,
-            color: Colors.black87,
+            color: isDarkMode ? Colors.grey[200] : Colors.black87,
             letterSpacing: 0.2,
           ),
           maxLines: _isContentExpanded ? null : 3,
@@ -585,6 +605,8 @@ class _PostCardState extends State<PostCard>
   }
 
   Widget _buildTags() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -593,13 +615,18 @@ class _PostCardState extends State<PostCard>
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.green[50]!, Colors.green[100]!],
+              colors: isDarkMode
+                  ? [Colors.green[900]!, Colors.green[800]!]
+                  : [Colors.green[50]!, Colors.green[100]!],
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.green[300]!, width: 1),
+            border: Border.all(
+              color: isDarkMode ? Colors.green[700]! : Colors.green[300]!,
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withOpacity(isDarkMode ? 0.2 : 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -608,14 +635,18 @@ class _PostCardState extends State<PostCard>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.local_offer, size: 12, color: Colors.green[700]),
+              Icon(
+                Icons.local_offer,
+                size: 12,
+                color: isDarkMode ? Colors.green[400] : Colors.green[700],
+              ),
               const SizedBox(width: 6),
               Text(
                 tag,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green[800],
+                  color: isDarkMode ? Colors.green[300] : Colors.green[800],
                   letterSpacing: 0.3,
                 ),
               ),
@@ -627,6 +658,8 @@ class _PostCardState extends State<PostCard>
   }
 
   Widget _buildFooter(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -666,7 +699,7 @@ class _PostCardState extends State<PostCard>
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -675,7 +708,7 @@ class _PostCardState extends State<PostCard>
                     Icon(
                       Icons.share_outlined,
                       size: 18,
-                      color: Colors.grey[700],
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -683,7 +716,7 @@ class _PostCardState extends State<PostCard>
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
                       ),
                     ),
                   ],

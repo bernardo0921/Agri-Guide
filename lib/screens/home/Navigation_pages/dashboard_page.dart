@@ -8,6 +8,7 @@ import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/models/post.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/post_card.dart';
+import 'package:agri_guide/screens/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -207,6 +208,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildTopPostsSection() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     if (_isLoadingPosts) {
       return Container(
         padding: const EdgeInsets.all(40),
@@ -219,11 +222,13 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.shade200,
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.shade200,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -231,20 +236,27 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         ),
         child: Column(
           children: [
-            Icon(Icons.forum_outlined, size: 48, color: Colors.grey.shade400),
+            Icon(
+              Icons.forum_outlined,
+              size: 48,
+              color: isDarkMode ? Colors.grey[600] : Colors.grey.shade400,
+            ),
             const SizedBox(height: 12),
             Text(
               'No posts yet',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey.shade600,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Be the first to share with the community!',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              style: TextStyle(
+                fontSize: 14,
+                color: isDarkMode ? Colors.grey[500] : Colors.grey.shade500,
+              ),
             ),
           ],
         ),
@@ -391,6 +403,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildCoursesCarousel() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     if (_isLoadingCourses) {
       return SizedBox(
         height: 220,
@@ -404,7 +418,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       return Container(
         height: 220,
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -414,7 +428,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               Icon(
                 Icons.school_outlined,
                 size: 48,
-                color: Colors.grey.shade400,
+                color: isDarkMode ? Colors.grey[600] : Colors.grey.shade400,
               ),
               const SizedBox(height: 12),
               Text(
@@ -422,7 +436,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600,
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey.shade600,
                 ),
               ),
             ],
@@ -884,14 +898,18 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildQuickActionsGrid() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.grey.shade200,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -934,6 +952,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   'Settings',
                   Icons.settings,
                   Colors.orange,
+                  onTap: _openSettingsPage,
                 ),
               ),
             ],
@@ -943,27 +962,42 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     );
   }
 
-  Widget _buildQuickActionButton(String label, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color.withOpacity(0.9),
+  Widget _buildQuickActionButton(
+    String label,
+    IconData icon,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color.withOpacity(0.9),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  void _openSettingsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsPage()),
     );
   }
 }

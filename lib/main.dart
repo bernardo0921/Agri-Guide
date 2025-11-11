@@ -1,6 +1,7 @@
 // lib/main.dart
 import 'package:agri_guide/screens/auth_wrapper.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/providers/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,11 +12,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
-  // The Provider stays a
-  //t the root, which is perfect
+
+  // Initialize ThemeProvider before running the app
+  final themeProvider = ThemeProvider();
+  await themeProvider.init();
+
   runApp(
-    ChangeNotifierProvider(
-      create: (ctx) => AuthService(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (ctx) => AuthService()),
+        ChangeNotifierProvider(create: (ctx) => themeProvider),
+      ],
       child: const HarvestAnalyticsApp(),
     ),
   );
@@ -33,21 +40,25 @@ class HarvestAnalyticsApp extends StatelessWidget {
     // This is the page that will decide to show Login or Home
     routes['/auth_wrapper'] = (ctx) => const AuthWrapper();
 
-    return MaterialApp(
-      title: 'Harvest Analytics',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Harvest Analytics',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
 
-      // 3. Restore your original initialRoute
-      // This will now correctly show your LanguageScreen first
-      initialRoute: AppRoutes.splash,
+          // 3. Restore your original initialRoute
+          // This will now correctly show your LanguageScreen first
+          initialRoute: AppRoutes.splash,
 
-      // 4. Use the routes map that now includes our new '/auth_wrapper' route
-      routes: routes,
+          // 4. Use the routes map that now includes our new '/auth_wrapper' route
+          routes: routes,
 
-      // 'home' is removed, as 'initialRoute' handles the start page
+          // 'home' is removed, as 'initialRoute' handles the start page
+        );
+      },
     );
   }
 }
