@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:agri_guide/services/weather_service.dart';
 import 'package:agri_guide/services/community_api_service.dart';
 import 'package:agri_guide/services/ai_service.dart';
+import 'package:agri_guide/services/lms_api_service.dart';
+import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/models/post.dart';
+import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/post_card.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 class DashboardPageContent extends StatefulWidget {
@@ -27,12 +31,25 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   String? _aiTip;
   bool _isLoadingTip = true;
 
+  List<Tutorial> _courses = [];
+  bool _isLoadingCourses = true;
+  final PageController _coursesPageController = PageController(
+    viewportFraction: 0.85,
+  );
+
   @override
   void initState() {
     super.initState();
     _fetchWeather();
     _fetchTopPosts();
     _fetchDailyAITip();
+    _fetchCourses();
+  }
+
+  @override
+  void dispose() {
+    _coursesPageController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchWeather() async {
@@ -89,8 +106,39 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     }
   }
 
+  Future<void> _fetchCourses() async {
+    setState(() => _isLoadingCourses = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final token = authService.token;
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final apiService = LMSApiService(token);
+      final tutorials = await apiService.getTutorials();
+
+      setState(() {
+        _courses = tutorials.take(10).toList(); // Get up to 10 courses
+        _isLoadingCourses = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCourses = false;
+      });
+      debugPrint('Error fetching courses: $e');
+    }
+  }
+
   Future<void> _refreshDashboard() async {
-    await Future.wait([_fetchWeather(), _fetchTopPosts(), _fetchDailyAITip()]);
+    await Future.wait([
+      _fetchWeather(),
+      _fetchTopPosts(),
+      _fetchDailyAITip(),
+      _fetchCourses(),
+    ]);
   }
 
   @override
@@ -339,6 +387,204 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildCoursesCarousel() {
+    if (_isLoadingCourses) {
+      return SizedBox(
+        height: 220,
+        child: Center(
+          child: CircularProgressIndicator(color: Colors.green.shade700),
+        ),
+      );
+    }
+
+    if (_courses.isEmpty) {
+      return Container(
+        height: 220,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.school_outlined,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No courses available',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 220,
+      child: PageView.builder(
+        controller: _coursesPageController,
+        scrollDirection: Axis.horizontal,
+        itemCount: _courses.length,
+        itemBuilder: (context, index) {
+          final course = _courses[index];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: _buildCourseCard(course),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCourseCard(Tutorial course) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to course details or video player
+        // widget.onNavigate?.call(3); // LMS page is at index 3
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background Image
+            if (course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  course.thumbnailUrl!,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey.shade600,
+                      ),
+                    );
+                  },
+                ),
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.blue.shade600],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.video_library,
+                    size: 48,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            // Overlay with course info
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                ),
+              ),
+            ),
+            // Course details
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Category badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade500,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        course.category,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Title
+                    Text(
+                      course.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    // Views count
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.visibility_outlined,
+                          size: 14,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          course.getFormattedViewCount(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -716,61 +962,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               color: color.withOpacity(0.9),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 32),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 16),
         ],
       ),
     );
