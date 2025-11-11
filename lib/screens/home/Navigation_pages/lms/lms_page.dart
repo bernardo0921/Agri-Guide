@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
-import '../../../../../../services/lms_api_service.dart';
-import '../../../../../../models/tutorial.dart';
-import '../../../../../../widgets/tutorial_card.dart';
+import 'package:agri_guide/services/lms_api_service.dart';
+import 'package:agri_guide/models/tutorial.dart';
+import 'package:agri_guide/widgets/tutorial_card.dart';
 import 'video_player_screen.dart';
-import 'upload_tutorial_screen.dart';
+import 'upload_tutorial_screen.dart' as upload;  // Use prefix to avoid conflict
 import 'my_tutorials_screen.dart';
 
 class LMSPageContent extends StatefulWidget {
@@ -22,7 +22,22 @@ class _LMSPageContentState extends State<LMSPageContent> {
   String? _errorMessage;
   
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'All';
+  String _selectedCategory = 'all'; // FIXED: Changed to lowercase 'all'
+  
+  // ADDED: Category mapping to match Django backend
+  static const Map<String, String> categoryMap = {
+    'all': 'All',
+    'crops': 'Crops',
+    'livestock': 'Livestock',
+    'irrigation': 'Irrigation',
+    'pest_control': 'Pest Control',
+    'soil_management': 'Soil Management',
+    'harvesting': 'Harvesting',
+    'post_harvest': 'Post-Harvest',
+    'farm_equipment': 'Farm Equipment',
+    'marketing': 'Marketing',
+    'other': 'Other',
+  };
   
   @override
   void initState() {
@@ -51,9 +66,11 @@ class _LMSPageContentState extends State<LMSPageContent> {
       }
 
       final apiService = LMSApiService(token);
+      
+      // FIXED: Send lowercase category or null if 'all'
       final tutorials = await apiService.getTutorials(
         search: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
-        category: _selectedCategory == 'All' ? null : _selectedCategory,
+        category: _selectedCategory == 'all' ? null : _selectedCategory,
       );
 
       setState(() {
@@ -102,7 +119,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const UploadTutorialScreen(),
+        builder: (context) => const upload.UploadTutorialScreen(),  // Use prefix
       ),
     ).then((uploaded) {
       if (uploaded == true) {
@@ -211,10 +228,11 @@ class _LMSPageContentState extends State<LMSPageContent> {
                       value: _selectedCategory,
                       isExpanded: true,
                       icon: const Icon(Icons.arrow_drop_down),
-                      items: LMSApiService.getCategories().map((category) {
+                      // FIXED: Now uses categoryMap with lowercase values
+                      items: categoryMap.entries.map((entry) {
                         return DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
+                          value: entry.key, // lowercase value (e.g., 'crops')
+                          child: Text(entry.value), // display name (e.g., 'Crops')
                         );
                       }).toList(),
                       onChanged: _onCategoryChanged,
@@ -318,7 +336,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
               ),
               const SizedBox(height: 8),
               Text(
-                _searchController.text.isNotEmpty || _selectedCategory != 'All'
+                _searchController.text.isNotEmpty || _selectedCategory != 'all'
                     ? 'Try adjusting your search or filter'
                     : 'Be the first to upload a tutorial',
                 textAlign: TextAlign.center,

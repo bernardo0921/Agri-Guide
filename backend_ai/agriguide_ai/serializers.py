@@ -26,18 +26,21 @@ class ExtensionWorkerProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['is_approved']
 
 
+# serializers.py - UPDATED UserSerializer
+
 class UserSerializer(serializers.ModelSerializer):
     farmer_profile = FarmerProfileSerializer(required=False)
     extension_worker_profile = ExtensionWorkerProfileSerializer(
         required=False, 
         read_only=True
     )
+    profile_picture_url = serializers.SerializerMethodField()  # ADD THIS
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'phone_number', 'user_type', 'profile_picture',
+            'phone_number', 'user_type', 'profile_picture', 'profile_picture_url',
             'is_verified', 'created_at', 'farmer_profile',
             'extension_worker_profile'
         ]
@@ -45,15 +48,22 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'created_at', 'is_verified', 
             'user_type', 'username'
         ]
+    
+    def get_profile_picture_url(self, obj):  # ADD THIS METHOD
+        """Returns S3 URL automatically"""
+        if obj.profile_picture:
+            return obj.profile_picture.url
+        return None
 
     def update(self, instance, validated_data):
         farmer_profile_data = validated_data.pop('farmer_profile', None)
-        validated_data.pop('extension_worker_profile', None)
         
+        # Update user fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         
+        # Update farmer profile if data provided and user is farmer
         if farmer_profile_data and instance.user_type == 'farmer':
             try:
                 profile_instance = instance.farmer_profile
@@ -65,7 +75,6 @@ class UserSerializer(serializers.ModelSerializer):
             profile_instance.save()
         
         return instance
-
 
 class FarmerRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
@@ -321,6 +330,8 @@ class PostCommentSerializer(serializers.ModelSerializer):
         return None
 
 
+# Add this to your serializers.py - Updated TutorialSerializer
+
 class TutorialSerializer(serializers.ModelSerializer):
     """Serializer for Tutorial model - S3 URLs handled automatically"""
     uploader_name = serializers.SerializerMethodField()
@@ -358,6 +369,24 @@ class TutorialSerializer(serializers.ModelSerializer):
         if obj.thumbnail:
             return obj.thumbnail.url
         return None
+    
+    def validate_category(self, value):
+        """FIXED: Accept both lowercase and original format"""
+        # List of valid categories in lowercase
+        valid_categories = [
+            'crops', 'livestock', 'irrigation', 'pest_control',
+            'soil_management', 'harvesting', 'post_harvest',
+            'farm_equipment', 'marketing', 'other'
+        ]
+        
+        # Convert to lowercase for validation
+        if value.lower() not in valid_categories:
+            raise serializers.ValidationError(
+                f"Invalid category. Must be one of: {', '.join(valid_categories)}"
+            )
+        
+        # Return lowercase version for consistency
+        return value.lower()
     
     def validate_video(self, value):
         if value:

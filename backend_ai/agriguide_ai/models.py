@@ -2,6 +2,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
+from django.core.files.storage import default_storage
+
 from .storage_backends import (
     ProfilePictureStorage,
     TutorialVideoStorage,
@@ -57,6 +59,16 @@ class User(AbstractUser):
         related_name='agriguide_user_set',
         related_query_name='agriguide_user',
     )
+    def save(self, *args, **kwargs):
+        """Override save to handle S3 storage errors"""
+        try:
+            super().save(*args, **kwargs)
+        except Exception as e:
+            # Log the error and re-raise
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error saving user {self.username}: {str(e)}")
+            raise
     
     class Meta:
         db_table = 'users'

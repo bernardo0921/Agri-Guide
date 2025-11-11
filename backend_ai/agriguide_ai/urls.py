@@ -31,6 +31,11 @@ urlpatterns = [
          auth_views.verify_token, 
          name='verify_token'),
     
+    # DEBUG: Check user type endpoint
+    path('api/auth/check-user-type/', 
+         lms_views.check_user_type, 
+         name='check_user_type'),
+    
     # Chat endpoints
     path('api/chat/', 
          views.chat_with_ai, 
@@ -70,7 +75,9 @@ urlpatterns = [
     path('api/community/my-posts/', 
          community_views.my_posts, 
          name='my_posts'),
-     path('api/tutorials/', 
+    
+    # LMS/Tutorial endpoints
+    path('api/tutorials/', 
          lms_views.TutorialListCreateView.as_view(), 
          name='tutorial_list_create'),
     path('api/tutorials/<int:pk>/', 

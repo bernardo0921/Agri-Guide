@@ -1,4 +1,4 @@
-# agriguide_ai/lms_views.py
+# agriguide_ai/lms_views.py - FIXED with better error messages
 from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
@@ -34,19 +34,31 @@ class TutorialListCreateView(generics.ListCreateAPIView):
                 Q(uploader__last_name__icontains=search)
             )
         
-        # Category filter
+        # Category filter - FIXED to handle lowercase from Flutter
         category = self.request.query_params.get('category', None)
-        if category and category.lower() != 'all':
-            queryset = queryset.filter(category=category.lower())
+        if category and category.lower() not in ['all', 'none', '']:
+            # Convert to lowercase for consistent comparison
+            queryset = queryset.filter(category__iexact=category)
         
         return queryset.select_related('uploader').order_by('-created_at')
     
     def perform_create(self, serializer):
         """Set the uploader to the current user when creating a tutorial"""
-        # Check if user is an extension worker
-        if self.request.user.user_type != 'extension_worker':
-            raise PermissionError("Only extension workers can upload tutorials")
+        # Debug print to see user type
+        print(f"User: {self.request.user.username}")
+        print(f"User type: '{self.request.user.user_type}'")
+        print(f"User type repr: {repr(self.request.user.user_type)}")
         
+        # Check if user is an extension worker - using strip() to handle whitespace
+        user_type = str(self.request.user.user_type).strip().lower()
+        
+        if user_type != 'extension_worker':
+            print(f"❌ Permission denied. User type '{user_type}' is not 'extension_worker'")
+            raise PermissionError(
+                f"Only extension workers can upload tutorials. Your user type is: {self.request.user.user_type}"
+            )
+        
+        print(f"✅ Permission granted for extension worker")
         serializer.save(uploader=self.request.user)
     
     def create(self, request, *args, **kwargs):
@@ -133,12 +145,25 @@ def my_tutorials(request):
     """
     Get all tutorials uploaded by the current user
     """
-    # Check if user is an extension worker
-    if request.user.user_type != 'extension_worker':
+    # Debug print
+    print(f"my_tutorials - User: {request.user.username}")
+    print(f"my_tutorials - User type: '{request.user.user_type}'")
+    
+    # Check if user is an extension worker - using strip() to handle whitespace
+    user_type = str(request.user.user_type).strip().lower()
+    
+    if user_type != 'extension_worker':
+        print(f"❌ Access denied. User type '{user_type}' is not 'extension_worker'")
         return Response(
-            {'error': 'Only extension workers can access this endpoint'},
+            {
+                'error': 'Only extension workers can access this endpoint',
+                'user_type': request.user.user_type,
+                'detail': f"Your user type is '{request.user.user_type}', but 'extension_worker' is required"
+            },
             status=status.HTTP_403_FORBIDDEN
         )
+    
+    print(f"✅ Access granted for extension worker")
     
     tutorials = Tutorial.objects.filter(
         uploader=request.user
@@ -173,3 +198,20 @@ def tutorial_categories(request):
     ]
     
     return Response({'categories': categories})
+
+
+# Add this new debugging endpoint
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_user_type(request):
+    """
+    Debug endpoint to check current user's type
+    """
+    return Response({
+        'username': request.user.username,
+        'user_type': request.user.user_type,
+        'user_type_display': request.user.get_user_type_display(),
+        'is_extension_worker': request.user.user_type == 'extension_worker',
+        'user_type_repr': repr(request.user.user_type),
+        'user_type_length': len(request.user.user_type),
+    })

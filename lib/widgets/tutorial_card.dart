@@ -131,7 +131,7 @@ class TutorialCard extends StatelessWidget {
   }
 
   Widget _buildThumbnail() {
-    final thumbnailUrl = tutorial.getFullThumbnailUrl(baseUrl);
+    final thumbnailUrl = tutorial.thumbnailUrl;
     
     return AspectRatio(
       aspectRatio: 16 / 9,
@@ -175,7 +175,7 @@ class TutorialCard extends StatelessWidget {
   }
 
   Widget _buildUploaderAvatar() {
-    final profilePictureUrl = tutorial.getFullUploaderProfilePictureUrl(baseUrl);
+    final profilePictureUrl = tutorial.uploaderProfilePictureUrl;
     final initials = tutorial.getUploaderInitials();
 
     return CircleAvatar(

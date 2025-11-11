@@ -18,13 +18,28 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   
-  String _selectedCategory = 'Crops';
+  // FIXED: Changed default to lowercase 'crops' to match backend
+  String _selectedCategory = 'crops';
   File? _videoFile;
   File? _thumbnailFile;
   
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   String? _errorMessage;
+
+  // FIXED: Added category mapping for display vs backend values
+  static const Map<String, String> categoryMap = {
+    'crops': 'Crops',
+    'livestock': 'Livestock',
+    'irrigation': 'Irrigation',
+    'pest_control': 'Pest Control',
+    'soil_management': 'Soil Management',
+    'harvesting': 'Harvesting',
+    'post_harvest': 'Post-Harvest',
+    'farm_equipment': 'Farm Equipment',
+    'marketing': 'Marketing',
+    'other': 'Other',
+  };
 
   @override
   void dispose() {
@@ -122,10 +137,11 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
 
       final apiService = LMSApiService(token);
       
+      // FIXED: Send lowercase category to match backend
       await apiService.uploadTutorial(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        category: _selectedCategory,
+        category: _selectedCategory, // Already lowercase
         videoFile: _videoFile!,
         thumbnailFile: _thumbnailFile,
         onProgress: (sent, total) {
@@ -292,7 +308,7 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Category dropdown
+              // Category dropdown - FIXED to use lowercase values
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
@@ -306,12 +322,10 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                     border: InputBorder.none,
                     prefixIcon: Icon(Icons.category),
                   ),
-                  items: LMSApiService.getCategories()
-                      .where((cat) => cat != 'All')
-                      .map((category) {
+                  items: categoryMap.entries.map((entry) {
                     return DropdownMenuItem(
-                      value: category,
-                      child: Text(category),
+                      value: entry.key, // lowercase value
+                      child: Text(entry.value), // display name
                     );
                   }).toList(),
                   onChanged: (value) {

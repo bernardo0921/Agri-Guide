@@ -124,10 +124,13 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, _hasChanges);
-        return false;
+    // FIXED: Use PopScope instead of deprecated WillPopScope
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          Navigator.pop(context, _hasChanges);
+        }
       },
       child: Scaffold(
         appBar: AppBar(title: const Text('My Tutorials'), elevation: 0),
@@ -228,7 +231,6 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
   Widget _buildTutorialItem(Tutorial tutorial) {
     final thumbnailUrl = tutorial.thumbnailUrl;
-    (baseUrl);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
