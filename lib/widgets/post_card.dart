@@ -25,6 +25,9 @@ class _PostCardState extends State<PostCard>
   late int _commentsCount;
   bool _isLikeLoading = false;
 
+  // Content expansion state
+  bool _isContentExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -383,14 +386,74 @@ class _PostCardState extends State<PostCard>
   }
 
   Widget _buildContent() {
-    return Text(
-      widget.post.content,
-      style: const TextStyle(
-        fontSize: 15,
-        height: 1.6,
-        color: Colors.black87,
-        letterSpacing: 0.2,
-      ),
+    final content = widget.post.content;
+
+    // Check if content needs truncation
+    final textSpan = TextSpan(text: content);
+    final textPainter = TextPainter(
+      text: textSpan,
+      maxLines: 3,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout(
+      maxWidth: MediaQuery.of(context).size.width - 48,
+    ); // 16 padding on each side
+
+    final isContentTruncated = textPainter.didExceedMaxLines;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          content,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.6,
+            color: Colors.black87,
+            letterSpacing: 0.2,
+          ),
+          maxLines: _isContentExpanded ? null : 3,
+          overflow: _isContentExpanded
+              ? TextOverflow.visible
+              : TextOverflow.ellipsis,
+        ),
+        if (isContentTruncated && !_isContentExpanded) ...[
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isContentExpanded = true;
+              });
+            },
+            child: Text(
+              'View More',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.green[700],
+              ),
+            ),
+          ),
+        ],
+        if (_isContentExpanded && isContentTruncated) ...[
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isContentExpanded = false;
+              });
+            },
+            child: Text(
+              'View Less',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.green[700],
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
