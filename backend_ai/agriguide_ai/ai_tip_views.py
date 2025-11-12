@@ -51,15 +51,24 @@ def get_daily_farming_tip(request):
     Get daily farming tip from Gemini AI
     Tips are cached for 24 hours
     """
+    print("=" * 80)
+    print("🌾 FARMING TIP REQUEST RECEIVED")
+    print("=" * 80)
+    
     try:
         # Generate cache key based on current date
         today = datetime.now().date()
         cache_key = f'farming_tip_{today}'
         
+        print(f"📅 Today's date: {today}")
+        print(f"🔑 Cache key: {cache_key}")
+        
         # Try to get cached tip
         cached_tip = cache.get(cache_key)
         
         if cached_tip:
+            print(f"✅ CACHED TIP FOUND for {today}")
+            print(f"📝 Cached tip: {cached_tip[:100]}...")
             logger.info(f"Returning cached tip for {today}")
             return Response({
                 'tip': cached_tip,
@@ -67,7 +76,17 @@ def get_daily_farming_tip(request):
                 'date': today.isoformat()
             })
         
+        print(f"❌ No cached tip found. Generating new tip...")
+        
+        # Check if API key is configured
+        if not GEMINI_API_KEY:
+            print("🚨 ERROR: GEMINI_API_KEY is not set!")
+            raise ValueError("GEMINI_API_KEY not configured")
+        
+        print(f"🔑 API Key present: {GEMINI_API_KEY[:10]}...{GEMINI_API_KEY[-5:]}")
+        
         # Generate new tip using Gemini
+        print(f"🤖 Calling Gemini API...")
         logger.info(f"Generating new tip for {today}")
         
         response = model.generate_content(
@@ -79,12 +98,24 @@ def get_daily_farming_tip(request):
             }
         )
         
+        print(f"✅ Gemini API response received")
+        print(f"📊 Response type: {type(response)}")
+        print(f"📊 Response object: {response}")
+        
         tip = response.text.strip()
+        
+        print(f"✅ Generated tip: {tip}")
+        print(f"📏 Tip length: {len(tip)} characters")
         
         # Cache the tip for 2 days (48 hours)
         cache.set(cache_key, tip, timeout=60 * 60 * 48)
+        print(f"💾 Tip cached for 48 hours")
         
         logger.info(f"Successfully generated and cached new tip")
+        
+        print("=" * 80)
+        print("✅ SUCCESS - Returning AI-generated tip")
+        print("=" * 80)
         
         return Response({
             'tip': tip,
@@ -93,13 +124,27 @@ def get_daily_farming_tip(request):
         })
         
     except Exception as e:
+        print("=" * 80)
+        print("🚨 ERROR OCCURRED")
+        print("=" * 80)
+        print(f"❌ Error type: {type(e).__name__}")
+        print(f"❌ Error message: {str(e)}")
+        
+        import traceback
+        print(f"📋 Full traceback:")
+        print(traceback.format_exc())
+        
         logger.error(f"Error generating farming tip: {str(e)}")
         
         # Try to get yesterday's tip as fallback
         yesterday = (datetime.now() - timedelta(days=1)).date()
         yesterday_tip = cache.get(f'farming_tip_{yesterday}')
         
+        print(f"🔍 Checking for yesterday's tip ({yesterday})...")
+        
         if yesterday_tip:
+            print(f"✅ Found yesterday's tip as fallback")
+            print(f"📝 Yesterday's tip: {yesterday_tip[:100]}...")
             logger.info("Returning yesterday's tip as fallback")
             return Response({
                 'tip': yesterday_tip,
@@ -108,11 +153,19 @@ def get_daily_farming_tip(request):
                 'date': yesterday.isoformat()
             })
         
+        print(f"❌ No yesterday's tip found")
+        
         # Return random default tip if all else fails
-        import random
         fallback_tip = random.choice(DEFAULT_FALLBACK_TIPS)
         
+        print(f"🔄 Using default fallback tip")
+        print(f"📝 Fallback tip: {fallback_tip[:100]}...")
         logger.info("Returning default fallback tip")
+        
+        print("=" * 80)
+        print("⚠️ FALLBACK - Returning default tip")
+        print("=" * 80)
+        
         return Response({
             'tip': fallback_tip,
             'cached': False,

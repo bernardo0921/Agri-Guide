@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FarmingTipService {
-  static const String baseUrl = 'http://10.0.2.2:8000'; // Android emulator
+  static const String baseUrl = 'http://192.168.100.7:5000'; // Android emulator
   // static const String baseUrl = 'http://localhost:8000'; // iOS simulator
   // static const String baseUrl = 'https://your-production-url.com'; // Production
 
@@ -21,25 +21,27 @@ class FarmingTipService {
       }
 
       // Fetch from API
-      final response = await http.get(
-        Uri.parse('$baseUrl/api/farming-tip/'),
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw Exception('Request timeout');
-        },
-      );
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/api/farming-tip/'),
+            headers: {
+              'Authorization': 'Token $token',
+              'Content-Type': 'application/json',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         // Cache the tip
         await _cacheTip(data);
-        
+
         return {
           'success': true,
           'tip': data['tip'],
@@ -54,11 +56,7 @@ class FarmingTipService {
       // Return cached tip if available, otherwise return default
       final cachedTip = await _getCachedTip();
       if (cachedTip != null) {
-        return {
-          ...cachedTip,
-          'error': true,
-          'errorMessage': e.toString(),
-        };
+        return {...cachedTip, 'error': true, 'errorMessage': e.toString()};
       }
 
       // Return default fallback tip
@@ -81,7 +79,7 @@ class FarmingTipService {
 
       if (cachedTip != null && cachedDate != null) {
         final today = DateTime.now().toIso8601String().split('T')[0];
-        
+
         // Check if cache is from today or yesterday (within 2 days)
         final cacheDateTime = DateTime.parse(cachedDate);
         final todayDateTime = DateTime.now();
@@ -118,11 +116,11 @@ class FarmingTipService {
     final tips = [
       "Water your plants early in the morning to reduce water loss through evaporation. This also helps prevent fungal diseases that thrive in moist conditions during cooler evening hours.",
       "Rotate your crops each season to prevent soil nutrient depletion and reduce pest buildup. For example, follow nitrogen-fixing legumes with heavy feeders like corn or tomatoes.",
-      "Apply mulch around your plants to retain soil moisture, regulate temperature, and suppress weeds. Organic mulches also improve soil health as they decompose.",
+      "Apply mulch around your plants to reta soil moisture, regulate temperature, and suppress weeds. Organic mulches also improve soil health as they decompose.",
       "Monitor your crops regularly for early signs of pests or diseases. Early detection allows for quicker intervention and prevents widespread damage to your harvest.",
       "Test your soil pH annually to ensure optimal nutrient availability. Most crops thrive in slightly acidic to neutral soil (pH 6.0-7.0).",
     ];
-    
+
     // Return random tip
     return tips[DateTime.now().day % tips.length];
   }

@@ -24,7 +24,7 @@ class DashboardPageContent extends StatefulWidget {
 class _DashboardPageContentState extends State<DashboardPageContent> {
   final WeatherService _weatherService = WeatherService();
   final FarmingTipService _farmingTipService = FarmingTipService();
-  
+
   Map<String, dynamic>? _weatherData;
   bool _isLoadingWeather = true;
 
@@ -71,24 +71,44 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Future<void> _fetchDailyTip() async {
+    print('🌾 ============================================');
+    print('🌾 DASHBOARD - Fetching Daily Tip');
+    print('🌾 ============================================');
+
     setState(() => _isLoadingTip = true);
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final token = authService.token;
 
+      print('🔑 Token present: ${token != null}');
+
       if (token == null) {
+        print('❌ No token - user not authenticated');
         throw Exception('Not authenticated');
       }
 
+      print('📡 Calling FarmingTipService...');
       final result = await _farmingTipService.getDailyFarmingTip(token);
+
+      print('✅ Got result from service');
+      print('📝 Result: $result');
 
       setState(() {
         _farmingTip = result['tip'];
         _isTipFallback = result['fallback'] ?? false;
         _isLoadingTip = false;
       });
+
+      print('✅ State updated successfully');
+      print('📝 Tip: ${_farmingTip?.substring(0, 50)}...');
+      print('🔄 Is fallback: $_isTipFallback');
     } catch (e) {
+      print('🌾 ============================================');
+      print('🚨 DASHBOARD - Error fetching tip');
+      print('🌾 ============================================');
+      print('❌ Error: $e');
+
       setState(() {
         _isLoadingTip = false;
       });
@@ -219,10 +239,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.green.shade700,
-            Colors.green.shade500,
-          ],
+          colors: [Colors.green.shade700, Colors.green.shade500],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -269,10 +286,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                     SizedBox(height: 2),
                     Text(
                       'Powered by AI',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ],
                 ),
@@ -301,10 +315,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           const SizedBox(height: 16),
 
           // Divider
-          Container(
-            height: 1,
-            color: Colors.white.withOpacity(0.3),
-          ),
+          Container(height: 1, color: Colors.white.withOpacity(0.3)),
           const SizedBox(height: 16),
 
           // Tip Content
