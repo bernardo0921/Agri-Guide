@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:agri_guide/services/weather_service.dart';
 import 'package:agri_guide/services/community_api_service.dart';
-import 'package:agri_guide/services/ai_service.dart';
 import 'package:agri_guide/services/lms_api_service.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/services/farming_tip_service.dart';
 import 'package:agri_guide/models/post.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/post_card.dart';
@@ -13,7 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 class DashboardPageContent extends StatefulWidget {
-  final Function(int)? onNavigate; // Callback to navigate to other pages
+  final Function(int)? onNavigate;
 
   const DashboardPageContent({super.key, this.onNavigate});
 
@@ -23,14 +23,17 @@ class DashboardPageContent extends StatefulWidget {
 
 class _DashboardPageContentState extends State<DashboardPageContent> {
   final WeatherService _weatherService = WeatherService();
+  final FarmingTipService _farmingTipService = FarmingTipService();
+  
   Map<String, dynamic>? _weatherData;
   bool _isLoadingWeather = true;
 
+  String? _farmingTip;
+  bool _isLoadingTip = true;
+  bool _isTipFallback = false;
+
   List<Post> _topPosts = [];
   bool _isLoadingPosts = true;
-
-  String? _aiTip;
-  bool _isLoadingTip = true;
 
   List<Tutorial> _courses = [];
   bool _isLoadingCourses = true;
@@ -42,8 +45,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   void initState() {
     super.initState();
     _fetchWeather();
+    _fetchDailyTip();
     _fetchTopPosts();
-    _fetchDailyAITip();
     _fetchCourses();
   }
 
@@ -67,13 +70,38 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     });
   }
 
+  Future<void> _fetchDailyTip() async {
+    setState(() => _isLoadingTip = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final token = authService.token;
+
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final result = await _farmingTipService.getDailyFarmingTip(token);
+
+      setState(() {
+        _farmingTip = result['tip'];
+        _isTipFallback = result['fallback'] ?? false;
+        _isLoadingTip = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingTip = false;
+      });
+      debugPrint('Error fetching farming tip: $e');
+    }
+  }
+
   Future<void> _fetchTopPosts() async {
     setState(() => _isLoadingPosts = true);
 
     try {
       final posts = await CommunityApiService.getPosts();
       setState(() {
-        // Get top 5 posts
         _topPosts = posts.take(5).toList();
         _isLoadingPosts = false;
       });
@@ -82,28 +110,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         _isLoadingPosts = false;
       });
       debugPrint('Error fetching posts: $e');
-    }
-  }
-
-  Future<void> _fetchDailyAITip() async {
-    setState(() => _isLoadingTip = true);
-
-    try {
-      final result = await AIService.getDailyAITip();
-      setState(() {
-        if (result['success'] == true) {
-          _aiTip = result['tip'];
-        } else {
-          _aiTip = 'Unable to load AI tip. Please try again later.';
-        }
-        _isLoadingTip = false;
-      });
-    } catch (e) {
-      setState(() {
-        _aiTip = 'Error loading tip: $e';
-        _isLoadingTip = false;
-      });
-      debugPrint('Error fetching AI tip: $e');
     }
   }
 
@@ -122,7 +128,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       final tutorials = await apiService.getTutorials();
 
       setState(() {
-        _courses = tutorials.take(10).toList(); // Get up to 10 courses
+        _courses = tutorials.take(10).toList();
         _isLoadingCourses = false;
       });
     } catch (e) {
@@ -136,8 +142,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   Future<void> _refreshDashboard() async {
     await Future.wait([
       _fetchWeather(),
+      _fetchDailyTip(),
       _fetchTopPosts(),
-      _fetchDailyAITip(),
       _fetchCourses(),
     ]);
   }
@@ -152,12 +158,12 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Weather Widget with real data
+            // Weather Widget
             _buildWeatherWidget(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // AI Tips Section
-            _buildAITipsWidget(),
+            // AI Farming Tip Card
+            _buildFarmingTipCard(),
             const SizedBox(height: 24),
 
             // Quick Actions Section
@@ -188,7 +194,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    // Navigate to Community page (index 2)
                     widget.onNavigate?.call(2);
                   },
                   icon: const Icon(Icons.arrow_forward, size: 18),
@@ -203,6 +208,126 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             _buildTopPostsSection(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFarmingTipCard() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.green.shade700,
+            Colors.green.shade500,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.shade700.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.lightbulb_outline,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daily Farming Tip',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Powered by AI',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_isTipFallback)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade400,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Offline',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Divider
+          Container(
+            height: 1,
+            color: Colors.white.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+
+          // Tip Content
+          _isLoadingTip
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              : Text(
+                  _farmingTip ?? 'Unable to load tip',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+        ],
       ),
     );
   }
@@ -280,128 +405,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     );
   }
 
-  Widget _buildAITipsWidget() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.purple.shade400, Colors.purple.shade600],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.purple.shade400.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: _isLoadingTip
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  height: 40,
-                  width: 40,
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ),
-              ),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.lightbulb,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Daily Farming Tip',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Tip Content
-                Text(
-                  _aiTip ?? 'No tip available',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Footer with refresh button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Updated today',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.7),
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: _fetchDailyAITip,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.refresh, color: Colors.white, size: 14),
-                            SizedBox(width: 6),
-                            Text(
-                              'Refresh',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-    );
-  }
-
   Widget _buildCoursesCarousel() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -466,7 +469,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     return GestureDetector(
       onTap: () {
         // Navigate to course details or video player
-        // widget.onNavigate?.call(3); // LMS page is at index 3
       },
       child: Container(
         decoration: BoxDecoration(
@@ -512,7 +514,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   ),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Center(
+                child: const Center(
                   child: Icon(
                     Icons.video_library,
                     size: 48,
@@ -520,7 +522,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   ),
                 ),
               ),
-            // Overlay with course info
+            // Overlay
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
@@ -541,7 +543,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Category badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -561,7 +562,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Title
                     Text(
                       course.title,
                       style: const TextStyle(
@@ -574,7 +574,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    // Views count
                     Row(
                       children: [
                         Icon(
@@ -669,7 +668,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header with date and location
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -713,16 +711,11 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           ],
         ),
         const SizedBox(height: 24),
-
-        // Main weather display
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Weather icon
             _buildWeatherIcon(conditionCode),
-
-            // Temperature and description
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -765,8 +758,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           ],
         ),
         const SizedBox(height: 16),
-
-        // Additional weather info
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [

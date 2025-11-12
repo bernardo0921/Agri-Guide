@@ -1,29 +1,20 @@
-import requests
-import json
+import os
+from google import genai
 
-# URL of your running Django backend
-DJANGO_API_URL = "http://127.0.0.1:8000/api/gemini/ask/"
+# Fetch Gemini API key from environment variable
+# GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-# The prompt you want to test
-payload = {
-    "prompt": "Explain in simple terms what IoT in agriculture means."
-}
+# if not GEMINI_API_KEY:
+#     raise ValueError("❌ GEMINI_API_KEY environment variable not found!")
 
-# Make the POST request
-try:
-    response = requests.post(
-        DJANGO_API_URL,
-        headers={"Content-Type": "application/json"},
-        data=json.dumps(payload),
-        timeout=15
-    )
+# Initialize Gemini client
+client = genai.Client(api_key='AIzaSyAPh3XBQhI9YVjWMpluoVzLWHdxrrn4UsI')
 
-    # Check response status
-    if response.status_code == 200:
-        print("✅ Success! Gemini responded:")
-        print(response.json()["response"])
-    else:
-        print(f"❌ Error {response.status_code}: {response.text}")
+# Send a simple prompt to Gemini Flash
+response = client.models.generate_content(
+    model="gemini-2.5-flash",
+    contents="hi"
+)
 
-except requests.exceptions.RequestException as e:
-    print(f"⚠️ Request failed: {e}")
+# Print the response text
+print("Gemini says:", response.text)

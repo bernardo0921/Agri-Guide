@@ -8,6 +8,8 @@ from rest_framework import status
 import json
 import os
 from .models import ChatSession, ChatMessage
+from django.core.cache import cache
+from datetime import date
 
 # Configure Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')

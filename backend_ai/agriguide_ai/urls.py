@@ -2,7 +2,7 @@
 from django.urls import path
 from . import views
 from . import auth_views
-from . import community_views, lms_views
+from . import community_views, lms_views, ai_tip_views
 
 urlpatterns = [
     # Authentication endpoints
@@ -55,6 +55,11 @@ urlpatterns = [
     path('api/test/', 
          views.test_connection, 
          name='test_connection'),
+    
+    # AI Tip endpoint
+    path('api/farming-tip/', 
+         ai_tip_views.get_daily_farming_tip, 
+         name='get_daily_farming_tip'),
          
     # Community endpoints
     path('api/community/posts/', 
