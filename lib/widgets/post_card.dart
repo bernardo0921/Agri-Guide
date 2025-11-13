@@ -749,9 +749,8 @@ View on AgriGuide: $deepLinkUrl
 ''';
 
       // Share the content
-      final result = await Share.share(
-        shareText,
-        subject: 'Post from AgriGuide Community',
+      final result = await SharePlus.instance.share(
+        ShareParams(text: shareText, subject: 'Post from AgriGuide Community'),
       );
 
       // Optional: Track share analytics

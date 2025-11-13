@@ -246,7 +246,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.shade700.withOpacity(0.3),
+            color: Colors.green.shade700.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -261,7 +261,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -315,7 +315,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           const SizedBox(height: 16),
 
           // Divider
-          Container(height: 1, color: Colors.white.withOpacity(0.3)),
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
 
           // Tip Content
@@ -363,7 +363,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           boxShadow: [
             BoxShadow(
               color: isDarkMode
-                  ? Colors.black.withOpacity(0.3)
+                  ? Colors.black.withValues(alpha: 0.3)
                   : Colors.grey.shade200,
               blurRadius: 8,
               offset: const Offset(0, 2),
@@ -486,7 +486,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -540,7 +540,10 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.7),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
@@ -590,14 +593,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                         Icon(
                           Icons.visibility_outlined,
                           size: 14,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           course.getFormattedViewCount(),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -627,7 +630,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.shade900.withOpacity(0.3),
+            color: Colors.blue.shade900.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -659,7 +662,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         ElevatedButton(
           onPressed: _fetchWeather,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white.withOpacity(0.2),
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
             foregroundColor: Colors.white,
           ),
           child: const Text('Retry'),
@@ -696,7 +699,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 Text(
                   '($formattedDate)',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Colors.white.withValues(alpha: 0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -706,14 +709,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               children: [
                 Icon(
                   Icons.location_on,
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   size: 16,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   cityName,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -746,7 +749,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       '/${tempMin.round()}°',
                       style: TextStyle(
                         fontSize: 24,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -759,7 +762,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       .map((word) => word[0].toUpperCase() + word.substring(1))
                       .join(' '),
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
@@ -799,7 +802,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: _getWeatherIconWidget(weatherType),
@@ -816,7 +819,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.shade300.withOpacity(0.5),
+                color: Colors.orange.shade300.withValues(alpha: 0.5),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),
@@ -828,7 +831,11 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            Icon(Icons.cloud, size: 56, color: Colors.white.withOpacity(0.9)),
+            Icon(
+              Icons.cloud,
+              size: 56,
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
             Positioned(
               top: -8,
               right: -8,
@@ -839,7 +846,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.orange.shade300.withOpacity(0.5),
+                      color: Colors.orange.shade300.withValues(alpha: 0.5),
                       blurRadius: 12,
                       spreadRadius: 2,
                     ),
@@ -859,7 +866,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         return Icon(
           Icons.water_drop,
           size: 56,
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
         );
       case 'thunderstorm':
         return Icon(Icons.flash_on, size: 56, color: Colors.yellow.shade300);
@@ -867,13 +874,13 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         return Icon(
           Icons.ac_unit,
           size: 56,
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
         );
       default:
         return Icon(
           Icons.wb_cloudy,
           size: 56,
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withValues(alpha: 0.9),
         );
     }
   }
@@ -881,7 +888,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   Widget _buildWeatherDetail(IconData icon, String value, String label) {
     return Column(
       children: [
-        Icon(icon, color: Colors.white.withOpacity(0.7), size: 20),
+        Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 20),
         const SizedBox(height: 4),
         Text(
           value,
@@ -893,7 +900,10 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 11),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 11,
+          ),
         ),
       ],
     );
@@ -910,7 +920,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
+                ? Colors.black.withValues(alpha: 0.3)
                 : Colors.grey.shade200,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -975,7 +985,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -987,7 +997,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: color.withOpacity(0.9),
+                color: color.withValues(alpha: 0.9),
               ),
             ),
           ],

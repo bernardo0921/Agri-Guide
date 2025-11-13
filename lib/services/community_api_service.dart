@@ -43,15 +43,15 @@ class CommunityApiService {
       '$baseUrl/api/community/posts/',
     ).replace(queryParameters: search != null ? {'search': search} : null);
 
-    print('Fetching posts from: $uri');
+    // print('Fetching posts from: $uri');
 
     final response = await http.get(
       uri,
       headers: await _getHeaders(),
     );
 
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    // print('Response status: ${response.statusCode}');
+    // print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final decodedBody = json.decode(response.body);
@@ -83,15 +83,15 @@ class CommunityApiService {
 
     final uri = Uri.parse('$baseUrl/api/community/posts/$postId/');
 
-    print('Fetching post from: $uri');
+    // print('Fetching post from: $uri');
 
     final response = await http.get(
       uri,
       headers: await _getHeaders(),
     );
 
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    // print('Response status: ${response.statusCode}');
+    // print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
