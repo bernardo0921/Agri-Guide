@@ -172,3 +172,4 @@ def my_posts(request):
     
     serializer = CommunityPostSerializer(posts, many=True, context={'request': request})
     return Response(serializer.data)
+

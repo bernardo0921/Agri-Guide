@@ -81,18 +81,18 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       final authService = Provider.of<AuthService>(context, listen: false);
       final token = authService.token;
 
-      print('🔑 Token present: ${token != null}');
+      // print('🔑 Token present: ${token != null}');
 
       if (token == null) {
-        print('❌ No token - user not authenticated');
+        // print('❌ No token - user not authenticated');
         throw Exception('Not authenticated');
       }
 
-      print('📡 Calling FarmingTipService...');
+      // print('📡 Calling FarmingTipService...');
       final result = await _farmingTipService.getDailyFarmingTip(token);
 
-      print('✅ Got result from service');
-      print('📝 Result: $result');
+      // print('✅ Got result from service');
+      // print('📝 Result: $result');
 
       setState(() {
         _farmingTip = result['tip'];
@@ -100,14 +100,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         _isLoadingTip = false;
       });
 
-      print('✅ State updated successfully');
-      print('📝 Tip: ${_farmingTip?.substring(0, 50)}...');
-      print('🔄 Is fallback: $_isTipFallback');
+      // print('✅ State updated successfully');
+      // print('📝 Tip: ${_farmingTip?.substring(0, 50)}...');
+      // print('🔄 Is fallback: $_isTipFallback');
     } catch (e) {
-      print('🌾 ============================================');
-      print('🚨 DASHBOARD - Error fetching tip');
-      print('🌾 ============================================');
-      print('❌ Error: $e');
+      // print('🌾 ============================================');
+      // print('🚨 DASHBOARD - Error fetching tip');
+      // print('🌾 ============================================');
+      // print('❌ Error: $e');
 
       setState(() {
         _isLoadingTip = false;
@@ -233,7 +233,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildFarmingTipCard() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(20),

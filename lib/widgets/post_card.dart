@@ -3,6 +3,7 @@ import '../models/post.dart';
 import '../services/community_api_service.dart';
 import '../widgets/comments_bottom_sheet.dart';
 import '../screens/image_viewer_screen.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PostCard extends StatefulWidget {
   final Post post;
@@ -657,6 +658,7 @@ class _PostCardState extends State<PostCard>
     );
   }
 
+  // Update the _buildFooter method in _PostCardState class
   Widget _buildFooter(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -694,7 +696,7 @@ class _PostCardState extends State<PostCard>
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {},
+              onTap: () => _onShare(context), // Updated to call _onShare
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 padding: const EdgeInsets.all(10),
@@ -727,6 +729,57 @@ class _PostCardState extends State<PostCard>
         ],
       ),
     );
+  }
+
+  // Add this new method to the _PostCardState class
+  Future<void> _onShare(BuildContext context) async {
+    try {
+      // Generate the deep link URL
+      final postId = widget.post.id;
+      final deepLinkUrl = 'http://192.168.100.7:5000/post/$postId';
+
+      // Create share content with post preview
+      final shareText =
+          '''
+Check out this post from ${widget.post.authorName}:
+
+${widget.post.content.length > 100 ? '${widget.post.content.substring(0, 100)}...' : widget.post.content}
+
+View on AgriGuide: $deepLinkUrl
+''';
+
+      // Share the content
+      final result = await Share.share(
+        shareText,
+        subject: 'Post from AgriGuide Community',
+      );
+
+      // Optional: Track share analytics
+      if (result.status == ShareResultStatus.success) {
+        print('Post ${widget.post.id} shared successfully');
+
+        // Show success feedback
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Post shared successfully!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error sharing post: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share post: $e'),
+            backgroundColor: Colors.red[700],
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildActionButton({

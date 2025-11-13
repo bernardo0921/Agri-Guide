@@ -76,6 +76,37 @@ class CommunityApiService {
     }
   }
 
+  // Get a single post by ID
+  static Future<Post> getPostById(String postId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final uri = Uri.parse('$baseUrl/api/community/posts/$postId/');
+
+    print('Fetching post from: $uri');
+
+    final response = await http.get(
+      uri,
+      headers: await _getHeaders(),
+    );
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return Post.fromJson(data);
+    } else if (response.statusCode == 404) {
+      throw Exception('Post not found');
+    } else if (response.statusCode == 401) {
+      throw Exception('Not authenticated');
+    } else {
+      throw Exception(
+        'Failed to load post: ${response.statusCode} - ${response.body}',
+      );
+    }
+  }
+
   // Create a new post with optional image and tags
   static Future<Post> createPost({
     required String content,

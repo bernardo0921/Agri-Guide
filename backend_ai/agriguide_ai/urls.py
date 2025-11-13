@@ -1,8 +1,9 @@
-# agriguide_ai/urls.py
+# agriguide_ai/urls.py - UPDATED WITH DEEP LINK ROUTES
 from django.urls import path
 from . import views
 from . import auth_views
 from . import community_views, lms_views, ai_tip_views
+from . import deep_link_views  # NEW IMPORT
 
 urlpatterns = [
     # Authentication endpoints
@@ -97,4 +98,27 @@ urlpatterns = [
     path('api/tutorials/categories/', 
          lms_views.tutorial_categories, 
          name='tutorial_categories'),
+    
+    # ============ NEW: DEEP LINK ENDPOINTS ============
+    
+    # API endpoint to fetch post data (used by Flutter app)
+    path('api/post/<int:post_id>/data/', 
+         deep_link_views.post_deep_link_data, 
+         name='post_deep_link_data'),
+    
+    # Web fallback page (when app is not installed)
+    # This MUST be at root level, not under /api/
+    path('post/<int:post_id>/', 
+         deep_link_views.post_fallback_view, 
+         name='post_fallback'),
+    
+    # Optional: Open Graph metadata endpoint
+    path('api/post/<int:post_id>/metadata/', 
+         deep_link_views.generate_share_metadata, 
+         name='post_share_metadata'),
+    
+    # Optional: Track share analytics
+    path('api/post/<int:post_id>/track-share/', 
+         deep_link_views.track_share_analytics, 
+         name='track_share'),
 ]
