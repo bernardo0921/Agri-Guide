@@ -153,7 +153,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   );
                 },
-                activeColor: Colors.green.shade700,
+                activeThumbColor: Colors.green.shade700,
               ),
             ],
           ),

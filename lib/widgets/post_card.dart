@@ -736,7 +736,7 @@ class _PostCardState extends State<PostCard>
     try {
       // Generate the deep link URL
       final postId = widget.post.id;
-      final deepLinkUrl = 'http://https://agriguide-backend-79j2.onrender.com/post/$postId';
+      final deepLinkUrl = 'https://agriguide-backend-79j2.onrender.com/post/$postId';
 
       // Create share content with post preview
       final shareText =

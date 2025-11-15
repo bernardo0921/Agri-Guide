@@ -3,7 +3,7 @@ import 'dart:io';
 import '../models/tutorial.dart';
 
 class LMSApiService {
-  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
+  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
   final Dio _dio;
 
   LMSApiService(String token)

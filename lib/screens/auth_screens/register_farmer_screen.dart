@@ -187,7 +187,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
 
               // Farming Method Dropdown
               DropdownButtonFormField<String>(
-                value: _formData['farming_method'],
+                initialValue: _formData['farming_method'],
                 decoration: const InputDecoration(
                   labelText: 'Farming Method',
                   border: OutlineInputBorder(),

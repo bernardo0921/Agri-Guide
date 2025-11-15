@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Service for handling AI chat functionality with authentication
 class AIService {
   /// Base URL for your Django backend
-  static const String _baseUrl = 'http://https://agriguide-backend-79j2.onrender.com/api';
+  static const String _baseUrl = 'https://agriguide-backend-79j2.onrender.com/api';
 
   /// Cached authentication token
   static String? _cachedToken;

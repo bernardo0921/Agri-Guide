@@ -18,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // Base URL for constructing full image URLs
-  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
+  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
   int _selectedIndex = 0;
 

@@ -5,7 +5,6 @@ import 'package:agri_guide/services/lms_api_service.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/tutorial_card.dart';
 import 'video_player_screen.dart';
-import 'upload_tutorial_screen.dart' as upload;  // Use prefix to avoid conflict
 import 'my_tutorials_screen.dart';
 
 class LMSPageContent extends StatefulWidget {
@@ -22,9 +21,8 @@ class _LMSPageContentState extends State<LMSPageContent> {
   String? _errorMessage;
   
   final TextEditingController _searchController = TextEditingController();
-  String _selectedCategory = 'all'; // FIXED: Changed to lowercase 'all'
+  String _selectedCategory = 'all';
   
-  // ADDED: Category mapping to match Django backend
   static const Map<String, String> categoryMap = {
     'all': 'All',
     'crops': 'Crops',
@@ -51,6 +49,19 @@ class _LMSPageContentState extends State<LMSPageContent> {
     super.dispose();
   }
 
+  bool _isExtensionWorker() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.user;
+    
+    if (user == null) return false;
+    
+    // Check for user_type field - adjust these values based on your backend
+    final userType = user['user_type']?.toString().toLowerCase();
+    return userType == 'extension_worker' || 
+           userType == 'extension' ||
+           userType == 'extensionworker';
+  }
+
   Future<void> _loadTutorials() async {
     setState(() {
       _isLoading = true;
@@ -67,7 +78,6 @@ class _LMSPageContentState extends State<LMSPageContent> {
 
       final apiService = LMSApiService(token);
       
-      // FIXED: Send lowercase category or null if 'all'
       final tutorials = await apiService.getTutorials(
         search: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
         category: _selectedCategory == 'all' ? null : _selectedCategory,
@@ -110,21 +120,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
         builder: (context) => VideoPlayerScreen(tutorial: tutorial),
       ),
     ).then((_) {
-      // Refresh tutorials when returning from video player
       _refreshTutorials();
-    });
-  }
-
-  void _navigateToUploadTutorial() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const upload.UploadTutorialScreen(),  // Use prefix
-      ),
-    ).then((uploaded) {
-      if (uploaded == true) {
-        _refreshTutorials();
-      }
     });
   }
 
@@ -146,20 +142,18 @@ class _LMSPageContentState extends State<LMSPageContent> {
     return Scaffold(
       body: Column(
         children: [
-          // Search and filter section
           _buildSearchAndFilter(),
-          
-          // Tutorials grid
           Expanded(
             child: _buildContent(),
           ),
         ],
       ),
-      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
   Widget _buildSearchAndFilter() {
+    final isExtensionWorker = _isExtensionWorker();
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -212,7 +206,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
           ),
           const SizedBox(height: 12),
           
-          // Category filter and My Tutorials button
+          // Category filter and My Tutorials button (only for extension workers)
           Row(
             children: [
               Expanded(
@@ -228,11 +222,10 @@ class _LMSPageContentState extends State<LMSPageContent> {
                       value: _selectedCategory,
                       isExpanded: true,
                       icon: const Icon(Icons.arrow_drop_down),
-                      // FIXED: Now uses categoryMap with lowercase values
                       items: categoryMap.entries.map((entry) {
                         return DropdownMenuItem(
-                          value: entry.key, // lowercase value (e.g., 'crops')
-                          child: Text(entry.value), // display name (e.g., 'Crops')
+                          value: entry.key,
+                          child: Text(entry.value),
                         );
                       }).toList(),
                       onChanged: _onCategoryChanged,
@@ -240,19 +233,22 @@ class _LMSPageContentState extends State<LMSPageContent> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: _navigateToMyTutorials,
-                icon: const Icon(Icons.video_library, size: 18),
-                label: const Text('My Tutorials'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.green.shade700,
-                  side: BorderSide(color: Colors.green.shade300),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              // Only show My Tutorials button for extension workers
+              if (isExtensionWorker) ...[
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _navigateToMyTutorials,
+                  icon: const Icon(Icons.video_library, size: 18),
+                  label: const Text('My Tutorials'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.green.shade700,
+                    side: BorderSide(color: Colors.green.shade300),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ],
@@ -338,7 +334,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
               Text(
                 _searchController.text.isNotEmpty || _selectedCategory != 'all'
                     ? 'Try adjusting your search or filter'
-                    : 'Be the first to upload a tutorial',
+                    : 'Check back later for new tutorials',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -370,15 +366,6 @@ class _LMSPageContentState extends State<LMSPageContent> {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildFloatingActionButton() {
-    return FloatingActionButton.extended(
-      onPressed: _navigateToUploadTutorial,
-      backgroundColor: Colors.green.shade600,
-      icon: const Icon(Icons.add),
-      label: const Text('Upload'),
     );
   }
 }

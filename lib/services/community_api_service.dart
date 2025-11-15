@@ -6,7 +6,7 @@ import '../models/post.dart';
 import '../models/comment.dart';
 
 class CommunityApiService {
-  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
+  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();

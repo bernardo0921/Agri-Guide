@@ -4,35 +4,31 @@ import '../models/tutorial.dart';
 class TutorialCard extends StatelessWidget {
   final Tutorial tutorial;
   final VoidCallback onTap;
-  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
+  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
-  const TutorialCard({
-    super.key,
-    required this.tutorial,
-    required this.onTap,
-  });
+  const TutorialCard({super.key, required this.tutorial, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Thumbnail
             _buildThumbnail(),
-            
+
             // Content
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Title
                   Text(
@@ -40,13 +36,13 @@ class TutorialCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      height: 1.3,
+                      height: 1.2,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  
+                  const SizedBox(height: 4),
+
                   // Category badge
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -66,19 +62,20 @@ class TutorialCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  
+                  const SizedBox(height: 6),
+
                   // Uploader info and stats
                   Row(
                     children: [
                       // Uploader avatar
                       _buildUploaderAvatar(),
                       const SizedBox(width: 8),
-                      
+
                       // Uploader name and time
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               tutorial.uploaderName,
@@ -101,8 +98,8 @@ class TutorialCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  
+                  const SizedBox(height: 6),
+
                   // View count
                   Row(
                     children: [
@@ -132,7 +129,7 @@ class TutorialCard extends StatelessWidget {
 
   Widget _buildThumbnail() {
     final thumbnailUrl = tutorial.thumbnailUrl;
-    
+
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Container(
@@ -150,7 +147,7 @@ class TutorialCard extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                     ),
                   );

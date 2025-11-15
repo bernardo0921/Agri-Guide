@@ -4,6 +4,7 @@ import 'package:agri_guide/services/auth_service.dart';
 import '../../../../../services/lms_api_service.dart';
 import '../../../../../models/tutorial.dart';
 import 'video_player_screen.dart';
+import 'upload_tutorial_screen.dart' as upload;
 
 class MyTutorialsScreen extends StatefulWidget {
   const MyTutorialsScreen({super.key});
@@ -17,13 +18,28 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _hasChanges = false;
+  bool _isExtensionWorker = false;
 
-  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
+  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
   @override
   void initState() {
     super.initState();
+    _checkUserRole();
     _loadMyTutorials();
+  }
+
+  void _checkUserRole() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.user;
+    
+    if (user != null) {
+      // Check for user_type field - adjust these values based on your backend
+      final userType = user['user_type']?.toString().toLowerCase();
+      _isExtensionWorker = userType == 'extension_worker' || 
+                          userType == 'extension' ||
+                          userType == 'extensionworker';
+    }
   }
 
   Future<void> _loadMyTutorials() async {
@@ -122,9 +138,24 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
     );
   }
 
+  void _navigateToUploadTutorial() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const upload.UploadTutorialScreen(),
+      ),
+    ).then((uploaded) {
+      if (uploaded == true) {
+        setState(() {
+          _hasChanges = true;
+        });
+        _loadMyTutorials();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // FIXED: Use PopScope instead of deprecated WillPopScope
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -133,9 +164,23 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Tutorials'), elevation: 0),
+        appBar: AppBar(
+          title: const Text('My Tutorials'),
+          elevation: 0,
+        ),
         body: _buildBody(),
+        // Only show upload button for extension workers
+        floatingActionButton: _isExtensionWorker ? _buildUploadButton() : null,
       ),
+    );
+  }
+
+  Widget _buildUploadButton() {
+    return FloatingActionButton.extended(
+      onPressed: _navigateToUploadTutorial,
+      backgroundColor: Colors.green.shade600,
+      icon: const Icon(Icons.add),
+      label: const Text('Upload'),
     );
   }
 
@@ -206,7 +251,9 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Upload your first tutorial to get started',
+                _isExtensionWorker
+                    ? 'Tap the Upload button to create your first tutorial'
+                    : 'You haven\'t uploaded any tutorials',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
@@ -342,12 +389,13 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                 ),
               ),
 
-              // Delete button
-              IconButton(
-                icon: Icon(Icons.delete_outline, color: Colors.red.shade600),
-                onPressed: () => _deleteTutorial(tutorial),
-                tooltip: 'Delete',
-              ),
+              // Delete button - only show for extension workers
+              if (_isExtensionWorker)
+                IconButton(
+                  icon: Icon(Icons.delete_outline, color: Colors.red.shade600),
+                  onPressed: () => _deleteTutorial(tutorial),
+                  tooltip: 'Delete',
+                ),
             ],
           ),
         ),
