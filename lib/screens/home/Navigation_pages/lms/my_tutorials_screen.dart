@@ -18,7 +18,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   String? _errorMessage;
   bool _hasChanges = false;
 
-  static const String baseUrl = 'http://192.168.100.7:5000';
+  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
 
   @override
   void initState() {

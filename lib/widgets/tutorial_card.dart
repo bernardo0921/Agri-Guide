@@ -4,7 +4,7 @@ import '../models/tutorial.dart';
 class TutorialCard extends StatelessWidget {
   final Tutorial tutorial;
   final VoidCallback onTap;
-  static const String baseUrl = 'http://192.168.100.7:5000';
+  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
 
   const TutorialCard({
     super.key,

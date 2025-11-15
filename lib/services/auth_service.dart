@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthService with ChangeNotifier {
-  final String _baseUrl = 'http://192.168.100.7:5000';
+  final String _baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
 
   String? _token;
   Map<String, dynamic>? _user;

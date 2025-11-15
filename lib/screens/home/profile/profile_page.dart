@@ -15,7 +15,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   // Base URL for constructing full image URLs
-  static const String baseUrl = 'http://192.168.100.7:5000';
+  static const String baseUrl = 'http://https://agriguide-backend-79j2.onrender.com';
   
   // State variables for data fetching and UI
   Map<String, dynamic>? _profileData;
