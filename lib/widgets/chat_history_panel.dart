@@ -34,7 +34,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
 
     try {
       final result = await AIService.getChatSessions();
-      
+
       if (result['success'] == true) {
         final sessions = result['sessions'] as List?;
         setState(() {
@@ -72,7 +72,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Chat'),
-        content: const Text('Are you sure you want to delete this chat session?'),
+        content: const Text(
+          'Are you sure you want to delete this chat session? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -88,19 +90,63 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
     );
 
     if (confirmed == true) {
-      // TODO: Implement delete on server
-      // For now, just remove from local list
-      setState(() {
-        _sessions.removeAt(index);
-      });
-      
+      // Show loading indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Chat deleted'),
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text('Deleting chat...'),
+              ],
+            ),
             duration: Duration(seconds: 2),
           ),
         );
+      }
+
+      // Call API to delete session
+      final result = await AIService.deleteSession(sessionId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+        if (result['success'] == true) {
+          // Remove from local list
+          setState(() {
+            _sessions.removeAt(index);
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Chat deleted successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          // If deleted session was active, notify parent to start new session
+          if (sessionId == widget.currentSessionId &&
+              widget.onSessionSelected != null) {
+            widget.onSessionSelected!('new');
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['error'] ?? 'Failed to delete chat'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }
@@ -153,9 +199,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
             ),
 
             // Content
-            Expanded(
-              child: _buildContent(),
-            ),
+            Expanded(child: _buildContent()),
 
             // New Chat Button
             Container(
@@ -177,10 +221,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                   icon: const Icon(Icons.add_circle_outline, size: 24),
                   label: const Text(
                     'Start New Chat',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
@@ -202,9 +243,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -214,11 +253,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red.shade300,
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
               Text(
                 'Oops! Something went wrong',
@@ -232,10 +267,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
               Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -316,7 +348,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
     final lastMessage = session['last_message'] as String? ?? 'No messages yet';
     final messageCount = session['message_count'] as int? ?? 0;
     final createdAt = session['created_at'] as String?;
-    
+
     // Truncate message if too long
     final displayMessage = lastMessage.length > 80
         ? '${lastMessage.substring(0, 77)}...'
@@ -333,9 +365,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
         ),
         boxShadow: [
           BoxShadow(
-            color: isSelected
-                ? Colors.green.shade100
-                : Colors.grey.shade100,
+            color: isSelected ? Colors.green.shade100 : Colors.grey.shade100,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -365,7 +395,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                       child: Icon(
                         Icons.chat_bubble,
                         size: 20,
-                        color: isSelected ? Colors.white : Colors.green.shade700,
+                        color: isSelected
+                            ? Colors.white
+                            : Colors.green.shade700,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -374,7 +406,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Session ${index + 1}',
+                            'Chat Session ${_sessions.length - index}',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -411,7 +443,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                           Icon(
                             Icons.message,
                             size: 14,
-                            color: isSelected ? Colors.white : Colors.grey.shade700,
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.grey.shade700,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -419,7 +453,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.grey.shade700,
                             ),
                           ),
                         ],
@@ -427,10 +463,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                     ),
                     const SizedBox(width: 8),
                     PopupMenuButton<String>(
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: Colors.grey.shade600,
-                      ),
+                      icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
                       onSelected: (value) {
                         if (value == 'delete') {
                           _handleDeleteSession(sessionId, index);
@@ -441,7 +474,11 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                              Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 20,
+                              ),
                               SizedBox(width: 12),
                               Text(
                                 'Delete',
@@ -454,9 +491,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Last message preview
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -467,11 +504,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.chat,
-                        size: 16,
-                        color: Colors.grey.shade400,
-                      ),
+                      Icon(Icons.chat, size: 16, color: Colors.grey.shade400),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

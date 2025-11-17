@@ -2,7 +2,7 @@
 from django.urls import path
 from . import views
 from . import auth_views
-from . import community_views, lms_views, ai_tip_views
+from . import community_views, lms_views, ai_tip_views, voice_views
 from . import deep_link_views  # NEW IMPORT
 
 urlpatterns = [
@@ -121,4 +121,10 @@ urlpatterns = [
     path('api/post/<int:post_id>/track-share/', 
          deep_link_views.track_share_analytics, 
          name='track_share'),
+
+     # Voice chat endpoints
+    path('voice/chat/', voice_views.voice_chat, name='voice_chat'),
+    path('voice/chat/stream/', voice_views.voice_chat_stream, name='voice_chat_stream'),
+    path('voice/voices/', voice_views.get_available_voices, name='available_voices'),
+
 ]

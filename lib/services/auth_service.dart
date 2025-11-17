@@ -1,4 +1,4 @@
-// lib/services/auth_service.dart - UPDATED
+// lib/services/auth_service.dart - UPDATED WITH CACHE CLEARING
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -91,6 +91,10 @@ class AuthService with ChangeNotifier {
   Future<void> _clearStorage(SharedPreferences prefs) async {
     await prefs.remove('token');
     await prefs.remove('user');
+    // ADDED: Clear AI chat cache
+    await prefs.remove('ai_chat_messages');
+    await prefs.remove('current_session_id');
+    await prefs.remove('ai_session_id');
     _token = null;
     _user = null;
   }
@@ -214,10 +218,12 @@ class AuthService with ChangeNotifier {
         // Add nested extension_worker_profile fields
         if (registrationData.containsKey('extension_worker_profile')) {
           final profile =
-              registrationData['extension_worker_profile'] as Map<String, dynamic>;
+              registrationData['extension_worker_profile']
+                  as Map<String, dynamic>;
           profile.forEach((key, value) {
             if (value != null && key != 'verification_document') {
-              request.fields['extension_worker_profile.$key'] = value.toString();
+              request.fields['extension_worker_profile.$key'] = value
+                  .toString();
             }
           });
         }
@@ -286,15 +292,21 @@ class AuthService with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        // UPDATED: Clear all storage including AI cache
         await prefs.remove('token');
+        await prefs.remove('user');
         await prefs.remove('user_id');
+        // Clear AI chat cache
+        await prefs.remove('ai_chat_messages');
+        await prefs.remove('current_session_id');
+        await prefs.remove('ai_session_id');
 
         _token = null;
         _user = null;
         _status = AuthStatus.unauthenticated;
         notifyListeners();
 
-        debugPrint('Logout successful');
+        debugPrint('✅ Logout successful - all cache cleared');
       } else {
         debugPrint('Logout failed: ${response.body}');
         if (context.mounted) {
@@ -306,9 +318,9 @@ class AuthService with ChangeNotifier {
     } catch (e) {
       debugPrint('Logout error: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error during logout: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error during logout: $e')));
       }
     }
   }
@@ -391,7 +403,8 @@ class AuthService with ChangeNotifier {
 
         // Add nested farmer_profile fields with dot notation
         if (updateData.containsKey('farmer_profile')) {
-          final farmerProfile = updateData['farmer_profile'] as Map<String, dynamic>;
+          final farmerProfile =
+              updateData['farmer_profile'] as Map<String, dynamic>;
           farmerProfile.forEach((key, value) {
             if (value != null) {
               request.fields['farmer_profile.$key'] = value.toString();

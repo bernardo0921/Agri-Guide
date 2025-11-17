@@ -1,4 +1,4 @@
-# views.py (Updated with authentication)
+# views.py (Updated with proper session management)
 import google.generativeai as genai
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
@@ -10,6 +10,7 @@ import os
 from .models import ChatSession, ChatMessage
 from django.core.cache import cache
 from datetime import date
+import uuid
 
 # Configure Gemini API
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -106,30 +107,37 @@ def chat_with_ai(request):
                 'error': 'Message is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get or create chat session
+        # FIXED: Get or create chat session properly
         if session_id:
+            # Try to get existing session
             try:
                 chat_session = ChatSession.objects.get(
                     session_id=session_id,
                     user=request.user
                 )
+                print(f"✅ Using existing session: {session_id}")
             except ChatSession.DoesNotExist:
-                return Response({
-                    'error': 'Session not found or access denied'
-                }, status=status.HTTP_404_NOT_FOUND)
+                # Session doesn't exist, create it with the provided ID
+                chat_session = ChatSession.objects.create(
+                    user=request.user,
+                    session_id=session_id
+                )
+                print(f"✅ Created new session with provided ID: {session_id}")
         else:
-            # Create new session
-            import uuid
+            # No session_id provided, create new session with UUID
             session_id = str(uuid.uuid4())
             chat_session = ChatSession.objects.create(
                 user=request.user,
                 session_id=session_id
             )
+            print(f"✅ Created new session with UUID: {session_id}")
         
         # Get conversation history from database
         history_messages = ChatMessage.objects.filter(
             session=chat_session
         ).order_by('created_at')
+        
+        print(f"📝 Loading {history_messages.count()} messages from history")
         
         # Build conversation contents
         contents = []
@@ -178,12 +186,18 @@ def chat_with_ai(request):
         # Update session timestamp
         chat_session.save()
         
+        print(f"✅ Message saved to session {session_id}")
+        print(f"📊 Session now has {chat_session.messages.count()} messages")
+        
         return Response({
             'response': ai_response,
             'session_id': session_id
         })
         
     except Exception as e:
+        print(f"❌ Error in chat_with_ai: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -209,6 +223,8 @@ def get_chat_sessions(request):
             'last_message': last_message.message if last_message else None
         })
     
+    print(f"📋 Returning {len(sessions_data)} sessions for user {request.user.username}")
+    
     return Response({'sessions': sessions_data})
 
 
@@ -233,6 +249,8 @@ def get_chat_history(request, session_id):
                 'message': msg.message,
                 'created_at': msg.created_at
             })
+        
+        print(f"📖 Returning {len(history)} messages for session {session_id}")
         
         return Response({
             'session_id': session_id,
@@ -268,6 +286,8 @@ def clear_chat_session(request):
         chat_session.is_active = False
         chat_session.save()
         
+        print(f"🗑️ Session {session_id} marked as inactive")
+        
         return Response({'message': 'Session cleared'})
         
     except ChatSession.DoesNotExist:
@@ -290,7 +310,10 @@ def delete_chat_session(request, session_id):
             user=request.user
         )
         
+        message_count = chat_session.messages.count()
         chat_session.delete()
+        
+        print(f"🗑️ Deleted session {session_id} with {message_count} messages")
         
         return Response({
             'message': 'Session deleted successfully'

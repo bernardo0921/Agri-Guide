@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:provider/provider.dart';
 import '../../../services/ai_service.dart';
+import '../../../services/voice_ai_service.dart';
 import '../../../widgets/chat_history_panel.dart';
 import 'package:agri_guide/services/ai_text_formmater.dart';
 import 'package:agri_guide/services/auth_service.dart';
@@ -25,6 +24,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   String? _errorMessage;
   String? _currentSessionId;
   bool _isChatHistoryPanelOpen = false;
+  bool _isUsingVoice = false;
+  String selectedVoice = 'Zephyr';
 
   @override
   void initState() {
@@ -33,13 +34,14 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuthentication();
     });
-    _loadMessages();
+    // REMOVED: Local message loading - messages now come from backend only
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    VoiceAIService.dispose();
     super.dispose();
   }
 
@@ -48,40 +50,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     _scaffoldKey.currentState?.openDrawer();
   }
 
-  /// Loads messages from local storage
-  Future<void> _loadMessages() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final messagesJson = prefs.getString('ai_chat_messages');
-      final savedSessionId = prefs.getString('current_session_id');
-
-      if (messagesJson != null) {
-        final List<dynamic> decoded = json.decode(messagesJson);
-        setState(() {
-          _messages.addAll(decoded.map((e) => Map<String, dynamic>.from(e)));
-          _currentSessionId = savedSessionId;
-        });
-        _scrollToBottom();
-      }
-    } catch (e) {
-      debugPrint('Error loading messages: $e');
-    }
-  }
-
-  /// Saves messages to local storage
-  Future<void> _saveMessages() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('ai_chat_messages', json.encode(_messages));
-      if (_currentSessionId != null) {
-        await prefs.setString('current_session_id', _currentSessionId!);
-      }
-    } catch (e) {
-      debugPrint('Error saving messages: $e');
-    }
-  }
-
-  /// Sends a message to the AI
+  /// Sends a message to the AI (text or voice)
   Future<void> _sendMessage() async {
     final authService = Provider.of<AuthService>(context, listen: false);
     if (!authService.isLoggedIn) {
@@ -92,7 +61,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     final prompt = _controller.text.trim();
     if (prompt.isEmpty) return;
 
-    // Add user message
+    // Add user message to UI
     setState(() {
       _messages.add({'text': prompt, 'isUser': true});
       _isLoading = true;
@@ -100,28 +69,40 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       _controller.clear();
     });
 
-    await _saveMessages();
     _scrollToBottom();
 
-    // Send to backend
-    final result = await AIService.sendMessage(prompt);
+    // Use voice or text service based on mode
+    final result = _isUsingVoice
+        ? await VoiceAIService.chatWithVoice(
+            message: prompt,
+            sessionId: _currentSessionId,
+            voice: selectedVoice,
+          )
+        : await AIService.sendMessage(prompt);
 
     setState(() {
       _isLoading = false;
     });
 
     if (result['success']) {
-      // Add AI response
+      // Add AI response to UI
       setState(() {
         _messages.add({'text': result['response'], 'isUser': false});
         // Update session ID if returned
-        if (result['session_id'] != null) {
-          _currentSessionId = result['session_id'];
+        if (result['sessionId'] != null) {
+          _currentSessionId = result['sessionId'];
         }
       });
 
-      await _saveMessages();
       _scrollToBottom();
+
+      print('✅ Message sent successfully');
+      print('📋 Current session: $_currentSessionId');
+      print('💬 Total messages in UI: ${_messages.length}');
+
+      if (_isUsingVoice) {
+        print('🎵 Audio played');
+      }
     } else {
       // Handle error
       setState(() {
@@ -153,54 +134,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   /// Clears the chat history
-  Future<void> _clearChat() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Chat'),
-        content: const Text(
-          'Are you sure you want to clear this chat? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Clear', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      // Clear local messages
-      setState(() {
-        _messages.clear();
-        _errorMessage = null;
-        _currentSessionId = null;
-      });
-
-      // Clear local storage
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('ai_chat_messages');
-      await prefs.remove('current_session_id');
-
-      // Start new session on server
-      await AIService.startNewSession();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Chat cleared'),
-            backgroundColor: Colors.green.shade600,
-          ),
-        );
-      }
-    }
-  }
-
   /// Scrolls to bottom of chat
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -227,11 +160,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         _errorMessage = null;
       });
 
-      // Clear local storage
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('ai_chat_messages');
-      await prefs.remove('current_session_id');
-
       await AIService.startNewSession();
 
       if (mounted) {
@@ -242,10 +170,12 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           ),
         );
       }
+
+      print('🆕 New session started');
       return;
     }
 
-    // Load selected session
+    // Load selected session from backend
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -255,7 +185,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       // Set the session ID in the service
       await AIService.setSessionId(sessionId);
 
-      // Fetch chat history
+      // Fetch chat history from backend
       final result = await AIService.getChatHistory(sessionId);
 
       if (result['success'] == true) {
@@ -275,9 +205,9 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           _isLoading = false;
         });
 
-        // Save to local storage
-        await _saveMessages();
         _scrollToBottom();
+
+        print('📖 Loaded session $sessionId with ${history.length} messages');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -305,7 +235,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   void _checkAuthentication() {
     final authService = Provider.of<AuthService>(context, listen: false);
     if (!authService.isLoggedIn) {
-      // Show error or redirect to login
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please log in to use the AI Assistant'),
@@ -506,79 +435,155 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // History button
-          IconButton(
-            icon: Icon(Icons.history, color: Colors.green.shade600),
-            onPressed: openDrawer,
-            tooltip: 'Chat History',
-          ),
+          // Voice mode indicator
+          if (_isUsingVoice)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.mic, size: 18, color: Colors.blue.shade600),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Voice mode: $selectedVoice',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _isUsingVoice = false;
+                      });
+                    },
+                    child: const Text('Disable'),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 8),
+          // Input row
+          Row(
+            children: [
+              // History button
+              IconButton(
+                icon: Icon(Icons.history, color: Colors.green.shade600),
+                onPressed: openDrawer,
+                tooltip: 'Chat History',
+              ),
 
-          // Text input
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendMessage(),
-              maxLines: null,
-              enabled: !_isLoading,
-              decoration: InputDecoration(
-                hintText: 'Ask AgriGuide anything...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(
-                    color: Colors.green.shade300,
-                    width: 2,
+              // Text input
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _sendMessage(),
+                  maxLines: null,
+                  enabled: !_isLoading,
+                  decoration: InputDecoration(
+                    hintText: _isUsingVoice
+                        ? 'Ask me anything (voice response)...'
+                        : 'Ask AgriGuide anything...',
+                    hintStyle: TextStyle(color: Colors.grey.shade400),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide(color: Colors.grey.shade200),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide(
+                        color: Colors.green.shade300,
+                        width: 2,
+                      ),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
                   ),
                 ),
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
+              const SizedBox(width: 8),
 
-          // Send button
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.green.shade600, Colors.green.shade700],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.shade300,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+              // Voice mode toggle button
+              IconButton(
+                icon: Icon(
+                  _isUsingVoice ? Icons.mic : Icons.mic_none,
+                  color: _isUsingVoice
+                      ? Colors.blue.shade600
+                      : Colors.grey.shade500,
                 ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.send_rounded, color: Colors.white),
-              onPressed: _isLoading ? null : _sendMessage,
-            ),
+                onPressed: _isLoading ? null : _toggleVoiceMode,
+                tooltip: _isUsingVoice
+                    ? 'Disable voice'
+                    : 'Enable voice responses',
+              ),
+
+              // Send button
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green.shade600, Colors.green.shade700],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.shade300,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.send_rounded, color: Colors.white),
+                  onPressed: _isLoading ? null : _sendMessage,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  /// Toggle voice mode on/off
+  void _toggleVoiceMode() {
+    setState(() {
+      _isUsingVoice = !_isUsingVoice;
+    });
+
+    if (_isUsingVoice) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Voice mode enabled - responses will be read aloud with $selectedVoice voice',
+          ),
+          backgroundColor: Colors.blue.shade600,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 }
 

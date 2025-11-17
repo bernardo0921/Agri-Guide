@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
 from dotenv import load_dotenv
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-43@ixa45=t^c5v7yfmmrg2tkql4(!apm01q6w$8c3@s^wzkbz^'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-43@ixa45=t^c5v7yfmmrg2tkql4!apm01q6w$8c3@s^wzkbz^')
 
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
@@ -31,9 +32,9 @@ GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.168.100.7", "127.0.0.1", "localhost"]
-
-
+# In settings.py, find ALLOWED_HOSTS and replace with:
+# In settings.py, find ALLOWED_HOSTS and replace with:
+ALLOWED_HOSTS = ["192.168.100.7", "127.0.0.1", "localhost", ".onrender.com"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -62,7 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+    'whitenoise.middleware.WhiteNoiseMiddleware',     
 ]
 
 REST_FRAMEWORK = {
@@ -85,6 +86,7 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    'https://agriguide-backend-79j2.onrender.com'
     # Add your Flutter app's origin
 ]
 
@@ -112,10 +114,10 @@ WSGI_APPLICATION = 'backend_ai.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600
+    )
 }
 
 
@@ -213,7 +215,7 @@ AWS_QUERYSTRING_AUTH = False  # Don't add query parameter authentication
 
 # Storage backends
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files configuration (for user uploads)
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
