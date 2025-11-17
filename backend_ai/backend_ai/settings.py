@@ -34,7 +34,7 @@ DEBUG = True
 
 # In settings.py, find ALLOWED_HOSTS and replace with:
 # In settings.py, find ALLOWED_HOSTS and replace with:
-ALLOWED_HOSTS = ["192.168.100.7", "127.0.0.1", "localhost", ".onrender.com"]
+ALLOWED_HOSTS = ["192.168.100.7", "localhost", ".onrender.com"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -85,7 +85,6 @@ REST_FRAMEWORK = {
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://127.0.0.1:3000",
     'https://agriguide-backend-79j2.onrender.com'
     # Add your Flutter app's origin
 ]

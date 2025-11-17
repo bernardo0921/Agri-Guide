@@ -207,7 +207,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
         _scrollToBottom();
 
-        print('📖 Loaded session $sessionId with ${history.length} messages');
+        // print('📖 Loaded session $sessionId with ${history.length} messages');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
