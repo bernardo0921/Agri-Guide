@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http_parser/http_parser.dart';
 
 /// Service for handling AI chat functionality with authentication
 class AIService {
   /// Base URL for your Django backend
-  static const String _baseUrl = 'https://agriguide-backend-79j2.onrender.com/api';
+  static const String _baseUrl =
+      'https://agriguide-backend-79j2.onrender.com/api';
 
   /// Cached authentication token
   static String? _cachedToken;
@@ -125,6 +128,90 @@ class AIService {
       return {
         'success': false,
         'error': 'Invalid response format: ${e.message}',
+      };
+    } catch (e) {
+      return {'success': false, 'error': 'Request failed: $e'};
+    }
+  }
+
+  /// Sends an image with optional text message to the AI
+  ///
+  /// Returns a Map with:
+  /// - 'success': bool
+  /// - 'response': String (AI response text)
+  /// - 'sessionId': String (session ID for conversation continuity)
+  /// - 'imageUrl': String (URL of the uploaded image)
+  /// - 'error': String (error message if failed)
+  static Future<Map<String, dynamic>> sendImageMessage(
+    File imageFile, {
+    String? message,
+  }) async {
+    final token = await _getAuthToken();
+    if (token == null) {
+      return {'success': false, 'error': 'Not authenticated'};
+    }
+
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/chat/'));
+
+      // Add headers
+      request.headers['Authorization'] = 'Token $token';
+
+      // Add text message if provided
+      if (message != null && message.isNotEmpty) {
+        request.fields['message'] = message;
+      }
+
+      // Add image file
+      var imageStream = http.ByteStream(imageFile.openRead());
+      var imageLength = await imageFile.length();
+
+      var multipartFile = http.MultipartFile(
+        'image',
+        imageStream,
+        imageLength,
+        filename: imageFile.path.split('/').last,
+        contentType: MediaType('image', 'jpeg'),
+      );
+
+      request.files.add(multipartFile);
+
+      // Send request
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newSessionId = data['session_id'];
+        final imageUrl = data['image_url'];
+
+        // Cache the session ID for future requests
+        if (newSessionId != null) {
+          await _setSessionId(newSessionId);
+        }
+
+        return {
+          'success': true,
+          'response': data['response'] ?? 'Image analyzed successfully.',
+          'sessionId': newSessionId,
+          'imageUrl': imageUrl,
+        };
+      } else if (response.statusCode == 401) {
+        return {
+          'success': false,
+          'error': 'Authentication failed. Please login again.',
+          'requiresLogin': true,
+        };
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to send image: ${response.statusCode}',
+        };
+      }
+    } on http.ClientException catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: ${e.message}. Please check your connection.',
       };
     } catch (e) {
       return {'success': false, 'error': 'Request failed: $e'};

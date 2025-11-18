@@ -1,4 +1,4 @@
-import 'package:agri_guide/screens/home/Navigation_pages/ai_advisory_page.dart';
+import 'package:agri_guide/screens/home/Navigation_pages/ai/ai_advisory_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/community/community_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/dashboard_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/lms/lms_page.dart';
