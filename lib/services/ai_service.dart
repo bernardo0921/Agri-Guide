@@ -62,7 +62,147 @@ class AIService {
     await prefs.remove('ai_session_id');
   }
 
-  /// Sends a message to the AI and returns the response
+ // ai_service.dart - FIXED sendMessageStream method
+// Replace the existing sendMessageStream method with this corrected version
+
+/// Sends a message to the AI with streaming support (for typing animation)
+///
+/// Returns a Stream of Maps with:
+/// - 'success': bool
+/// - 'type': String ('session_id', 'chunk', 'done', 'error')
+/// - 'chunk': String (text chunk for streaming)
+/// - 'fullText': String (accumulated text so far)
+/// - 'response': String (complete AI response when done)
+/// - 'sessionId': String (session ID for conversation continuity)
+/// - 'error': String (error message if failed)
+static Stream<Map<String, dynamic>> sendMessageStream({
+  required Map<String, dynamic> requestData,
+}) async* {
+  final token = await _getAuthToken();
+  if (token == null) {
+    yield {'success': false, 'error': 'Not authenticated'};
+    return;
+  }
+
+  // Extract message and session_id from requestData
+  final message = requestData['message'] as String?;
+  final sessionId = requestData['session_id'] as String?;
+
+  if (message == null || message.isEmpty) {
+    yield {'success': false, 'error': 'Message is required'};
+    return;
+  }
+
+  final url = Uri.parse('$_baseUrl/chat-stream/');
+  final request = http.Request('POST', url);
+
+  request.headers.addAll({
+    'Authorization': 'Token $token',
+    'Content-Type': 'application/json',
+  });
+
+  // FIXED: Include session_id in request body
+  final requestBody = {
+    'message': message,
+    if (sessionId != null) 'session_id': sessionId, // ✅ CRITICAL FIX
+  };
+
+  request.body = json.encode(requestBody);
+
+  print('🚀 Sending stream request with session_id: $sessionId');
+
+  try {
+    final streamedResponse = await request.send();
+
+    if (streamedResponse.statusCode != 200) {
+      if (streamedResponse.statusCode == 401) {
+        yield {
+          'success': false,
+          'error': 'Authentication failed. Please login again.',
+          'requiresLogin': true,
+        };
+      } else {
+        yield {
+          'success': false,
+          'error': 'Server error: ${streamedResponse.statusCode}'
+        };
+      }
+      return;
+    }
+
+    String buffer = '';
+    String fullResponse = '';
+
+    await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
+      buffer += chunk;
+
+      // Process complete SSE messages (format: "data: {...}\n\n")
+      while (buffer.contains('\n\n')) {
+        final index = buffer.indexOf('\n\n');
+        final message = buffer.substring(0, index);
+        buffer = buffer.substring(index + 2);
+
+        if (message.startsWith('data: ')) {
+          final jsonStr = message.substring(6).trim();
+          try {
+            final data = json.decode(jsonStr);
+
+            if (data['type'] == 'session_id') {
+              final newSessionId = data['session_id'];
+              if (newSessionId != null) {
+                await _setSessionId(newSessionId);
+                print('✅ Received and saved session_id: $newSessionId');
+              }
+              yield {
+                'success': true,
+                'type': 'session_id',
+                'sessionId': newSessionId,
+              };
+            } else if (data['type'] == 'chunk') {
+              fullResponse += data['text'];
+              yield {
+                'success': true,
+                'type': 'chunk',
+                'chunk': data['text'],
+                'fullText': fullResponse,
+              };
+            } else if (data['type'] == 'done') {
+              yield {
+                'success': true,
+                'type': 'done',
+                'response': data['full_text'],
+                'sessionId': _cachedSessionId,
+              };
+            } else if (data['type'] == 'error') {
+              yield {
+                'success': false,
+                'type': 'error',
+                'error': data['error'],
+              };
+            }
+          } catch (e) {
+            print('Error parsing SSE data: $e');
+            // Continue processing other chunks
+          }
+        }
+      }
+    }
+  } on http.ClientException catch (e) {
+    yield {
+      'success': false,
+      'error': 'Network error: ${e.message}. Please check your connection.',
+    };
+  } on SocketException catch (e) {
+    yield {
+      'success': false,
+      'error': 'Connection error: ${e.message}. Check your internet.',
+    };
+  } catch (e) {
+    yield {'success': false, 'error': 'Connection error: $e'};
+  }
+}
+
+  /// Sends a message to the AI (non-streaming, legacy support)
   ///
   /// Returns a Map with:
   /// - 'success': bool
@@ -75,6 +215,8 @@ class AIService {
       return {'success': false, 'error': 'Not authenticated'};
     }
 
+    final sessionId = await _getSessionId();
+
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/chat/'),
@@ -82,7 +224,10 @@ class AIService {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
-        body: json.encode({'message': message}),
+        body: json.encode({
+          'message': message,
+          if (sessionId != null) 'session_id': sessionId,
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -151,11 +296,18 @@ class AIService {
       return {'success': false, 'error': 'Not authenticated'};
     }
 
+    final sessionId = await _getSessionId();
+
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/chat/'));
 
       // Add headers
       request.headers['Authorization'] = 'Token $token';
+
+      // Add session ID if exists
+      if (sessionId != null) {
+        request.fields['session_id'] = sessionId;
+      }
 
       // Add text message if provided
       if (message != null && message.isNotEmpty) {

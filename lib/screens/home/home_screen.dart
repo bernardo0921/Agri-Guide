@@ -272,7 +272,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             title: Row(
               children: [
                 if (_selectedIndex == 1) ...[
-                  Icon(Icons.eco, color: Colors.green.shade600, size: 24),
+                  Image.asset(
+                    'assets/images/logo.png', // The path to your image file
+                    width:
+                        80, // Use width/height to set the size, similar to the Icon's 'size' property
+                    height: 80,
+                    // You won't use the 'color' property here unless you're tinting a non-colored image.
+                  ),
                   const SizedBox(width: 8),
                 ],
                 Text(_pageTitles[_selectedIndex]),

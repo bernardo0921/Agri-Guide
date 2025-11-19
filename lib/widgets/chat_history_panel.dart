@@ -27,6 +27,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
   }
 
   Future<void> _loadSessions() async {
+    // Check if mounted before first setState
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -34,6 +37,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
 
     try {
       final result = await AIService.getChatSessions();
+
+      // Check if mounted after async call
+      if (!mounted) return;
 
       if (result['success'] == true) {
         final sessions = result['sessions'] as List?;
@@ -48,6 +54,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
         });
       }
     } catch (e) {
+      // Check if mounted in catch block
+      if (!mounted) return;
+
       setState(() {
         _error = 'Error: $e';
         _isLoading = false;
@@ -90,63 +99,65 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
     );
 
     if (confirmed == true) {
+      // Check if mounted before showing snackbar
+      if (!mounted) return;
+
       // Show loading indicator
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
-                SizedBox(width: 12),
-                Text('Deleting chat...'),
-              ],
-            ),
-            duration: Duration(seconds: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Deleting chat...'),
+            ],
           ),
-        );
-      }
+          duration: Duration(seconds: 2),
+        ),
+      );
 
       // Call API to delete session
       final result = await AIService.deleteSession(sessionId);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      // Check if mounted after async call
+      if (!mounted) return;
 
-        if (result['success'] == true) {
-          // Remove from local list
-          setState(() {
-            _sessions.removeAt(index);
-          });
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Chat deleted successfully'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
+      if (result['success'] == true) {
+        // Remove from local list
+        setState(() {
+          _sessions.removeAt(index);
+        });
 
-          // If deleted session was active, notify parent to start new session
-          if (sessionId == widget.currentSessionId &&
-              widget.onSessionSelected != null) {
-            widget.onSessionSelected!('new');
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['error'] ?? 'Failed to delete chat'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Chat deleted successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // If deleted session was active, notify parent to start new session
+        if (sessionId == widget.currentSessionId &&
+            widget.onSessionSelected != null) {
+          widget.onSessionSelected!('new');
         }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['error'] ?? 'Failed to delete chat'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     }
   }
