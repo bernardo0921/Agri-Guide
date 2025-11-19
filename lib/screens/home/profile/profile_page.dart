@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
-import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/core/language/app_strings.dart';
 import 'edit_profile_page.dart';
 import 'package:agri_guide/screens/auth_screens/login_screen.dart';

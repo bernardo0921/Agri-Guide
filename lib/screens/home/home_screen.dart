@@ -87,77 +87,77 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  void _handleMenuSelection(String value) {
-    switch (value) {
-      case 'profile':
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
-        break;
-      case 'settings':
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(AppStrings.settingsComingSoon)));
-        break;
-      case 'help':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.helpSupportComingSoon)),
-        );
-        break;
-      case 'logout':
-        _handleLogout();
-        break;
-    }
-  }
+  // void _handleMenuSelection(String value) {
+  //   switch (value) {
+  //     case 'profile':
+  //       Navigator.of(
+  //         context,
+  //       ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
+  //       break;
+  //     case 'settings':
+  //       ScaffoldMessenger.of(
+  //         context,
+  //       ).showSnackBar(SnackBar(content: Text(AppStrings.settingsComingSoon)));
+  //       break;
+  //     case 'help':
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text(AppStrings.helpSupportComingSoon)),
+  //       );
+  //       break;
+  //     case 'logout':
+  //       _handleLogout();
+  //       break;
+  //   }
+  // }
 
-  PopupMenuItem<String> _buildMenuItem(
-    String value,
-    IconData icon,
-    String text,
-    Color color,
-  ) {
-    return PopupMenuItem<String>(
-      value: value,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 12),
-            Text(
-              text,
-              style: TextStyle(color: color, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // PopupMenuItem<String> _buildMenuItem(
+  //   String value,
+  //   IconData icon,
+  //   String text,
+  //   Color color,
+  // ) {
+  //   return PopupMenuItem<String>(
+  //     value: value,
+  //     child: Container(
+  //       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+  //       child: Row(
+  //         children: [
+  //           Icon(icon, size: 20, color: color),
+  //           const SizedBox(width: 12),
+  //           Text(
+  //             text,
+  //             style: TextStyle(color: color, fontWeight: FontWeight.w500),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Future<void> _handleLogout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppStrings.logoutTitle),
-        content: Text(AppStrings.logoutConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(AppStrings.logout),
-          ),
-        ],
-      ),
-    );
+  // Future<void> _handleLogout() async {
+  //   final confirmed = await showDialog<bool>(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: Text(AppStrings.logoutTitle),
+  //       content: Text(AppStrings.logoutConfirm),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(context).pop(false),
+  //           child: Text(AppStrings.cancel),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Navigator.of(context).pop(true),
+  //           child: Text(AppStrings.logout),
+  //         ),
+  //       ],
+  //     ),
+  //   );
 
-    if (confirmed == true && mounted) {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.logout(context);
-    }
-  }
+  //   if (confirmed == true && mounted) {
+  //     final authService = Provider.of<AuthService>(context, listen: false);
+  //     await authService.logout(context);
+  //   }
+  // }
 
   /// Get user initials for avatar fallback
   String _getInitials(AuthService authService) {
