@@ -904,4 +904,331 @@ class AppStrings {
         return "$feature e tla tla haufinyane";
     }
   }
+
+  // Home Screen
+  static String get dashboard {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Dashboard";
+      case AppLanguage.sesotho:
+        return "Letlapa la Taolo";
+    }
+  }
+
+  static String get aiAdvisory {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "AI Advisory";
+      case AppLanguage.sesotho:
+        return "Likeletso tsa AI";
+    }
+  }
+
+  static String get community {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Community";
+      case AppLanguage.sesotho:
+        return "Sechaba";
+    }
+  }
+
+  static String get learning {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Learning";
+      case AppLanguage.sesotho:
+        return "Thuto";
+    }
+  }
+
+  static String get profile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Profile";
+      case AppLanguage.sesotho:
+        return "Profaele";
+    }
+  }
+
+  static String get helpSupport {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Help & Support";
+      case AppLanguage.sesotho:
+        return "Thuso le TÅ¡ehetso";
+    }
+  }
+
+  static String get settingsComingSoon {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Settings - Coming soon";
+      case AppLanguage.sesotho:
+        return "Litlhophiso - E tla tla haufinyane";
+    }
+  }
+
+  static String get helpSupportComingSoon {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Help & Support - Coming soon";
+      case AppLanguage.sesotho:
+        return "Thuso le TÅ¡ehetso - E tla tla haufinyane";
+    }
+  }
+
+  static String get logoutTitle {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Logout";
+      case AppLanguage.sesotho:
+        return "Tsoa";
+    }
+  }
+
+  // Profile Page Strings
+  static String get myProfile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "My Profile";
+      case AppLanguage.sesotho:
+        return "Profaele ea Ka";
+    }
+  }
+
+  static String get accountDetails {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Account Details";
+      case AppLanguage.sesotho:
+        return "Lintlha tsa Ak'haonte";
+    }
+  }
+
+  static String get emailAddress {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Email Address";
+      case AppLanguage.sesotho:
+        return "Aterese ea Emeile";
+    }
+  }
+
+  static String get farmer {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Farmer";
+      case AppLanguage.sesotho:
+        return "Molemisi";
+    }
+  }
+
+  static String get extensionWorker {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Extension Worker";
+      case AppLanguage.sesotho:
+        return "Mosebeletsi oa Tlatsetso";
+    }
+  }
+
+  static String get workerDetails {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Worker Details";
+      case AppLanguage.sesotho:
+        return "Lintlha tsa Mosebeletsi";
+    }
+  }
+
+  static String get farmingProfile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Farming Profile";
+      case AppLanguage.sesotho:
+        return "Profaele ea Temo";
+    }
+  }
+
+  static String get noFarmingProfileAvailable {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "No farming profile information available";
+      case AppLanguage.sesotho:
+        return "Ha ho na tlhahisoleseling ea profaele ea temo";
+    }
+  }
+
+  static String get acres {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "acres";
+      case AppLanguage.sesotho:
+        return "lieka";
+    }
+  }
+
+  static String get years {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "years";
+      case AppLanguage.sesotho:
+        return "lilemo";
+    }
+  }
+
+  static String get editProfile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Edit Profile";
+      case AppLanguage.sesotho:
+        return "Fetola Profaele";
+    }
+  }
+
+  static String get failedToLoadProfile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Failed to load profile";
+      case AppLanguage.sesotho:
+        return "Ho hlōlehile ho jara profaele";
+    }
+  }
+
+  static String get unknownErrorOccurred {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Unknown error occurred";
+      case AppLanguage.sesotho:
+        return "Phoso e sa tsejoeng e etsahetse";
+    }
+  }
+
+  // Edit Profile Page Strings
+  static String get personalInformationTitle {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Personal Information";
+      case AppLanguage.sesotho:
+        return "Tlhahisoleseling ea Botho";
+    }
+  }
+
+  static String get tapCameraToChangePhoto {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Tap camera icon to change photo";
+      case AppLanguage.sesotho:
+        return "Tobetsa lethathamo la khemera ho fetola setšoantšo";
+    }
+  }
+
+  static String get chooseFromGallery {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Choose from Gallery";
+      case AppLanguage.sesotho:
+        return "Khetha ho tsoa Galereng";
+    }
+  }
+
+  static String get takePhoto {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Take a Photo";
+      case AppLanguage.sesotho:
+        return "Nka Setšoantšo";
+    }
+  }
+
+  static String get removePhoto {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Remove Photo";
+      case AppLanguage.sesotho:
+        return "Tlosa Setšoantšo";
+    }
+  }
+
+  static String get saving {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Saving...";
+      case AppLanguage.sesotho:
+        return "E ntse e boloka...";
+    }
+  }
+
+  static String get saveChanges {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Save Changes";
+      case AppLanguage.sesotho:
+        return "Boloka Liphetoho";
+    }
+  }
+
+  static String get profileUpdatedSuccessfully {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Profile updated successfully!";
+      case AppLanguage.sesotho:
+        return "Profaele e ntlafalitsoe ka katleho!";
+    }
+  }
+
+  static String get failedToUpdateProfile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Failed to update profile";
+      case AppLanguage.sesotho:
+        return "Ho hlōlehile ho ntlafatsa profaele";
+    }
+  }
+
+  static String get failedToPickImage {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Failed to pick image";
+      case AppLanguage.sesotho:
+        return "Ho hlōlehile ho khetha setšoantšo";
+    }
+  }
+
+  static String get farmSizeAcres {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Farm Size (acres)";
+      case AppLanguage.sesotho:
+        return "Boholo ba Polasi (lieka)";
+    }
+  }
+
+  static String get specificLocation {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Specific Location";
+      case AppLanguage.sesotho:
+        return "Sebaka se Itseng";
+    }
+  }
+
+  static String get cropsGrownLabel {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Crops Grown";
+      case AppLanguage.sesotho:
+        return "Lijalo tse Lemileng";
+    }
+  }
+
+  static String fieldIsRequired(String fieldName) {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "$fieldName is required.";
+      case AppLanguage.sesotho:
+        return "$fieldName e hlokahala.";
+    }
+  }
 }

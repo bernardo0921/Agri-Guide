@@ -5,6 +5,8 @@ import 'package:agri_guide/screens/home/Navigation_pages/lms/lms_page.dart';
 import 'package:agri_guide/widgets/buttom_navigation_bar.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/screens/auth_screens/login_screen.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'profile/profile_page.dart';
@@ -25,14 +27,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // List of screens for each navigation item
   late final List<Widget> _screens;
 
-  // Page titles for AppBar
-  final List<String> _pageTitles = [
-    'Dashboard',
-    'AI Advisory',
-    'Community',
-    'Learning',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -46,12 +40,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       const CommunityPage(),
       const LMSPageContent(),
     ];
+
+    // Listen to language changes to rebuild UI
+    AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
     super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -93,11 +97,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case 'settings':
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Settings - Coming soon')));
+        ).showSnackBar(SnackBar(content: Text(AppStrings.settingsComingSoon)));
         break;
       case 'help':
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Help & Support - Coming soon')),
+          SnackBar(content: Text(AppStrings.helpSupportComingSoon)),
         );
         break;
       case 'logout':
@@ -134,16 +138,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(AppStrings.logoutTitle),
+        content: Text(AppStrings.logoutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout'),
+            child: Text(AppStrings.logout),
           ),
         ],
       ),
@@ -246,6 +250,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     ];
   }
 
+  /// Get page titles based on current language
+  List<String> get _pageTitles => [
+        AppStrings.dashboard,
+        AppStrings.aiAdvisory,
+        AppStrings.community,
+        AppStrings.learning,
+      ];
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthService>(
@@ -260,37 +272,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             }
           });
 
-          return const Scaffold(
+          return Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            // Don't show leading button, let AIAdvisoryPage handle its own drawer
-            automaticallyImplyLeading: false,
-            title: Row(
-              children: [
-                if (_selectedIndex == 1) ...[
-                  Image.asset(
-                    'assets/images/logo.png', // The path to your image file
-                    width:
-                        80, // Use width/height to set the size, similar to the Icon's 'size' property
-                    height: 80,
-                    // You won't use the 'color' property here unless you're tinting a non-colored image.
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Text(_pageTitles[_selectedIndex]),
-              ],
-            ),
-            actions: _buildAppBarActions(authService),
-          ),
-          body: IndexedStack(index: _selectedIndex, children: _screens),
-          bottomNavigationBar: CustomBottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: _onNavItemTapped,
-          ),
+        return ValueListenableBuilder(
+          valueListenable: AppNotifiers.languageNotifier,
+          builder: (context, language, child) {
+            return Scaffold(
+              appBar: AppBar(
+                // Don't show leading button, let AIAdvisoryPage handle its own drawer
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: [
+                    if (_selectedIndex == 1) ...[
+                      Image.asset(
+                        'assets/images/logo.png',
+                        width: 80,
+                        height: 80,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(_pageTitles[_selectedIndex]),
+                  ],
+                ),
+                actions: _buildAppBarActions(authService),
+              ),
+              body: IndexedStack(index: _selectedIndex, children: _screens),
+              bottomNavigationBar: CustomBottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: _onNavItemTapped,
+              ),
+            );
+          },
         );
       },
     );

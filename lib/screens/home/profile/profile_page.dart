@@ -3,8 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
 import 'edit_profile_page.dart';
-import 'package:agri_guide/screens/auth_screens/login_screen.dart'; // Add import for LoginScreen
+import 'package:agri_guide/screens/auth_screens/login_screen.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,7 +19,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   // Base URL for constructing full image URLs
   static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
-  
+
   // State variables for data fetching and UI
   Map<String, dynamic>? _profileData;
   bool _isLoading = true;
@@ -26,6 +29,20 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _fetchProfileData();
+    // Listen to language changes to rebuild UI
+    AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   /// Fetch the complete user profile from the backend
@@ -39,7 +56,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      
+
       // Fetch profile from backend
       await authService.fetchProfile();
 
@@ -52,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load profile data. Please try again.';
+          _error = AppStrings.unknownErrorOccurred;
           debugPrint('Profile fetch error: $e');
         });
       }
@@ -83,14 +100,14 @@ class _ProfilePageState extends State<ProfilePage> {
       if (lastName.isNotEmpty) {
         initials += lastName[0];
       }
-      
+
       if (initials.isEmpty) {
         final username = _profileData!['username'] as String? ?? '';
         if (username.isNotEmpty) {
           initials = username[0];
         }
       }
-      
+
       return initials.toUpperCase();
     }
     return 'U';
@@ -115,17 +132,17 @@ class _ProfilePageState extends State<ProfilePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(AppStrings.logoutTitle),
+        content: Text(AppStrings.logoutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
+            child: Text(AppStrings.logout),
           ),
         ],
       ),
@@ -154,19 +171,27 @@ class _ProfilePageState extends State<ProfilePage> {
     final String fullName = '$firstName $lastName'.trim();
     final bool isFarmer = userType == 'farmer';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'My Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.green.shade700,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.green))
-          : _error != null
+    return ValueListenableBuilder(
+      valueListenable: AppNotifiers.languageNotifier,
+      builder: (context, language, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              AppStrings.myProfile,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.green.shade700,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.green),
+                )
+              : _error != null
               ? _buildErrorState()
               : ListView(
                   padding: const EdgeInsets.all(20),
@@ -180,20 +205,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 25),
 
                     // 2. User Contact Information
-                    _buildSectionHeader('Account Details'),
+                    _buildSectionHeader(AppStrings.accountDetails),
                     _buildDetailCard(
                       Icons.person_outline,
-                      'Username',
+                      AppStrings.username,
                       _profileData?['username'] ?? 'N/A',
                     ),
                     _buildDetailCard(
                       Icons.email_outlined,
-                      'Email Address',
+                      AppStrings.emailAddress,
                       _profileData?['email'] ?? 'N/A',
                     ),
                     _buildDetailCard(
                       Icons.phone_outlined,
-                      'Phone Number',
+                      AppStrings.phoneNumber,
                       _profileData?['phone_number'] ?? 'N/A',
                     ),
                     const SizedBox(height: 10),
@@ -202,21 +227,24 @@ class _ProfilePageState extends State<ProfilePage> {
                     if (isFarmer) ..._buildFarmerDetails(),
 
                     if (!isFarmer) ...[
-                      _buildSectionHeader('Worker Details'),
+                      _buildSectionHeader(AppStrings.workerDetails),
                       _buildDetailCard(
                         Icons.work_outline,
-                        'Organization',
-                        _profileData?['extension_worker_profile']?['organization'] ?? 'N/A',
+                        AppStrings.organization,
+                        _profileData?['extension_worker_profile']?['organization'] ??
+                            'N/A',
                       ),
                       _buildDetailCard(
                         Icons.badge_outlined,
-                        'Employee ID',
-                        _profileData?['extension_worker_profile']?['employee_id'] ?? 'N/A',
+                        AppStrings.employeeId,
+                        _profileData?['extension_worker_profile']?['employee_id'] ??
+                            'N/A',
                       ),
                       _buildDetailCard(
                         Icons.school_outlined,
-                        'Specialization',
-                        _profileData?['extension_worker_profile']?['specialization'] ?? 'N/A',
+                        AppStrings.specialization,
+                        _profileData?['extension_worker_profile']?['specialization'] ??
+                            'N/A',
                       ),
                     ],
 
@@ -230,8 +258,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             Navigator.of(context)
                                 .push(
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        EditProfilePage(initialData: _profileData!),
+                                    builder: (context) => EditProfilePage(
+                                      initialData: _profileData!,
+                                    ),
                                   ),
                                 )
                                 .then((_) {
@@ -240,9 +269,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           }
                         },
                         icon: const Icon(Icons.edit, color: Colors.white),
-                        label: const Text(
-                          'Edit Profile',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        label: Text(
+                          AppStrings.editProfile,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade700,
@@ -266,7 +298,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         onPressed: _handleLogout,
                         icon: Icon(Icons.logout, color: Colors.red.shade700),
                         label: Text(
-                          'Logout',
+                          AppStrings.logout,
                           style: TextStyle(
                             color: Colors.red.shade700,
                             fontSize: 16,
@@ -277,6 +309,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
+        );
+      },
     );
   }
 
@@ -289,14 +323,10 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              color: Colors.red.shade300,
-              size: 64,
-            ),
+            Icon(Icons.error_outline, color: Colors.red.shade300, size: 64),
             const SizedBox(height: 16),
             Text(
-              'Failed to load profile',
+              AppStrings.failedToLoadProfile,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -305,7 +335,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _error ?? 'Unknown error occurred',
+              _error ?? AppStrings.unknownErrorOccurred,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[500]),
             ),
@@ -313,7 +343,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ElevatedButton.icon(
               onPressed: _fetchProfileData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(AppStrings.retry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
                 foregroundColor: Colors.white,
@@ -335,7 +365,7 @@ class _ProfilePageState extends State<ProfilePage> {
     bool isVerified,
   ) {
     final profilePictureUrl = _getProfilePictureUrl();
-    
+
     return Column(
       children: [
         Stack(
@@ -433,7 +463,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(width: 6),
               Text(
-                userType == 'farmer' ? 'Farmer' : 'Extension Worker',
+                userType == 'farmer'
+                    ? AppStrings.farmer
+                    : AppStrings.extensionWorker,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -451,12 +483,12 @@ class _ProfilePageState extends State<ProfilePage> {
     final farmerProfile = _getFarmerProfile();
     if (farmerProfile == null) {
       return [
-        _buildSectionHeader('Farming Profile'),
+        _buildSectionHeader(AppStrings.farmingProfile),
         Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'No farming profile information available',
+              AppStrings.noFarmingProfileAvailable,
               style: TextStyle(color: Colors.grey[600]),
             ),
           ),
@@ -468,38 +500,39 @@ class _ProfilePageState extends State<ProfilePage> {
     final String region = farmerProfile['region'] ?? 'N/A';
     final String farmName = farmerProfile['farm_name'] ?? 'N/A';
     final String farmSize = farmerProfile['farm_size'] != null
-        ? '${farmerProfile['farm_size']} acres'
+        ? '${farmerProfile['farm_size']} ${AppStrings.acres}'
         : 'N/A';
     final String cropsGrown = farmerProfile['crops_grown'] ?? 'N/A';
     final String farmingMethod = farmerProfile['farming_method'] ?? 'N/A';
-    final String yearsOfExperience = farmerProfile['years_of_experience'] != null
-        ? '${farmerProfile['years_of_experience']} years'
+    final String yearsOfExperience =
+        farmerProfile['years_of_experience'] != null
+        ? '${farmerProfile['years_of_experience']} ${AppStrings.years}'
         : 'N/A';
 
     return [
-      _buildSectionHeader('Farming Profile'),
+      _buildSectionHeader(AppStrings.farmingProfile),
 
       // Farm Identity
       if (farmName != 'N/A')
-        _buildDetailCard(Icons.agriculture, 'Farm Name', farmName),
+        _buildDetailCard(Icons.agriculture, AppStrings.farmName, farmName),
       if (farmSize != 'N/A')
-        _buildDetailCard(Icons.landscape, 'Farm Size', farmSize),
+        _buildDetailCard(Icons.landscape, AppStrings.farmSize, farmSize),
 
       // Location
       if (location != 'N/A')
-        _buildDetailCard(Icons.location_on, 'Location', location),
+        _buildDetailCard(Icons.location_on, AppStrings.location, location),
       if (region != 'N/A')
-        _buildDetailCard(Icons.map, 'Region', region),
+        _buildDetailCard(Icons.map, AppStrings.region, region),
 
       // Farming Practices
       if (cropsGrown != 'N/A')
-        _buildDetailCard(Icons.grass, 'Crops Grown', cropsGrown),
+        _buildDetailCard(Icons.grass, AppStrings.cropsGrownLabel, cropsGrown),
       if (farmingMethod != 'N/A')
-        _buildDetailCard(Icons.eco, 'Farming Method', farmingMethod),
+        _buildDetailCard(Icons.eco, AppStrings.farmingMethod, farmingMethod),
       if (yearsOfExperience != 'N/A')
         _buildDetailCard(
           Icons.trending_up,
-          'Years of Experience',
+          AppStrings.yearsOfExperience,
           yearsOfExperience,
         ),
 

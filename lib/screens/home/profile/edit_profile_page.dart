@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic> initialData;
@@ -82,6 +84,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         text: (farmerProfile['years_of_experience']?.toString() ?? ''),
       );
     }
+
+    // Listen to language changes to rebuild UI
+    AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
   @override
@@ -99,7 +104,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
       farmingMethodController.dispose();
       yearsOfExperienceController.dispose();
     }
+    AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
     super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -119,7 +131,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: ${e.toString()}')),
+          SnackBar(content: Text('${AppStrings.failedToPickImage}: ${e.toString()}')),
         );
       }
     }
@@ -134,7 +146,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.photo_library, color: Colors.green),
-                title: const Text('Choose from Gallery'),
+                title: Text(AppStrings.chooseFromGallery),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.gallery);
@@ -142,7 +154,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_camera, color: Colors.green),
-                title: const Text('Take a Photo'),
+                title: Text(AppStrings.takePhoto),
                 onTap: () {
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.camera);
@@ -152,7 +164,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   widget.initialData['profile_picture'] != null)
                 ListTile(
                   leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text('Remove Photo'),
+                  title: Text(AppStrings.removePhoto),
                   onTap: () {
                     Navigator.of(context).pop();
                     setState(() {
@@ -209,14 +221,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
+          SnackBar(content: Text(AppStrings.profileUpdatedSuccessfully)),
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
+          SnackBar(content: Text('${AppStrings.failedToUpdateProfile}: ${e.toString()}')),
         );
       }
     } finally {
@@ -239,154 +251,159 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.green.shade700,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              // Profile Picture Section
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.green.shade100,
-                    backgroundImage: _selectedImage != null
-                        ? FileImage(_selectedImage!) as ImageProvider
-                        : (widget.initialData['profile_picture'] != null &&
-                                  widget.initialData['profile_picture']
-                                      .toString()
-                                      .isNotEmpty
-                              ? NetworkImage(
-                                  widget.initialData['profile_picture'],
-                                )
-                              : null),
-                    child:
-                        (_selectedImage == null &&
-                            (widget.initialData['profile_picture'] == null ||
-                                widget.initialData['profile_picture']
-                                    .toString()
-                                    .isEmpty))
-                        ? Text(
-                            _getInitials(),
-                            style: TextStyle(
-                              fontSize: 48,
-                              color: Colors.green.shade800,
-                              fontWeight: FontWeight.w600,
+    return ValueListenableBuilder(
+      valueListenable: AppNotifiers.languageNotifier,
+      builder: (context, language, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              AppStrings.editProfile,
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green.shade700,
+            iconTheme: const IconThemeData(color: Colors.white),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  // Profile Picture Section
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.green.shade100,
+                        backgroundImage: _selectedImage != null
+                            ? FileImage(_selectedImage!) as ImageProvider
+                            : (widget.initialData['profile_picture'] != null &&
+                                      widget.initialData['profile_picture']
+                                          .toString()
+                                          .isNotEmpty
+                                  ? NetworkImage(
+                                      widget.initialData['profile_picture'],
+                                    )
+                                  : null),
+                        child:
+                            (_selectedImage == null &&
+                                (widget.initialData['profile_picture'] == null ||
+                                    widget.initialData['profile_picture']
+                                        .toString()
+                                        .isEmpty))
+                            ? Text(
+                                _getInitials(),
+                                style: TextStyle(
+                                  fontSize: 48,
+                                  color: Colors.green.shade800,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: _showImageSourceDialog,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade600,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
                             ),
-                          )
-                        : null,
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _showImageSourceDialog,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade600,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 20,
+                  const SizedBox(height: 10),
+                  Text(
+                    AppStrings.tapCameraToChangePhoto,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 30),
+
+                  Text(
+                    AppStrings.personalInformationTitle,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Divider(color: Colors.green),
+                  _buildTextField(firstNameController, AppStrings.firstName, Icons.person),
+                  _buildTextField(
+                    lastNameController,
+                    AppStrings.lastName,
+                    Icons.person_outline,
+                  ),
+                  _buildTextField(
+                    emailController,
+                    AppStrings.email,
+                    Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                    isReadOnly: true,
+                  ),
+                  _buildTextField(
+                    phoneNumberController,
+                    AppStrings.phoneNumber,
+                    Icons.phone,
+                    keyboardType: TextInputType.phone,
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  if (isFarmer) ..._buildFarmerFields(),
+
+                  const SizedBox(height: 30),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSaving ? null : _saveProfile,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save, color: Colors.white),
+                      label: Text(
+                        _isSaving ? AppStrings.saving : AppStrings.saveChanges,
+                        style: const TextStyle(
+                          fontSize: 16,
                           color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 5,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Tap camera icon to change photo',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 30),
-
-              const Text(
-                'Personal Information',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const Divider(color: Colors.green),
-              _buildTextField(firstNameController, 'First Name', Icons.person),
-              _buildTextField(
-                lastNameController,
-                'Last Name',
-                Icons.person_outline,
-              ),
-              _buildTextField(
-                emailController,
-                'Email',
-                Icons.email,
-                keyboardType: TextInputType.emailAddress,
-                isReadOnly: true,
-              ),
-              _buildTextField(
-                phoneNumberController,
-                'Phone Number',
-                Icons.phone,
-                keyboardType: TextInputType.phone,
-              ),
-
-              const SizedBox(height: 30),
-
-              if (isFarmer) ..._buildFarmerFields(),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isSaving ? null : _saveProfile,
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.save, color: Colors.white),
-                  label: Text(
-                    _isSaving ? 'Saving...' : 'Save Changes',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    elevation: 5,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -419,7 +436,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return '$label is required.';
+            return AppStrings.fieldIsRequired(label);
           }
           return null;
         },
@@ -430,33 +447,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
   List<Widget> _buildFarmerFields() {
     return [
       const SizedBox(height: 10),
-      const Text(
-        'Farming Profile',
-        style: TextStyle(
+      Text(
+        AppStrings.farmingProfile,
+        style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
       ),
       const Divider(color: Colors.green),
-      _buildTextField(farmNameController, 'Farm Name', Icons.agriculture),
+      _buildTextField(farmNameController, AppStrings.farmName, Icons.agriculture),
       _buildTextField(
         farmSizeController,
-        'Farm Size (acres)',
+        AppStrings.farmSizeAcres,
         Icons.fence,
         keyboardType: TextInputType.number,
       ),
       _buildTextField(
         locationController,
-        'Specific Location',
+        AppStrings.specificLocation,
         Icons.location_on,
       ),
-      _buildTextField(regionController, 'Region', Icons.map),
-      _buildTextField(cropsGrownController, 'Crops Grown', Icons.grain),
-      _buildTextField(farmingMethodController, 'Farming Method', Icons.eco),
+      _buildTextField(regionController, AppStrings.region, Icons.map),
+      _buildTextField(cropsGrownController, AppStrings.cropsGrownLabel, Icons.grain),
+      _buildTextField(farmingMethodController, AppStrings.farmingMethod, Icons.eco),
       _buildTextField(
         yearsOfExperienceController,
-        'Years of Experience',
+        AppStrings.yearsOfExperience,
         Icons.trending_up,
         keyboardType: TextInputType.number,
       ),
