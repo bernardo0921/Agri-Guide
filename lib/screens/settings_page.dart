@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/providers/theme_provider.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -15,74 +17,93 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: ValueListenableBuilder(
+          valueListenable: AppNotifiers.languageNotifier,
+          builder: (context, language, child) {
+            return Text(AppStrings.settings);
+          },
+        ),
         elevation: 0,
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Appearance Section
-            _buildSectionHeader('Appearance'),
-            _buildThemeSettingTile(),
-            const Divider(height: 1),
+      body: ValueListenableBuilder(
+        valueListenable: AppNotifiers.languageNotifier,
+        builder: (context, language, child) {
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Appearance Section
+                _buildSectionHeader(AppStrings.appearance),
+                _buildThemeSettingTile(),
+                const Divider(height: 1),
 
-            // Notifications Section
-            _buildSectionHeader('Notifications'),
-            _buildComingSoonTile('Push Notifications', Icons.notifications),
-            _buildComingSoonTile('Email Notifications', Icons.email),
-            const Divider(height: 1),
+                // Notifications Section
+                _buildSectionHeader(AppStrings.notifications),
+                _buildComingSoonTile(
+                  AppStrings.pushNotifications,
+                  Icons.notifications,
+                ),
+                _buildComingSoonTile(
+                  AppStrings.emailNotifications,
+                  Icons.email,
+                ),
+                const Divider(height: 1),
 
-            // Privacy & Security Section
-            _buildSectionHeader('Privacy & Security'),
-            _buildComingSoonTile('Privacy Settings', Icons.lock),
-            _buildComingSoonTile('Change Password', Icons.vpn_key),
-            const Divider(height: 1),
+                // Privacy & Security Section
+                _buildSectionHeader(AppStrings.privacySecurity),
+                _buildComingSoonTile(AppStrings.privacySettings, Icons.lock),
+                _buildComingSoonTile(AppStrings.changePassword, Icons.vpn_key),
+                const Divider(height: 1),
 
-            // Account Section
-            _buildSectionHeader('Account'),
-            _buildComingSoonTile('Manage Profile', Icons.person),
-            _buildComingSoonTile('Connected Apps', Icons.apps),
-            const Divider(height: 1),
+                // Account Section
+                _buildSectionHeader(AppStrings.account),
+                _buildComingSoonTile(AppStrings.manageProfile, Icons.person),
+                _buildComingSoonTile(AppStrings.connectedApps, Icons.apps),
+                const Divider(height: 1),
 
-            // Support Section
-            _buildSectionHeader('Support'),
-            _buildComingSoonTile('Help & Feedback', Icons.help),
-            _buildComingSoonTile('Report a Bug', Icons.bug_report),
-            const Divider(height: 1),
+                // Support Section
+                _buildSectionHeader(AppStrings.support),
+                _buildComingSoonTile(AppStrings.helpFeedback, Icons.help),
+                _buildComingSoonTile(AppStrings.reportBug, Icons.bug_report),
+                const Divider(height: 1),
 
-            // About Section
-            _buildSectionHeader('About'),
-            _buildComingSoonTile('Terms of Service', Icons.description),
-            _buildComingSoonTile('Privacy Policy', Icons.shield),
-            _buildVersionInfo(),
-            const SizedBox(height: 32),
+                // About Section
+                _buildSectionHeader(AppStrings.about),
+                _buildComingSoonTile(
+                  AppStrings.termsOfService,
+                  Icons.description,
+                ),
+                _buildComingSoonTile(AppStrings.privacyPolicy, Icons.shield),
+                _buildVersionInfo(),
+                const SizedBox(height: 32),
 
-            // Logout Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _handleLogout,
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Logout'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                // Logout Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _handleLogout,
+                      icon: const Icon(Icons.logout),
+                      label: Text(AppStrings.logout),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 32),
+              ],
             ),
-            const SizedBox(height: 32),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -122,16 +143,18 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Dark Mode',
-                      style: TextStyle(
+                    Text(
+                      AppStrings.darkMode,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
                     ),
                     Text(
-                      themeProvider.isDarkMode ? 'Enabled' : 'Disabled',
+                      themeProvider.isDarkMode
+                          ? AppStrings.enabled
+                          : AppStrings.disabled,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
@@ -147,7 +170,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        value ? 'Dark mode enabled' : 'Light mode enabled',
+                        value
+                            ? AppStrings.darkModeEnabled
+                            : AppStrings.lightModeEnabled,
                       ),
                       duration: const Duration(seconds: 2),
                     ),
@@ -167,7 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$title is coming soon'),
+            content: Text(AppStrings.comingSoonFor(title)),
             backgroundColor: Colors.orange.shade600,
             duration: const Duration(seconds: 2),
           ),
@@ -200,7 +225,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   Text(
-                    'Coming soon',
+                    AppStrings.comingSoon,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.orange.shade600,
@@ -240,16 +265,16 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'App Version',
-                  style: TextStyle(
+                Text(
+                  AppStrings.appVersion,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
                 ),
                 Text(
-                  'Version 1.0.0',
+                  AppStrings.version,
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
@@ -264,12 +289,12 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(AppStrings.logout),
+        content: Text(AppStrings.logoutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -277,7 +302,7 @@ class _SettingsPageState extends State<SettingsPage> {
               _performLogout();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Logout'),
+            child: Text(AppStrings.logout),
           ),
         ],
       ),
