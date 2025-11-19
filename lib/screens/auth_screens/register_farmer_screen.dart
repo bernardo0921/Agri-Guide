@@ -1,7 +1,9 @@
 // lib/screens/register_farmer_screen.dart
-import 'package:agri_guide/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
+import '../../core/notifiers/app_notifiers.dart';
+import '../../core/language/app_strings.dart';
 
 class FarmerRegisterScreen extends StatefulWidget {
   const FarmerRegisterScreen({super.key});
@@ -41,8 +43,8 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     // Check if passwords match
     if (_formData['password'] != _formData['password_confirm']) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Passwords do not match."),
+        SnackBar(
+          content: Text(AppStrings.passwordsDoNotMatch),
           backgroundColor: Colors.red,
         ),
       );
@@ -107,130 +109,162 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register as Farmer')),
+      appBar: AppBar(
+        title: ValueListenableBuilder(
+          valueListenable: AppNotifiers.languageNotifier,
+          builder: (context, language, child) {
+            return Text(AppStrings.registerAsFarmer);
+          },
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Text(
-                'Create Farmer Account',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 24),
+        child: ValueListenableBuilder(
+          valueListenable: AppNotifiers.languageNotifier,
+          builder: (context, language, child) {
+            return Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Text(
+                    AppStrings.createFarmerAccount,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 24),
 
-              // --- Account Fields ---
-              _buildTextFormField('username', 'Username', Icons.person),
-              _buildTextFormField(
-                'email',
-                'Email',
-                Icons.email,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              _buildTextFormField(
-                'password',
-                'Password',
-                Icons.lock,
-                obscureText: true,
-              ),
-              _buildTextFormField(
-                'password_confirm',
-                'Confirm Password',
-                Icons.lock_outline,
-                obscureText: true,
-              ),
+                  // --- Account Fields ---
+                  _buildTextFormField(
+                    'username',
+                    AppStrings.username,
+                    Icons.person,
+                  ),
+                  _buildTextFormField(
+                    'email',
+                    AppStrings.email,
+                    Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  _buildTextFormField(
+                    'password',
+                    AppStrings.password,
+                    Icons.lock,
+                    obscureText: true,
+                  ),
+                  _buildTextFormField(
+                    'password_confirm',
+                    AppStrings.confirmPassword,
+                    Icons.lock_outline,
+                    obscureText: true,
+                  ),
 
-              // --- Personal Fields ---
-              const SizedBox(height: 16),
-              _buildTextFormField('first_name', 'First Name', Icons.badge),
-              _buildTextFormField('last_name', 'Last Name', Icons.badge),
-              _buildTextFormField(
-                'phone_number',
-                'Phone Number (e.g., +233...)',
-                Icons.phone,
-                keyboardType: TextInputType.phone,
-              ),
+                  // --- Personal Fields ---
+                  const SizedBox(height: 16),
+                  _buildTextFormField(
+                    'first_name',
+                    AppStrings.firstName,
+                    Icons.badge,
+                  ),
+                  _buildTextFormField(
+                    'last_name',
+                    AppStrings.lastName,
+                    Icons.badge,
+                  ),
+                  _buildTextFormField(
+                    'phone_number',
+                    AppStrings.phoneNumber,
+                    Icons.phone,
+                    keyboardType: TextInputType.phone,
+                  ),
 
-              // --- Farmer Profile Fields ---
-              const SizedBox(height: 16),
-              Text(
-                'Farm Details',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
+                  // --- Farmer Profile Fields ---
+                  const SizedBox(height: 16),
+                  Text(
+                    AppStrings.farmDetails,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
 
-              _buildTextFormField('farm_name', 'Farm Name', Icons.home_work),
-              _buildTextFormField(
-                'farm_size',
-                'Farm Size (in acres)',
-                Icons.landscape,
-                keyboardType: TextInputType.number,
-              ),
-              _buildTextFormField(
-                'location',
-                'Location (e.g., Town/Village)',
-                Icons.location_on,
-              ),
-              _buildTextFormField('region', 'Region', Icons.map),
-              _buildTextFormField(
-                'crops_grown',
-                'Crops Grown (comma-separated)',
-                Icons.eco,
-              ),
-              _buildTextFormField(
-                'years_of_experience',
-                'Years of Experience',
-                Icons.history,
-                keyboardType: TextInputType.number,
-              ),
+                  _buildTextFormField(
+                    'farm_name',
+                    AppStrings.farmName,
+                    Icons.home_work,
+                  ),
+                  _buildTextFormField(
+                    'farm_size',
+                    AppStrings.farmSize,
+                    Icons.landscape,
+                    keyboardType: TextInputType.number,
+                  ),
+                  _buildTextFormField(
+                    'location',
+                    AppStrings.location,
+                    Icons.location_on,
+                  ),
+                  _buildTextFormField(
+                    'region',
+                    AppStrings.region,
+                    Icons.map,
+                  ),
+                  _buildTextFormField(
+                    'crops_grown',
+                    AppStrings.cropsGrown,
+                    Icons.eco,
+                  ),
+                  _buildTextFormField(
+                    'years_of_experience',
+                    AppStrings.yearsOfExperience,
+                    Icons.history,
+                    keyboardType: TextInputType.number,
+                  ),
 
-              // Farming Method Dropdown
-              DropdownButtonFormField<String>(
-                initialValue: _formData['farming_method'],
-                decoration: const InputDecoration(
-                  labelText: 'Farming Method',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.agriculture),
-                ),
-                items: ['conventional', 'organic', 'mixed']
-                    .map(
-                      (method) => DropdownMenuItem(
-                        value: method,
-                        child: Text(
-                          method[0].toUpperCase() + method.substring(1),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _formData['farming_method'] = value!;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 24),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _submit,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                      ),
-                      child: const Text('Register'),
+                  // Farming Method Dropdown
+                  DropdownButtonFormField<String>(
+                    initialValue: _formData['farming_method'],
+                    decoration: InputDecoration(
+                      labelText: AppStrings.farmingMethod,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.agriculture),
                     ),
-            ],
-          ),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'conventional',
+                        child: Text(AppStrings.conventional),
+                      ),
+                      DropdownMenuItem(
+                        value: 'organic',
+                        child: Text(AppStrings.organic),
+                      ),
+                      DropdownMenuItem(
+                        value: 'mixed',
+                        child: Text(AppStrings.mixed),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _formData['farming_method'] = value!;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+                  _isLoading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 50),
+                          ),
+                          child: Text(AppStrings.register),
+                        ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  // Helper widget to reduce boilerplate
-  // --- FIXED ---
-  // Changed the optional parameters to be NAMED parameters ({})
-  // This avoids the error and is easier to read.
   Widget _buildTextFormField(
     String key,
     String label,
@@ -251,7 +285,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
         validator: (value) {
           if (key == 'email') {
             if (value == null || value.isEmpty || !value.contains('@')) {
-              return 'Please enter a valid email';
+              return AppStrings.pleaseEnterValidEmail;
             }
           }
           if (value == null || value.isEmpty) {
@@ -259,7 +293,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
             if (key == 'farm_name' || key == 'farm_size' || key == 'location') {
               return null; // These can be blank
             }
-            return 'This field is required';
+            return AppStrings.fieldRequired;
           }
           return null;
         },

@@ -1,5 +1,7 @@
 // lib/screens/language_screen.dart
 import 'package:flutter/material.dart';
+import '../../core/language/app_language.dart';
+import '../../core/notifiers/app_notifiers.dart';
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -9,12 +11,19 @@ class LanguageScreen extends StatefulWidget {
 }
 
 class _LanguageScreenState extends State<LanguageScreen> {
-  String _selectedLanguage = 'English';
+  AppLanguage _selectedLanguage = AppLanguage.english;
 
-  final List<Map<String, String>> languages = [
-    {'name': 'English', 'subtitle': 'English'},
-    {'name': 'Sesotho', 'subtitle': 'English'},
+  final List<AppLanguage> languages = [
+    AppLanguage.english,
+    AppLanguage.sesotho,
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with current language from notifier
+    _selectedLanguage = AppNotifiers.languageNotifier.value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +35,6 @@ class _LanguageScreenState extends State<LanguageScreen> {
           child: Column(
             children: [
               // Logo/Icon
-              // Assuming 'assets/images/logo.png' is in your pubspec.yaml
               Image.asset(
                 'assets/images/logo.png',
                 width: 200,
@@ -37,9 +45,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
               // Title
               Text(
                 'Select Language',
-                style: Theme.of(
-                  context,
-                ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context)
+                    .textTheme
+                    .displaySmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 40),
@@ -49,7 +58,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   itemCount: languages.length,
                   itemBuilder: (context, index) {
                     final language = languages[index];
-                    final isSelected = language['name'] == _selectedLanguage;
+                    final isSelected = language == _selectedLanguage;
 
                     return Card(
                       elevation: isSelected ? 4 : 1,
@@ -69,12 +78,14 @@ class _LanguageScreenState extends State<LanguageScreen> {
                           horizontal: 20,
                         ),
                         title: Text(
-                          language['name']!,
-                          style: Theme.of(context).textTheme.titleLarge
+                          language.displayName,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          language['subtitle']!,
+                          language.displayName,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         trailing: isSelected
@@ -85,7 +96,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                             : null,
                         onTap: () {
                           setState(() {
-                            _selectedLanguage = language['name']!;
+                            _selectedLanguage = language;
                           });
                         },
                       ),
@@ -99,6 +110,8 @@ class _LanguageScreenState extends State<LanguageScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Update the language notifier
+                    AppNotifiers.languageNotifier.value = _selectedLanguage;
                     // Navigate to the AuthWrapper
                     Navigator.of(context).pushReplacementNamed('/auth_wrapper');
                   },
@@ -112,9 +125,9 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   child: Text(
                     'Continue',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
               ),
@@ -129,8 +142,6 @@ class _LanguageScreenState extends State<LanguageScreen> {
                     height: 6,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      // --- THIS IS THE FIX ---
-                      // Replaced withOpacity(0.3) with withAlpha(77)
                       color: Theme.of(context).primaryColor.withAlpha(77),
                     ),
                   );
