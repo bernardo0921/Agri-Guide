@@ -1,5 +1,6 @@
 // ai_advisory_page.dart - With Streaming Typing Animation (Theme-aware)
 import 'dart:io';
+import 'package:agri_guide/core/language/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -607,19 +608,16 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         children: [
           Image.asset('assets/images/logo.png', width: 80, height: 80),
           const SizedBox(height: 16),
-          Text(
-            'Hello! I\'m your AgriGuide AI',
-            style: theme.textTheme.headlineMedium,
-          ),
+          Text(AppStrings.aiGreetings, style: theme.textTheme.headlineMedium),
           const SizedBox(height: 8),
           Text(
-            'Ask me anything about farming and agriculture',
+            AppStrings.aiAdvisoryIntro,
             style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Or send me a picture of your crops!',
+            AppStrings.aiSdvisoryIntro2,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.primary,
               fontWeight: FontWeight.w500,
@@ -630,7 +628,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           OutlinedButton.icon(
             onPressed: openDrawer,
             icon: const Icon(Icons.history),
-            label: const Text('View Chat History'),
+            label: Text(AppStrings.viewChatHistory),
           ),
         ],
       ),
@@ -658,7 +656,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           IconButton(
             icon: Icon(Icons.history, color: colorScheme.primary),
             onPressed: openDrawer,
-            tooltip: 'Chat History',
+            tooltip: AppStrings.chatHistory,
           ),
           IconButton(
             icon: Icon(Icons.image, color: colorScheme.primary),
@@ -675,7 +673,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               maxLines: null,
               enabled: !_isLoading && !_isStreaming,
               decoration: InputDecoration(
-                hintText: 'Ask AgriGuide anything...',
+                hintText: AppStrings.captionInAiChatTextBox,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,

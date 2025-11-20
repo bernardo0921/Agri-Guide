@@ -557,7 +557,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to delete post";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho phumola poso";
+        return "Ho hlÅlehile ho phumola poso";
     }
   }
 
@@ -566,7 +566,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to update like";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho ntlafatsa thabo";
+        return "Ho hlÅlehile ho ntlafatsa thabo";
     }
   }
 
@@ -584,7 +584,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to load image";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho jara setšoantšo";
+        return "Ho hlÅlehile ho jara setÅ¡oantÅ¡o";
     }
   }
 
@@ -603,7 +603,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to load post";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho jara poso";
+        return "Ho hlÅlehile ho jara poso";
     }
   }
 
@@ -802,7 +802,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Support";
       case AppLanguage.sesotho:
-        return "Tšehetso";
+        return "TÅ¡ehetso";
     }
   }
 
@@ -838,7 +838,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Terms of Service";
       case AppLanguage.sesotho:
-        return "Lipehelo tsa Tšebeletso";
+        return "Lipehelo tsa TÅ¡ebeletso";
     }
   }
 
@@ -956,7 +956,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Help & Support";
       case AppLanguage.sesotho:
-        return "Thuso le TÅ¡ehetso";
+        return "Thuso le TÃ…Â¡ehetso";
     }
   }
 
@@ -974,7 +974,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Help & Support - Coming soon";
       case AppLanguage.sesotho:
-        return "Thuso le TÅ¡ehetso - E tla tla haufinyane";
+        return "Thuso le TÃ…Â¡ehetso - E tla tla haufinyane";
     }
   }
 
@@ -1092,7 +1092,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to load profile";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho jara profaele";
+        return "Ho hlÅlehile ho jara profaele";
     }
   }
 
@@ -1120,7 +1120,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Tap camera icon to change photo";
       case AppLanguage.sesotho:
-        return "Tobetsa lethathamo la khemera ho fetola setšoantšo";
+        return "Tobetsa lethathamo la khemera ho fetola setÅ¡oantÅ¡o";
     }
   }
 
@@ -1138,7 +1138,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Take a Photo";
       case AppLanguage.sesotho:
-        return "Nka Setšoantšo";
+        return "Nka SetÅ¡oantÅ¡o";
     }
   }
 
@@ -1147,7 +1147,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Remove Photo";
       case AppLanguage.sesotho:
-        return "Tlosa Setšoantšo";
+        return "Tlosa SetÅ¡oantÅ¡o";
     }
   }
 
@@ -1183,7 +1183,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to update profile";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho ntlafatsa profaele";
+        return "Ho hlÅlehile ho ntlafatsa profaele";
     }
   }
 
@@ -1192,7 +1192,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Failed to pick image";
       case AppLanguage.sesotho:
-        return "Ho hlōlehile ho khetha setšoantšo";
+        return "Ho hlÅlehile ho khetha setÅ¡oantÅ¡o";
     }
   }
 
@@ -1401,6 +1401,196 @@ class AppStrings {
         return "Reports";
       case AppLanguage.sesotho:
         return "Litlaleho";
+    }
+  }
+
+  static String get aiGreetings {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Hello! I'm your Agriguide AI";
+      case AppLanguage.sesotho:
+        return "Lumela! Ke Agriguide AI ea hau";
+    }
+  }
+
+  static String get aiAdvisoryIntro {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Ask me anything about farming and agriculture';
+      case AppLanguage.sesotho:
+        return 'Mphe potso efe kapa efe mabapi le temo le temo';
+    }
+  }
+
+  static String get aiSdvisoryIntro2 {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Or send me a picture of your crops!';
+      case AppLanguage.sesotho:
+        return 'Kapa nthomelle setÅ¡oantÅ¡o sa lijalo tsa hau!';
+    }
+  }
+
+  static String get captionInAiChatTextBox {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Ask AgriGuide anything...';
+      case AppLanguage.sesotho:
+        return 'Kopa AgriGuide ntho efe kapa efe...';
+    }
+  }
+
+  static String get viewChatHistory {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'View Chat History';
+      case AppLanguage.sesotho:
+        return 'Sheba Nalane ea Puisano';
+    }
+  }
+
+  static String get chatHistory {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Chat History';
+      case AppLanguage.sesotho:
+        return 'Nalane ea Puisano';
+    }
+  }
+
+  // Chat History Panel Strings
+  static String get startNewChat {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Start New Chat';
+      case AppLanguage.sesotho:
+        return 'Qala Puisano e Ncha';
+    }
+  }
+
+  static String get oopsSomethingWentWrong {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Oops! Something went wrong';
+      case AppLanguage.sesotho:
+        return 'Oops! Ho etsahala ntho e fosahetseng';
+    }
+  }
+
+  static String get tryAgain {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Try Again';
+      case AppLanguage.sesotho:
+        return 'Leka Hape';
+    }
+  }
+
+  static String get noChatHistory {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'No Chat History';
+      case AppLanguage.sesotho:
+        return 'Ha ho Nalane ea Puisano';
+    }
+  }
+
+  static String get startNewConversation {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Start a new conversation with AgriGuide AI\nto see your chat history here';
+      case AppLanguage.sesotho:
+        return 'Qala puisano e ncha le AgriGuide AI\nho bona nalane ea hau ea puisano mona';
+    }
+  }
+
+  static String get deleteChat {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Delete Chat';
+      case AppLanguage.sesotho:
+        return 'Phumola Puisano';
+    }
+  }
+
+  static String get deleteChatConfirm {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Are you sure you want to delete this chat session? This action cannot be undone.';
+      case AppLanguage.sesotho:
+        return 'Na u na le bonnete ba hore u batla ho phumola puisano ena? Ketso ena ha e khone ho khutlisoa.';
+    }
+  }
+
+  static String get deletingChat {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Deleting chat...';
+      case AppLanguage.sesotho:
+        return 'E ntse e phumola puisano...';
+    }
+  }
+
+  static String get chatDeletedSuccessfully {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Chat deleted successfully';
+      case AppLanguage.sesotho:
+        return 'Puisano e phumoliloe ka katleho';
+    }
+  }
+
+  static String get failedToDeleteChat {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Failed to delete chat';
+      case AppLanguage.sesotho:
+        return 'Ho hlÅlehile ho phumola puisano';
+    }
+  }
+
+  static String get noMessagesYet {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'No messages yet';
+      case AppLanguage.sesotho:
+        return 'Ha ho melaetsa';
+    }
+  }
+
+  static String chatSessionNumber(int number) {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Chat Session $number';
+      case AppLanguage.sesotho:
+        return 'Puisano $number';
+    }
+  }
+
+  static String get activeSession {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Active Session';
+      case AppLanguage.sesotho:
+        return 'Puisano e Sebetsang';
+    }
+  }
+
+  static String get yesterday {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Yesterday';
+      case AppLanguage.sesotho:
+        return 'Maobane';
+    }
+  }
+
+  static String daysAgo(int days) {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return '$days days ago';
+      case AppLanguage.sesotho:
+        return 'Matsatsi a $days a fetileng';
     }
   }
 }

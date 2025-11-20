@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:agri_guide/services/ai_service.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
 
 class ChatHistoryPanel extends StatefulWidget {
   final Function(String)? onSessionSelected;
@@ -49,7 +50,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
         });
       } else {
         setState(() {
-          _error = result['error'] ?? 'Failed to load sessions';
+          _error = result['error'] ?? AppStrings.failedToDeleteChat;
           _isLoading = false;
         });
       }
@@ -58,7 +59,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
       if (!mounted) return;
 
       setState(() {
-        _error = 'Error: $e';
+        _error = '${AppStrings.unknownError}: $e';
         _isLoading = false;
       });
     }
@@ -80,19 +81,17 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: const Text(
-          'Are you sure you want to delete this chat session? This action cannot be undone.',
-        ),
+        title: Text(AppStrings.deleteChat),
+        content: Text(AppStrings.deleteChatConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(AppStrings.delete),
           ),
         ],
       ),
@@ -104,10 +103,10 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
 
       // Show loading indicator
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
@@ -115,11 +114,11 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
-              SizedBox(width: 12),
-              Text('Deleting chat...'),
+              const SizedBox(width: 12),
+              Text(AppStrings.deletingChat),
             ],
           ),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
 
@@ -138,10 +137,10 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Chat deleted successfully'),
+          SnackBar(
+            content: Text(AppStrings.chatDeletedSuccessfully),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
 
@@ -153,7 +152,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['error'] ?? 'Failed to delete chat'),
+            content: Text(result['error'] ?? AppStrings.failedToDeleteChat),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -191,10 +190,10 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                   const SizedBox(width: 8),
                   const Icon(Icons.history, color: Colors.white, size: 24),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Chat History',
-                      style: TextStyle(
+                      AppStrings.chatHistory,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -230,9 +229,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                 child: ElevatedButton.icon(
                   onPressed: _handleNewChat,
                   icon: const Icon(Icons.add_circle_outline, size: 24),
-                  label: const Text(
-                    'Start New Chat',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  label: Text(
+                    AppStrings.startNewChat,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
@@ -267,7 +266,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
               Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
               Text(
-                'Oops! Something went wrong',
+                AppStrings.oopsSomethingWentWrong,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -284,7 +283,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
               ElevatedButton.icon(
                 onPressed: _loadSessions,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+                label: Text(AppStrings.tryAgain),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,
@@ -317,7 +316,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
               ),
               const SizedBox(height: 24),
               Text(
-                'No Chat History',
+                AppStrings.noChatHistory,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -326,7 +325,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Start a new conversation with AgriGuide AI\nto see your chat history here',
+                AppStrings.startNewConversation,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -356,7 +355,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
   Widget _buildSessionCard(Map<String, dynamic> session, int index) {
     final sessionId = session['session_id'] as String? ?? '';
     final isSelected = sessionId == widget.currentSessionId;
-    final lastMessage = session['last_message'] as String? ?? 'No messages yet';
+    final lastMessage = session['last_message'] as String? ?? AppStrings.noMessagesYet;
     final messageCount = session['message_count'] as int? ?? 0;
     final createdAt = session['created_at'] as String?;
 
@@ -417,7 +416,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Chat Session ${_sessions.length - index}',
+                            AppStrings.chatSessionNumber(_sessions.length - index),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -481,19 +480,19 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                         }
                       },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.delete_outline,
                                 color: Colors.red,
                                 size: 20,
                               ),
-                              SizedBox(width: 12),
+                              const SizedBox(width: 12),
                               Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.red),
+                                AppStrings.delete,
+                                style: const TextStyle(color: Colors.red),
                               ),
                             ],
                           ),
@@ -556,7 +555,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Active Session',
+                          AppStrings.activeSession,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -582,11 +581,11 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
       final difference = now.difference(date);
 
       if (difference.inDays == 0) {
-        return 'Today';
+        return AppStrings.today;
       } else if (difference.inDays == 1) {
-        return 'Yesterday';
+        return AppStrings.yesterday;
       } else if (difference.inDays < 7) {
-        return '${difference.inDays} days ago';
+        return AppStrings.daysAgo(difference.inDays);
       } else {
         return '${date.day}/${date.month}/${date.year}';
       }
