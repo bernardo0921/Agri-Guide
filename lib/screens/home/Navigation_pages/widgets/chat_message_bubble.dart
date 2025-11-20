@@ -13,6 +13,8 @@ class ChatMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -24,19 +26,25 @@ class ChatMessageBubble extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isUser
-              ? theme.colorScheme.primary.withOpacity(0.15)
-              : theme.colorScheme.secondary.withOpacity(0.08),
+              ? colorScheme.primary.withOpacity(0.15)
+              : (isDarkMode
+                    ? colorScheme.surface.withOpacity(0.5)
+                    : colorScheme.secondary.withOpacity(0.08)),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft:
-                isUser ? const Radius.circular(16) : const Radius.circular(0),
-            bottomRight:
-                isUser ? const Radius.circular(0) : const Radius.circular(16),
+            bottomLeft: isUser
+                ? const Radius.circular(16)
+                : const Radius.circular(0),
+            bottomRight: isUser
+                ? const Radius.circular(0)
+                : const Radius.circular(16),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
               offset: const Offset(0, 1),
               blurRadius: 3,
             ),
@@ -44,11 +52,10 @@ class ChatMessageBubble extends StatelessWidget {
         ),
         child: Text(
           message,
-          style: TextStyle(
+          style: theme.textTheme.bodyMedium?.copyWith(
             color: isUser
-                ? theme.colorScheme.onPrimaryContainer
-                : theme.colorScheme.onSurface,
-            fontSize: 15,
+                ? colorScheme.onPrimaryContainer
+                : colorScheme.onSurface,
             height: 1.4,
           ),
         ),

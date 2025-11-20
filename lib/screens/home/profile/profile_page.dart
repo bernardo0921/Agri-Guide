@@ -16,10 +16,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Base URL for constructing full image URLs
   static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
-  // State variables for data fetching and UI
   Map<String, dynamic>? _profileData;
   bool _isLoading = true;
   String? _error;
@@ -28,7 +26,6 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _fetchProfileData();
-    // Listen to language changes to rebuild UI
     AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
@@ -44,7 +41,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Fetch the complete user profile from the backend
   Future<void> _fetchProfileData() async {
     if (!mounted) return;
 
@@ -55,11 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-
-      // Fetch profile from backend
       await authService.fetchProfile();
-
-      // Read the updated user data from the service
       final user = authService.user;
 
       setState(() {
@@ -81,12 +73,10 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// Helper to safely get farmer profile data
   Map<String, dynamic>? _getFarmerProfile() {
     return _profileData?['farmer_profile'] as Map<String, dynamic>?;
   }
 
-  /// Helper to get user initials for fallback avatar
   String _getInitials() {
     if (_profileData != null) {
       final firstName = _profileData!['first_name'] as String? ?? '';
@@ -112,27 +102,30 @@ class _ProfilePageState extends State<ProfilePage> {
     return 'U';
   }
 
-  /// Get the full profile picture URL
   String? _getProfilePictureUrl() {
     final profilePicture = _profileData?['profile_picture'] as String?;
     if (profilePicture != null && profilePicture.isNotEmpty) {
-      // If it's already a full URL, return it
       if (profilePicture.startsWith('http')) {
         return profilePicture;
       }
-      // Otherwise, prepend the base URL
       return '$baseUrl$profilePicture';
     }
     return null;
   }
 
-  /// Handle logout
   Future<void> _handleLogout() async {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppStrings.logoutTitle),
-        content: Text(AppStrings.logoutConfirm),
+        backgroundColor: colorScheme.surface,
+        title: Text(AppStrings.logoutTitle, style: theme.textTheme.titleLarge),
+        content: Text(
+          AppStrings.logoutConfirm,
+          style: theme.textTheme.bodyMedium,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -140,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: colorScheme.error),
             child: Text(AppStrings.logout),
           ),
         ],
@@ -151,7 +144,6 @@ class _ProfilePageState extends State<ProfilePage> {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.logout(context);
 
-      // Ensure navigation to login page immediately after logout
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -163,7 +155,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine the user's role and name for the header
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final String userType = _profileData?['user_type'] ?? 'user';
     final String firstName = _profileData?['first_name'] ?? 'Guest';
     final String lastName = _profileData?['last_name'] ?? '';
@@ -177,25 +171,24 @@ class _ProfilePageState extends State<ProfilePage> {
           appBar: AppBar(
             title: Text(
               AppStrings.myProfile,
-              style: const TextStyle(
+              style: theme.textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: colorScheme.primary,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: Colors.green),
+              ? Center(
+                  child: CircularProgressIndicator(color: colorScheme.primary),
                 )
               : _error != null
               ? _buildErrorState()
               : ListView(
                   padding: const EdgeInsets.all(20),
                   children: <Widget>[
-                    // 1. Profile Header Section
                     _buildProfileHeader(
                       fullName,
                       userType,
@@ -203,7 +196,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 25),
 
-                    // 2. User Contact Information
                     _buildSectionHeader(AppStrings.accountDetails),
                     _buildDetailCard(
                       Icons.person_outline,
@@ -222,7 +214,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 3. Role-Specific Information (Farmer/Extension Worker)
                     if (isFarmer) ..._buildFarmerDetails(),
 
                     if (!isFarmer) ...[
@@ -249,7 +240,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     const SizedBox(height: 30),
 
-                    // 4. Action Buttons
                     Center(
                       child: ElevatedButton.icon(
                         onPressed: () {
@@ -276,7 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade700,
+                          backgroundColor: colorScheme.primary,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 30,
                             vertical: 15,
@@ -291,16 +281,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
                     const SizedBox(height: 15),
 
-                    // Logout Button
                     Center(
                       child: TextButton.icon(
                         onPressed: _handleLogout,
-                        icon: Icon(Icons.logout, color: Colors.red.shade700),
+                        icon: Icon(Icons.logout, color: colorScheme.error),
                         label: Text(
                           AppStrings.logout,
-                          style: TextStyle(
-                            color: Colors.red.shade700,
-                            fontSize: 16,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: colorScheme.error,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -313,30 +301,31 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- UI Helpers ---
-
   Widget _buildErrorState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, color: Colors.red.shade300, size: 64),
+            Icon(
+              Icons.error_outline,
+              color: colorScheme.error.withOpacity(0.7),
+              size: 64,
+            ),
             const SizedBox(height: 16),
             Text(
               AppStrings.failedToLoadProfile,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
+              style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
               _error ?? AppStrings.unknownErrorOccurred,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500]),
+              style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -344,7 +333,7 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: const Icon(Icons.refresh),
               label: Text(AppStrings.retry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
+                backgroundColor: colorScheme.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
@@ -363,19 +352,20 @@ class _ProfilePageState extends State<ProfilePage> {
     String userType,
     bool isVerified,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final profilePictureUrl = _getProfilePictureUrl();
 
     return Column(
       children: [
         Stack(
           children: [
-            // Profile Picture
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.shade200.withOpacity(0.5),
+                    color: colorScheme.primary.withOpacity(0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -383,7 +373,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: CircleAvatar(
                 radius: 65,
-                backgroundColor: Colors.green.shade100,
+                backgroundColor: colorScheme.primary.withOpacity(0.1),
                 backgroundImage: profilePictureUrl != null
                     ? NetworkImage(profilePictureUrl)
                     : null,
@@ -397,14 +387,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         _getInitials(),
                         style: TextStyle(
                           fontSize: 48,
-                          color: Colors.green.shade800,
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       )
                     : null,
               ),
             ),
-            // Verification Badge
             if (isVerified)
               Positioned(
                 bottom: 5,
@@ -414,7 +403,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   decoration: BoxDecoration(
                     color: Colors.blue.shade600,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
+                    border: Border.all(color: colorScheme.surface, width: 3),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.blue.shade200,
@@ -433,24 +422,24 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
         const SizedBox(height: 16),
-        // User Name
         Text(
           fullName.isNotEmpty ? fullName : 'User',
-          style: TextStyle(
-            fontSize: 26,
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: colorScheme.primary,
             fontWeight: FontWeight.bold,
-            color: Colors.green.shade800,
           ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        // User Type / Role Tag
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.green.shade100,
+            color: colorScheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.green.shade300, width: 1),
+            border: Border.all(
+              color: colorScheme.primary.withOpacity(0.3),
+              width: 1,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -458,17 +447,16 @@ class _ProfilePageState extends State<ProfilePage> {
               Icon(
                 userType == 'farmer' ? Icons.agriculture : Icons.work,
                 size: 16,
-                color: Colors.green.shade800,
+                color: colorScheme.primary,
               ),
               const SizedBox(width: 6),
               Text(
                 userType == 'farmer'
                     ? AppStrings.farmer
                     : AppStrings.extensionWorker,
-                style: TextStyle(
-                  fontSize: 14,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.primary,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green.shade800,
                 ),
               ),
             ],
@@ -488,7 +476,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(16.0),
             child: Text(
               AppStrings.noFarmingProfileAvailable,
-              style: TextStyle(color: Colors.grey[600]),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
         ),
@@ -510,20 +498,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return [
       _buildSectionHeader(AppStrings.farmingProfile),
-
-      // Farm Identity
       if (farmName != 'N/A')
         _buildDetailCard(Icons.agriculture, AppStrings.farmName, farmName),
       if (farmSize != 'N/A')
         _buildDetailCard(Icons.landscape, AppStrings.farmSize, farmSize),
-
-      // Location
       if (location != 'N/A')
         _buildDetailCard(Icons.location_on, AppStrings.location, location),
       if (region != 'N/A')
         _buildDetailCard(Icons.map, AppStrings.region, region),
-
-      // Farming Practices
       if (cropsGrown != 'N/A')
         _buildDetailCard(Icons.grass, AppStrings.cropsGrownLabel, cropsGrown),
       if (farmingMethod != 'N/A')
@@ -534,12 +516,14 @@ class _ProfilePageState extends State<ProfilePage> {
           AppStrings.yearsOfExperience,
           yearsOfExperience,
         ),
-
       const SizedBox(height: 10),
     ];
   }
 
   Widget _buildSectionHeader(String title) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(top: 15.0, bottom: 12.0),
       child: Row(
@@ -548,17 +532,16 @@ class _ProfilePageState extends State<ProfilePage> {
             width: 4,
             height: 24,
             decoration: BoxDecoration(
-              color: Colors.green.shade700,
+              color: colorScheme.primary,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(width: 10),
           Text(
             title,
-            style: TextStyle(
-              fontSize: 18,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: colorScheme.primary,
               fontWeight: FontWeight.w700,
-              color: Colors.green.shade700,
             ),
           ),
         ],
@@ -567,16 +550,25 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildDetailCard(IconData icon, String title, String value) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200, width: 1),
+        border: Border.all(
+          color: colorScheme.outline.withOpacity(0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade100,
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : colorScheme.outline.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -587,10 +579,10 @@ class _ProfilePageState extends State<ProfilePage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color: colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.green.shade700, size: 24),
+            child: Icon(icon, color: colorScheme.primary, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -599,19 +591,15 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
                   ),
                 ),
               ],

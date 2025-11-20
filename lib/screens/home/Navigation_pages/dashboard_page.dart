@@ -9,6 +9,8 @@ import 'package:agri_guide/models/post.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/post_card.dart';
 import 'package:agri_guide/screens/settings_page.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -48,12 +50,20 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     _fetchDailyTip();
     _fetchTopPosts();
     _fetchCourses();
+    AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
   @override
   void dispose() {
     _coursesPageController.dispose();
+    AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
     super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _fetchWeather() async {
@@ -71,44 +81,24 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Future<void> _fetchDailyTip() async {
-    print('🌾 ============================================');
-    print('🌾 DASHBOARD - Fetching Daily Tip');
-    print('🌾 ============================================');
-
     setState(() => _isLoadingTip = true);
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       final token = authService.token;
 
-      // print('🔑 Token present: ${token != null}');
-
       if (token == null) {
-        // print('❌ No token - user not authenticated');
         throw Exception('Not authenticated');
       }
 
-      // print('📡 Calling FarmingTipService...');
       final result = await _farmingTipService.getDailyFarmingTip(token);
-
-      // print('✅ Got result from service');
-      // print('📝 Result: $result');
 
       setState(() {
         _farmingTip = result['tip'];
         _isTipFallback = result['fallback'] ?? false;
         _isLoadingTip = false;
       });
-
-      // print('✅ State updated successfully');
-      // print('📝 Tip: ${_farmingTip?.substring(0, 50)}...');
-      // print('🔄 Is fallback: $_isTipFallback');
     } catch (e) {
-      // print('🌾 ============================================');
-      // print('🚨 DASHBOARD - Error fetching tip');
-      // print('🌾 ============================================');
-      // print('❌ Error: $e');
-
       setState(() {
         _isLoadingTip = false;
       });
@@ -170,83 +160,86 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _refreshDashboard,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Weather Widget
-            _buildWeatherWidget(),
-            const SizedBox(height: 16),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-            // AI Farming Tip Card
-            _buildFarmingTipCard(),
-            const SizedBox(height: 24),
-
-            // Quick Actions Section
-            const Text(
-              'Quick Actions',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildQuickActionsGrid(),
-            const SizedBox(height: 24),
-
-            // Learning Carousel Section
-            const Text(
-              'Featured Courses',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildCoursesCarousel(),
-            const SizedBox(height: 24),
-
-            // Top Community Posts Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ValueListenableBuilder(
+      valueListenable: AppNotifiers.languageNotifier,
+      builder: (context, language, child) {
+        return RefreshIndicator(
+          onRefresh: _refreshDashboard,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Top Community Posts',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                _buildWeatherWidget(),
+                const SizedBox(height: 16),
+                _buildFarmingTipCard(),
+                const SizedBox(height: 24),
+                Text(
+                  AppStrings.quickActions,
+                  style: theme.textTheme.headlineMedium,
                 ),
-                TextButton.icon(
-                  onPressed: () {
-                    widget.onNavigate?.call(2);
-                  },
-                  icon: const Icon(Icons.arrow_forward, size: 18),
-                  label: const Text('View More'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.green.shade700,
-                  ),
+                const SizedBox(height: 12),
+                _buildQuickActionsGrid(),
+                const SizedBox(height: 24),
+                Text(
+                  AppStrings.featuredCourses,
+                  style: theme.textTheme.headlineMedium,
                 ),
+                const SizedBox(height: 12),
+                _buildCoursesCarousel(),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      AppStrings.topCommunityPosts,
+                      style: theme.textTheme.headlineMedium,
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        widget.onNavigate?.call(2);
+                      },
+                      icon: const Icon(Icons.arrow_forward, size: 18),
+                      label: Text(AppStrings.viewMore),
+                      style: TextButton.styleFrom(
+                        foregroundColor: colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildTopPostsSection(),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildTopPostsSection(),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildFarmingTipCard() {
-    // final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.green.shade700, Colors.green.shade500],
+          colors: isDarkMode
+              ? [colorScheme.primary.withOpacity(0.8), colorScheme.primary]
+              : [colorScheme.primary, colorScheme.primary.withOpacity(0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.shade700.withValues(alpha: 0.3),
+            color: colorScheme.primary.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -255,13 +248,12 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -271,22 +263,23 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Daily Farming Tip',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      AppStrings.dailyFarmingTip,
+                      style: theme.textTheme.titleLarge?.copyWith(
                         color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Powered by AI',
-                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                      AppStrings.poweredByAI,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
                     ),
                   ],
                 ),
@@ -301,10 +294,9 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                     color: Colors.orange.shade400,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Offline',
-                    style: TextStyle(
-                      fontSize: 10,
+                  child: Text(
+                    AppStrings.offline,
+                    style: theme.textTheme.labelSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
@@ -313,12 +305,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Divider
-          Container(height: 1, color: Colors.white.withValues(alpha: 0.3)),
+          Container(height: 1, color: Colors.white.withOpacity(0.3)),
           const SizedBox(height: 16),
-
-          // Tip Content
           _isLoadingTip
               ? const Center(
                   child: Padding(
@@ -330,12 +318,10 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   ),
                 )
               : Text(
-                  _farmingTip ?? 'Unable to load tip',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.5,
+                  _farmingTip ?? AppStrings.unableToLoadTip,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w400,
+                    height: 1.5,
                   ),
                 ),
         ],
@@ -344,13 +330,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildTopPostsSection() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     if (_isLoadingPosts) {
       return Container(
         padding: const EdgeInsets.all(40),
         alignment: Alignment.center,
-        child: const CircularProgressIndicator(),
+        child: CircularProgressIndicator(color: colorScheme.primary),
       );
     }
 
@@ -358,13 +345,11 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: isDarkMode
-                  ? Colors.black.withValues(alpha: 0.3)
-                  : Colors.grey.shade200,
+              color: colorScheme.outline.withOpacity(0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -375,24 +360,17 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             Icon(
               Icons.forum_outlined,
               size: 48,
-              color: isDarkMode ? Colors.grey[600] : Colors.grey.shade400,
+              color: theme.textTheme.bodySmall?.color,
             ),
             const SizedBox(height: 12),
             Text(
-              'No posts yet',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.grey[400] : Colors.grey.shade600,
-              ),
+              AppStrings.noPostsYet,
+              style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              'Be the first to share with the community!',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDarkMode ? Colors.grey[500] : Colors.grey.shade500,
-              ),
+              AppStrings.beFirstToShare,
+              style: theme.textTheme.bodySmall,
             ),
           ],
         ),
@@ -417,13 +395,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildCoursesCarousel() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     if (_isLoadingCourses) {
       return SizedBox(
         height: 220,
         child: Center(
-          child: CircularProgressIndicator(color: Colors.green.shade700),
+          child: CircularProgressIndicator(color: colorScheme.primary),
         ),
       );
     }
@@ -432,7 +411,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       return Container(
         height: 220,
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -442,16 +421,12 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               Icon(
                 Icons.school_outlined,
                 size: 48,
-                color: isDarkMode ? Colors.grey[600] : Colors.grey.shade400,
+                color: theme.textTheme.bodySmall?.color,
               ),
               const SizedBox(height: 12),
               Text(
-                'No courses available',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.grey[400] : Colors.grey.shade600,
-                ),
+                AppStrings.noCoursesAvailable,
+                style: theme.textTheme.titleMedium,
               ),
             ],
           ),
@@ -477,6 +452,9 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildCourseCard(Tutorial course) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return GestureDetector(
       onTap: () {
         // Navigate to course details or video player
@@ -486,7 +464,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -494,7 +472,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         ),
         child: Stack(
           children: [
-            // Background Image
             if (course.thumbnailUrl != null && course.thumbnailUrl!.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -506,12 +483,12 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
                         Icons.image_not_supported,
-                        color: Colors.grey.shade600,
+                        color: theme.textTheme.bodySmall?.color,
                       ),
                     );
                   },
@@ -533,7 +510,6 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   ),
                 ),
               ),
-            // Overlay
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
@@ -541,13 +517,12 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withOpacity(0.7),
                     Colors.transparent,
                   ],
                 ),
               ),
             ),
-            // Course details
             Positioned(
               bottom: 0,
               left: 0,
@@ -563,26 +538,23 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade500,
+                        color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         course.category,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                        style: theme.textTheme.labelSmall?.copyWith(
                           color: Colors.white,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       course.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
-                        height: 1.3,
+                        fontWeight: FontWeight.bold,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -593,14 +565,13 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                         Icon(
                           Icons.visibility_outlined,
                           size: 14,
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: Colors.white.withOpacity(0.8),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           course.getFormattedViewCount(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.8),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withOpacity(0.8),
                           ),
                         ),
                       ],
@@ -616,6 +587,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildWeatherWidget() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final now = DateTime.now();
     final formattedDate = DateFormat('dd/MM/yy').format(now);
 
@@ -630,7 +603,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.shade900.withValues(alpha: 0.3),
+            color: Colors.blue.shade900.withOpacity(0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -644,34 +617,37 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               ),
             )
           : _weatherData == null
-          ? _buildWeatherError()
-          : _buildWeatherContent(formattedDate),
+              ? _buildWeatherError()
+              : _buildWeatherContent(formattedDate),
     );
   }
 
   Widget _buildWeatherError() {
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         const Icon(Icons.error_outline, color: Colors.white70, size: 48),
         const SizedBox(height: 12),
-        const Text(
-          'Unable to load weather',
-          style: TextStyle(color: Colors.white, fontSize: 16),
+        Text(
+          AppStrings.unableToLoadWeather,
+          style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
         ),
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _fetchWeather,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
+            backgroundColor: Colors.white.withOpacity(0.2),
             foregroundColor: Colors.white,
           ),
-          child: const Text('Retry'),
+          child: Text(AppStrings.retry),
         ),
       ],
     );
   }
 
   Widget _buildWeatherContent(String formattedDate) {
+    final theme = Theme.of(context);
     final temp = _weatherData!['main']['temp'].toDouble();
     final tempMin = _weatherData!['main']['temp_min'].toDouble();
     final tempMax = _weatherData!['main']['temp_max'].toDouble();
@@ -687,20 +663,18 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           children: [
             Row(
               children: [
-                const Text(
-                  'Today',
-                  style: TextStyle(
+                Text(
+                  AppStrings.today,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.white70,
-                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   '($formattedDate)',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 12,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -709,15 +683,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               children: [
                 Icon(
                   Icons.location_on,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Colors.white.withOpacity(0.7),
                   size: 16,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   cityName,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontSize: 12,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -749,7 +722,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       '/${tempMin.round()}°',
                       style: TextStyle(
                         fontSize: 24,
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: Colors.white.withOpacity(0.7),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -761,10 +734,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       .split(' ')
                       .map((word) => word[0].toUpperCase() + word.substring(1))
                       .join(' '),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -778,17 +749,17 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             _buildWeatherDetail(
               Icons.water_drop,
               '${_weatherData!['main']['humidity']}%',
-              'Humidity',
+              AppStrings.humidity,
             ),
             _buildWeatherDetail(
               Icons.air,
               '${_weatherData!['wind']['speed']} m/s',
-              'Wind',
+              AppStrings.wind,
             ),
             _buildWeatherDetail(
               Icons.thermostat,
               '${tempMax.round()}°',
-              'High',
+              AppStrings.high,
             ),
           ],
         ),
@@ -802,7 +773,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: _getWeatherIconWidget(weatherType),
@@ -819,7 +790,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.shade300.withValues(alpha: 0.5),
+                color: Colors.orange.shade300.withOpacity(0.5),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),
@@ -834,7 +805,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             Icon(
               Icons.cloud,
               size: 56,
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white.withOpacity(0.9),
             ),
             Positioned(
               top: -8,
@@ -846,7 +817,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.orange.shade300.withValues(alpha: 0.5),
+                      color: Colors.orange.shade300.withOpacity(0.5),
                       blurRadius: 12,
                       spreadRadius: 2,
                     ),
@@ -866,7 +837,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         return Icon(
           Icons.water_drop,
           size: 56,
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white.withOpacity(0.9),
         );
       case 'thunderstorm':
         return Icon(Icons.flash_on, size: 56, color: Colors.yellow.shade300);
@@ -874,35 +845,35 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         return Icon(
           Icons.ac_unit,
           size: 56,
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white.withOpacity(0.9),
         );
       default:
         return Icon(
           Icons.wb_cloudy,
           size: 56,
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white.withOpacity(0.9),
         );
     }
   }
 
   Widget _buildWeatherDetail(IconData icon, String value, String label) {
+    final theme = Theme.of(context);
+
     return Column(
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 20),
+        Icon(icon, color: Colors.white.withOpacity(0.7), size: 20),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
+          style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white,
-            fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.6),
-            fontSize: 11,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: Colors.white.withOpacity(0.6),
           ),
         ),
       ],
@@ -910,18 +881,17 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
   }
 
   Widget _buildQuickActionsGrid() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF2A2A2A) : Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode
-                ? Colors.black.withValues(alpha: 0.3)
-                : Colors.grey.shade200,
+            color: colorScheme.outline.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -933,7 +903,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             children: [
               Expanded(
                 child: _buildQuickActionButton(
-                  'Add Crop',
+                  AppStrings.addCrop,
                   Icons.add_circle_outline,
                   Colors.green,
                 ),
@@ -941,7 +911,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildQuickActionButton(
-                  'Tasks',
+                  AppStrings.tasks,
                   Icons.checklist,
                   Colors.blue,
                 ),
@@ -953,7 +923,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             children: [
               Expanded(
                 child: _buildQuickActionButton(
-                  'Reports',
+                  AppStrings.reports,
                   Icons.bar_chart,
                   Colors.purple,
                 ),
@@ -961,7 +931,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildQuickActionButton(
-                  'Settings',
+                  AppStrings.settings,
                   Icons.settings,
                   Colors.orange,
                   onTap: _openSettingsPage,
@@ -980,12 +950,14 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
     Color color, {
     VoidCallback? onTap,
   }) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -994,10 +966,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color.withValues(alpha: 0.9),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: color.withOpacity(0.9),
               ),
             ),
           ],

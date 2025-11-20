@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/post.dart';
 import '../services/community_api_service.dart';
+import '../config/theme.dart';
 
 class CreatePostModal extends StatefulWidget {
   final Function(Post) onPostCreated;
@@ -74,13 +75,15 @@ class _CreatePostModalState extends State<CreatePostModal>
   }
 
   void _showImageSourceDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
           child: Column(
@@ -91,7 +94,7 @@ class _CreatePostModalState extends State<CreatePostModal>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -100,40 +103,37 @@ class _CreatePostModalState extends State<CreatePostModal>
                 icon: Icons.photo_camera,
                 title: 'Take Photo',
                 subtitle: 'Use camera',
-                gradient: LinearGradient(
-                  colors: [Colors.blue[400]!, Colors.blue[600]!],
-                ),
+                color: Colors.blue,
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
                 },
+                isDark: isDark,
               ),
               _buildImageOption(
                 icon: Icons.photo_library,
                 title: 'Choose from Gallery',
                 subtitle: 'Select existing photo',
-                gradient: LinearGradient(
-                  colors: [Colors.green[400]!, Colors.green[600]!],
-                ),
+                color: AppColors.primaryGreen,
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
                 },
+                isDark: isDark,
               ),
               if (_selectedImage != null)
                 _buildImageOption(
                   icon: Icons.delete_outline,
                   title: 'Remove Photo',
                   subtitle: 'Delete selected image',
-                  gradient: LinearGradient(
-                    colors: [Colors.red[400]!, Colors.red[600]!],
-                  ),
+                  color: AppColors.accentRed,
                   onTap: () {
                     Navigator.pop(context);
                     setState(() {
                       _selectedImage = null;
                     });
                   },
+                  isDark: isDark,
                 ),
               const SizedBox(height: 20),
             ],
@@ -147,8 +147,9 @@ class _CreatePostModalState extends State<CreatePostModal>
     required IconData icon,
     required String title,
     required String subtitle,
-    required Gradient gradient,
+    required Color color,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -160,28 +161,23 @@ class _CreatePostModalState extends State<CreatePostModal>
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.grey[50]!, Colors.grey[100]!],
-              ),
+              color: isDark 
+                  ? AppColors.backgroundDark 
+                  : AppColors.backgroundLight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[200]!),
+              border: Border.all(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              ),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    gradient: gradient,
+                    color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: gradient.colors.first.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 24),
+                  child: Icon(icon, color: color, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -190,21 +186,27 @@ class _CreatePostModalState extends State<CreatePostModal>
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: isDark ? AppColors.textWhite : AppColors.textDark,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMedium,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right, color: Colors.grey[400]),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textLight,
+                ),
               ],
             ),
           ),
@@ -237,12 +239,12 @@ class _CreatePostModalState extends State<CreatePostModal>
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
+                Icon(Icons.check_circle, color: AppColors.textWhite),
                 const SizedBox(width: 12),
                 const Text('Post created successfully!'),
               ],
             ),
-            backgroundColor: Colors.green[700],
+            backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -263,12 +265,12 @@ class _CreatePostModalState extends State<CreatePostModal>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
+            Icon(Icons.error_outline, color: AppColors.textWhite),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.red[700],
+        backgroundColor: AppColors.accentRed,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -277,11 +279,13 @@ class _CreatePostModalState extends State<CreatePostModal>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
@@ -302,19 +306,19 @@ class _CreatePostModalState extends State<CreatePostModal>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
+              _buildHeader(isDark),
               const SizedBox(height: 24),
-              _buildContentField(),
+              _buildContentField(isDark),
               const SizedBox(height: 16),
               if (_selectedImage != null) ...[
                 _buildImagePreview(),
                 const SizedBox(height: 16),
               ],
-              _buildImageButton(),
+              _buildImageButton(isDark),
               const SizedBox(height: 20),
-              _buildTagsSection(),
+              _buildTagsSection(isDark),
               const SizedBox(height: 24),
-              _buildActionButtons(),
+              _buildActionButtons(isDark),
               const SizedBox(height: 20),
             ],
           ),
@@ -323,28 +327,28 @@ class _CreatePostModalState extends State<CreatePostModal>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDark) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.green[400]!, Colors.green[600]!],
+              colors: [AppColors.lightGreen, AppColors.primaryGreen],
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.green.withOpacity(0.3),
+                color: AppColors.primaryGreen.withOpacity(0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: const Icon(Icons.create, color: Colors.white, size: 24),
+          child: Icon(Icons.create, color: AppColors.textWhite, size: 24),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -353,25 +357,31 @@ class _CreatePostModalState extends State<CreatePostModal>
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               Text(
                 'Share with the community',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textMedium,
+                ),
               ),
             ],
           ),
         ),
         Material(
-          color: Colors.grey[100],
+          color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
           borderRadius: BorderRadius.circular(10),
           child: InkWell(
             onTap: _isSubmitting ? null : () => Navigator.pop(context),
             borderRadius: BorderRadius.circular(10),
             child: Padding(
               padding: const EdgeInsets.all(8),
-              child: Icon(Icons.close, color: Colors.grey[600]),
+              child: Icon(
+                Icons.close,
+                color: AppColors.textMedium,
+              ),
             ),
           ),
         ),
@@ -379,26 +389,39 @@ class _CreatePostModalState extends State<CreatePostModal>
     );
   }
 
-  Widget _buildContentField() {
+  Widget _buildContentField(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
       ),
       child: TextField(
         controller: _contentController,
         maxLines: 6,
         enabled: !_isSubmitting,
-        style: const TextStyle(fontSize: 15, height: 1.5),
+        style: TextStyle(
+          fontSize: 15,
+          height: 1.5,
+          color: isDark ? AppColors.textWhite : AppColors.textDark,
+        ),
         decoration: InputDecoration(
           hintText: 'Share your farming experiences, tips, or questions...',
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
+          hintStyle: TextStyle(
+            color: AppColors.textLight,
+            fontSize: 15,
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
           prefixIcon: Padding(
             padding: const EdgeInsets.only(left: 16, right: 12, top: 16),
-            child: Icon(Icons.edit_note, color: Colors.green[600], size: 24),
+            child: Icon(
+              Icons.edit_note,
+              color: AppColors.primaryGreen,
+              size: 24,
+            ),
           ),
         ),
         textCapitalization: TextCapitalization.sentences,
@@ -481,7 +504,7 @@ class _CreatePostModalState extends State<CreatePostModal>
                   children: [
                     Icon(
                       Icons.check_circle,
-                      color: Colors.green[300],
+                      color: AppColors.successGreen,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
@@ -499,7 +522,7 @@ class _CreatePostModalState extends State<CreatePostModal>
     );
   }
 
-  Widget _buildImageButton() {
+  Widget _buildImageButton(bool isDark) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -508,11 +531,12 @@ class _CreatePostModalState extends State<CreatePostModal>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.green[50]!, Colors.green[100]!],
-            ),
+            color: AppColors.paleGreen,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.green[300]!, width: 1.5),
+            border: Border.all(
+              color: AppColors.lightGreen,
+              width: 1.5,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -520,14 +544,14 @@ class _CreatePostModalState extends State<CreatePostModal>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _selectedImage == null
                       ? Icons.add_photo_alternate
                       : Icons.edit_outlined,
-                  color: Colors.green[700],
+                  color: AppColors.primaryGreen,
                   size: 20,
                 ),
               ),
@@ -537,7 +561,7 @@ class _CreatePostModalState extends State<CreatePostModal>
                     ? 'Add Photo (Optional)'
                     : 'Change Photo',
                 style: TextStyle(
-                  color: Colors.green[800],
+                  color: AppColors.primaryGreen,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -549,7 +573,7 @@ class _CreatePostModalState extends State<CreatePostModal>
     );
   }
 
-  Widget _buildTagsSection() {
+  Widget _buildTagsSection(bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -558,32 +582,36 @@ class _CreatePostModalState extends State<CreatePostModal>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: Colors.blue.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.local_offer, color: Colors.blue[700], size: 16),
+              child: Icon(
+                Icons.local_offer,
+                color: Colors.blue[700],
+                size: 16,
+              ),
             ),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Tags',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.black87,
+                color: isDark ? AppColors.textWhite : AppColors.textDark,
               ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 'Optional',
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.grey[600],
+                  color: AppColors.textMedium,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -620,21 +648,23 @@ class _CreatePostModalState extends State<CreatePostModal>
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? LinearGradient(
-                            colors: [Colors.green[400]!, Colors.green[600]!],
+                            colors: [AppColors.lightGreen, AppColors.primaryGreen],
                           )
                         : null,
-                    color: isSelected ? null : Colors.white,
+                    color: isSelected 
+                        ? null 
+                        : (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
-                          ? Colors.green[600]!
-                          : Colors.grey[300]!,
+                          ? AppColors.primaryGreen
+                          : (isDark ? AppColors.borderDark : AppColors.borderLight),
                       width: isSelected ? 2 : 1,
                     ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: Colors.green.withValues(alpha: 0.3),
+                              color: AppColors.primaryGreen.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -645,11 +675,11 @@ class _CreatePostModalState extends State<CreatePostModal>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isSelected)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
                           child: Icon(
                             Icons.check_circle,
-                            color: Colors.white,
+                            color: AppColors.textWhite,
                             size: 16,
                           ),
                         ),
@@ -657,7 +687,9 @@ class _CreatePostModalState extends State<CreatePostModal>
                         tag,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isSelected ? Colors.white : Colors.grey[700],
+                          color: isSelected 
+                              ? AppColors.textWhite 
+                              : (isDark ? AppColors.textWhite : AppColors.textDark),
                           fontWeight: isSelected
                               ? FontWeight.w600
                               : FontWeight.w500,
@@ -674,7 +706,7 @@ class _CreatePostModalState extends State<CreatePostModal>
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(bool isDark) {
     return Row(
       children: [
         Expanded(
@@ -682,7 +714,10 @@ class _CreatePostModalState extends State<CreatePostModal>
             onPressed: _isSubmitting ? null : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              side: BorderSide(color: Colors.grey[300]!, width: 1.5),
+              side: BorderSide(
+                color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                width: 1.5,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -690,7 +725,7 @@ class _CreatePostModalState extends State<CreatePostModal>
             child: Text(
               'Cancel',
               style: TextStyle(
-                color: Colors.grey[700],
+                color: isDark ? AppColors.textWhite : AppColors.textDark,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
@@ -703,12 +738,12 @@ class _CreatePostModalState extends State<CreatePostModal>
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green[500]!, Colors.green[700]!],
+                colors: [AppColors.lightGreen, AppColors.primaryGreen],
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.4),
+                  color: AppColors.primaryGreen.withOpacity(0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -725,23 +760,27 @@ class _CreatePostModalState extends State<CreatePostModal>
                 ),
               ),
               child: _isSubmitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: Colors.white,
+                        color: AppColors.textWhite,
                       ),
                     )
-                  : const Row(
+                  : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
+                        Icon(
+                          Icons.send_rounded,
+                          color: AppColors.textWhite,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
                         Text(
                           'Publish Post',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textWhite,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

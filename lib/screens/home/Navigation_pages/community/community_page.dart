@@ -49,10 +49,11 @@ class _CommunityPageState extends State<CommunityPage> {
         _isLoading = false;
       });
       if (mounted) {
+        final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red[700],
+            backgroundColor: colorScheme.error,
           ),
         );
       }
@@ -75,11 +76,18 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Future<void> _deletePost(Post post) async {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Post'),
-        content: const Text('Are you sure you want to delete this post?'),
+        backgroundColor: colorScheme.surface,
+        title: Text('Delete Post', style: theme.textTheme.titleLarge),
+        content: Text(
+          'Are you sure you want to delete this post?',
+          style: theme.textTheme.bodyMedium,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -87,7 +95,7 @@ class _CommunityPageState extends State<CommunityPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: colorScheme.error),
             child: const Text('Delete'),
           ),
         ],
@@ -105,10 +113,11 @@ class _CommunityPageState extends State<CommunityPage> {
         }
       } catch (e) {
         if (mounted) {
+          final colorScheme = Theme.of(context).colorScheme;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to delete post: $e'),
-              backgroundColor: Colors.red[700],
+              backgroundColor: colorScheme.error,
             ),
           );
         }
@@ -131,15 +140,22 @@ class _CommunityPageState extends State<CommunityPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
             _buildSearchBar(),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    )
                   : _error != null
                   ? _buildErrorState()
                   : _filteredPosts.isEmpty
@@ -150,7 +166,7 @@ class _CommunityPageState extends State<CommunityPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.green.withOpacity(0.5),
+        backgroundColor: colorScheme.primary,
         onPressed: _openCreatePostModal,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
@@ -162,14 +178,20 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -178,13 +200,19 @@ class _CommunityPageState extends State<CommunityPage> {
       child: TextField(
         controller: _searchController,
         onChanged: _filterPosts,
+        style: theme.textTheme.bodyMedium,
         decoration: InputDecoration(
           hintText: 'Search posts, topics or farmers...',
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          prefixIcon: Icon(Icons.search, color: Colors.green[700]),
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.textTheme.bodySmall?.color,
+          ),
+          prefixIcon: Icon(Icons.search, color: colorScheme.primary),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
+                  icon: Icon(
+                    Icons.clear,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
                   onPressed: () {
                     _searchController.clear();
                     _filterPosts('');
@@ -202,7 +230,10 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildPostsList() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return RefreshIndicator(
+      color: colorScheme.primary,
       onRefresh: _loadPosts,
       child: ListView.builder(
         padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 80),
@@ -220,24 +251,24 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            'No posts found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
-            ),
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: theme.textTheme.bodySmall?.color,
           ),
+          const SizedBox(height: 16),
+          Text('No posts found', style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
             'Try a different search term',
-            style: TextStyle(color: Colors.grey[500]),
+            style: theme.textTheme.bodyMedium,
           ),
         ],
       ),
@@ -245,27 +276,27 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildErrorState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-          const SizedBox(height: 16),
-          Text(
-            'Failed to load posts',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
-            ),
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: colorScheme.error.withOpacity(0.7),
           ),
+          const SizedBox(height: 16),
+          Text('Failed to load posts', style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               _error ?? 'Unknown error',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500]),
+              style: theme.textTheme.bodyMedium,
             ),
           ),
           const SizedBox(height: 16),
@@ -274,7 +305,7 @@ class _CommunityPageState extends State<CommunityPage> {
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[700],
+              backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,
             ),
           ),

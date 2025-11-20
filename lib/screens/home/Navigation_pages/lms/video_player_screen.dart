@@ -4,6 +4,7 @@ import 'package:chewie/chewie.dart';
 import 'package:video_player/video_player.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/config/theme.dart';
 import '../../../../../models/tutorial.dart';
 import '../../../../../services/lms_api_service.dart';
 
@@ -39,7 +40,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   Future<void> _initializePlayer() async {
     try {
-      // Video URL is already a complete S3 URL from the backend
       final videoUrl = widget.tutorial.videoUrl;
 
       _videoPlayerController = VideoPlayerController.networkUrl(
@@ -56,15 +56,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         allowMuting: true,
         showControls: true,
         materialProgressColors: ChewieProgressColors(
-          playedColor: Colors.green.shade600,
-          handleColor: Colors.green.shade700,
-          backgroundColor: Colors.grey.shade300,
-          bufferedColor: Colors.grey.shade400,
+          playedColor: AppColors.primaryGreen,
+          handleColor: AppColors.primaryGreen,
+          backgroundColor: AppColors.borderLight,
+          bufferedColor: AppColors.textLight,
         ),
         placeholder: Container(
           color: Colors.black,
-          child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primaryGreen,
+            ),
           ),
         ),
         errorBuilder: (context, errorMessage) {
@@ -74,9 +76,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               children: [
                 const Icon(Icons.error_outline, color: Colors.white, size: 48),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'Error loading video',
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -90,7 +92,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         },
       );
 
-      // Increment view count after video starts playing
       _videoPlayerController.addListener(() {
         if (_videoPlayerController.value.isPlaying && !_viewCountIncremented) {
           _incrementViewCount();
@@ -125,6 +126,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -144,8 +148,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           // Tutorial Details
           Expanded(
             child: Container(
-              color: Colors.white,
-              child: _buildTutorialDetails(),
+              color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+              child: _buildTutorialDetails(theme, isDark),
             ),
           ),
         ],
@@ -159,8 +163,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         aspectRatio: 16 / 9,
         child: Container(
           color: Colors.black,
-          child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+          child: Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primaryGreen,
+            ),
           ),
         ),
       );
@@ -199,10 +205,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     },
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      foregroundColor: Colors.white,
-                    ),
                   ),
                 ],
               ),
@@ -222,7 +224,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildTutorialDetails() {
+  Widget _buildTutorialDetails(ThemeData theme, bool isDark) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -232,10 +234,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             // Title
             Text(
               widget.tutorial.title,
-              style: const TextStyle(
-                fontSize: 20,
+              style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 height: 1.3,
+                color: isDark ? AppColors.textWhite : AppColors.textDark,
               ),
             ),
             const SizedBox(height: 12),
@@ -246,19 +248,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 Icon(
                   Icons.play_circle_outline,
                   size: 16,
-                  color: Colors.grey.shade600,
+                  color: AppColors.textMedium,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   '${widget.tutorial.getFormattedViewCount()} views',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMedium,
+                  ),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
+                Icon(
+                  Icons.schedule,
+                  size: 16,
+                  color: AppColors.textMedium,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   widget.tutorial.getRelativeTime(),
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.textMedium,
+                  ),
                 ),
               ],
             ),
@@ -268,7 +278,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: AppColors.paleGreen,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
@@ -276,13 +286,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green.shade700,
+                  color: AppColors.primaryGreen,
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            Divider(color: Colors.grey.shade300),
+            Divider(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
             const SizedBox(height: 16),
 
             // Uploader info
@@ -296,17 +308,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     children: [
                       Text(
                         widget.tutorial.uploaderName,
-                        style: const TextStyle(
-                          fontSize: 15,
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.textWhite : AppColors.textDark,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Extension Farmer',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMedium,
                         ),
                       ),
                     ],
@@ -316,20 +327,24 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
             const SizedBox(height: 16),
 
-            Divider(color: Colors.grey.shade300),
+            Divider(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
             const SizedBox(height: 16),
 
             // Description
-            const Text(
+            Text(
               'Description',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppColors.textWhite : AppColors.textDark,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               widget.tutorial.description,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade800,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppColors.textWhite : AppColors.textDark,
                 height: 1.5,
               ),
             ),
@@ -345,7 +360,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
     return CircleAvatar(
       radius: 24,
-      backgroundColor: Colors.green.shade100,
+      backgroundColor: AppColors.paleGreen,
       backgroundImage: profilePictureUrl != null
           ? NetworkImage(profilePictureUrl)
           : null,
@@ -360,7 +375,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.green.shade800,
+                color: AppColors.primaryGreen,
               ),
             )
           : null,

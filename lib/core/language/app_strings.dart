@@ -1231,4 +1231,176 @@ class AppStrings {
         return "$fieldName e hlokahala.";
     }
   }
+
+  // Dashboard Page Strings
+  static String get quickActions {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Quick Actions";
+      case AppLanguage.sesotho:
+        return "Liketso tse Potlakileng";
+    }
+  }
+
+  static String get featuredCourses {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Featured Courses";
+      case AppLanguage.sesotho:
+        return "Likhofo tse Hlahelletseng";
+    }
+  }
+
+  static String get topCommunityPosts {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Top Community Posts";
+      case AppLanguage.sesotho:
+        return "Liposo tse Holimo tsa Sechaba";
+    }
+  }
+
+  static String get viewMore {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "View More";
+      case AppLanguage.sesotho:
+        return "Bona Tse Ling";
+    }
+  }
+
+  static String get dailyFarmingTip {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Daily Farming Tip";
+      case AppLanguage.sesotho:
+        return "Keletso ea Temo ea Letsatsi";
+    }
+  }
+
+  static String get poweredByAI {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Powered by AI";
+      case AppLanguage.sesotho:
+        return "E tsamaisoa ke AI";
+    }
+  }
+
+  static String get offline {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Offline";
+      case AppLanguage.sesotho:
+        return "Ha e ntse e le sieo";
+    }
+  }
+
+  static String get unableToLoadTip {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Unable to load tip";
+      case AppLanguage.sesotho:
+        return "Ha e khone ho jara keletso";
+    }
+  }
+
+  static String get noPostsYet {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "No posts yet";
+      case AppLanguage.sesotho:
+        return "Ha ho liposo";
+    }
+  }
+
+  static String get beFirstToShare {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Be the first to share with the community!";
+      case AppLanguage.sesotho:
+        return "E be oa pele ho arolelana le sechaba!";
+    }
+  }
+
+  static String get noCoursesAvailable {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "No courses available";
+      case AppLanguage.sesotho:
+        return "Ha ho likhofo tse fumanehang";
+    }
+  }
+
+  static String get today {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Today";
+      case AppLanguage.sesotho:
+        return "Kajeno";
+    }
+  }
+
+  static String get unableToLoadWeather {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Unable to load weather";
+      case AppLanguage.sesotho:
+        return "Ha e khone ho jara boemo ba leholimo";
+    }
+  }
+
+  static String get humidity {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Humidity";
+      case AppLanguage.sesotho:
+        return "Mongobo";
+    }
+  }
+
+  static String get wind {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Wind";
+      case AppLanguage.sesotho:
+        return "Moea";
+    }
+  }
+
+  static String get high {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "High";
+      case AppLanguage.sesotho:
+        return "Holimo";
+    }
+  }
+
+  static String get addCrop {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Add Crop";
+      case AppLanguage.sesotho:
+        return "Eketsa Sejalo";
+    }
+  }
+
+  static String get tasks {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Tasks";
+      case AppLanguage.sesotho:
+        return "Mesebetsi";
+    }
+  }
+
+  static String get reports {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Reports";
+      case AppLanguage.sesotho:
+        return "Litlaleho";
+    }
+  }
 }

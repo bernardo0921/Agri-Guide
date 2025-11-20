@@ -4,6 +4,7 @@ import '../services/community_api_service.dart';
 import '../widgets/post_card.dart';
 import '../core/notifiers/app_notifiers.dart';
 import '../core/language/app_strings.dart';
+import '../config/theme.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final String postId;
@@ -35,7 +36,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
 
     try {
-      // Fetch the specific post by ID
       final post = await CommunityApiService.getPostById(widget.postId);
       
       if (mounted) {
@@ -67,7 +67,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentRed),
             child: Text(AppStrings.delete),
           ),
         ],
@@ -80,10 +80,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppStrings.postDeletedSuccessfully)),
+            SnackBar(
+              content: Text(AppStrings.postDeletedSuccessfully),
+              backgroundColor: AppColors.successGreen,
+            ),
           );
           
-          // Go back after deletion
           Navigator.of(context).pop();
         }
       } catch (e) {
@@ -91,7 +93,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${AppStrings.failedToDeletePost}: $e'),
-              backgroundColor: Colors.red[700],
+              backgroundColor: AppColors.accentRed,
             ),
           );
         }
@@ -101,8 +103,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: ValueListenableBuilder(
           valueListenable: AppNotifiers.languageNotifier,
@@ -110,13 +114,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             return Text(AppStrings.postDetails);
           },
         ),
-        backgroundColor: Colors.green[700],
-        foregroundColor: Colors.white,
-        elevation: 0,
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primaryGreen,
+                ),
+              )
             : _error != null
                 ? _buildErrorState()
                 : _post == null
@@ -129,6 +134,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Widget _buildPostContent() {
     return RefreshIndicator(
       onRefresh: _loadPost,
+      color: AppColors.primaryGreen,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
@@ -141,6 +147,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Widget _buildErrorState() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return ValueListenableBuilder(
       valueListenable: AppNotifiers.languageNotifier,
       builder: (context, language, child) {
@@ -148,14 +157,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.accentRed.withOpacity(0.7),
+              ),
               const SizedBox(height: 16),
               Text(
                 AppStrings.failedToLoadPost,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -164,7 +175,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 child: Text(
                   _error ?? AppStrings.unknownError,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[500]),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMedium,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -172,10 +185,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 onPressed: _loadPost,
                 icon: const Icon(Icons.refresh),
                 label: Text(AppStrings.retry),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
-                  foregroundColor: Colors.white,
-                ),
               ),
             ],
           ),
@@ -185,6 +194,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Widget _buildNotFoundState() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return ValueListenableBuilder(
       valueListenable: AppNotifiers.languageNotifier,
       builder: (context, language, child) {
@@ -192,30 +204,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+              Icon(
+                Icons.search_off,
+                size: 64,
+                color: AppColors.textLight,
+              ),
               const SizedBox(height: 16),
               Text(
                 AppStrings.postNotFound,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 AppStrings.postMayBeDeleted,
-                style: TextStyle(color: Colors.grey[500]),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(Icons.arrow_back),
                 label: Text(AppStrings.goBack),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
-                  foregroundColor: Colors.white,
-                ),
               ),
             ],
           ),

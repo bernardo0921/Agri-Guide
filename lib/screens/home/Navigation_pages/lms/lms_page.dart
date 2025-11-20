@@ -4,6 +4,7 @@ import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/services/lms_api_service.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/tutorial_card.dart';
+import 'package:agri_guide/config/theme.dart';
 import 'video_player_screen.dart';
 import 'my_tutorials_screen.dart';
 
@@ -55,7 +56,6 @@ class _LMSPageContentState extends State<LMSPageContent> {
     
     if (user == null) return false;
     
-    // Check for user_type field - adjust these values based on your backend
     final userType = user['user_type']?.toString().toLowerCase();
     return userType == 'extension_worker' || 
            userType == 'extension' ||
@@ -153,14 +153,18 @@ class _LMSPageContentState extends State<LMSPageContent> {
 
   Widget _buildSearchAndFilter() {
     final isExtensionWorker = _isExtensionWorker();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: isDark 
+                ? Colors.black.withOpacity(0.3)
+                : AppColors.borderLight,
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -173,31 +177,22 @@ class _LMSPageContentState extends State<LMSPageContent> {
             controller: _searchController,
             decoration: InputDecoration(
               hintText: 'Search tutorials...',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: Icon(
+                Icons.search,
+                color: AppColors.textMedium,
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear),
+                      icon: Icon(
+                        Icons.clear,
+                        color: AppColors.textMedium,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         _onSearchChanged();
                       },
                     )
                   : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green.shade400, width: 2),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
             onChanged: (value) {
               setState(() {});
@@ -206,22 +201,35 @@ class _LMSPageContentState extends State<LMSPageContent> {
           ),
           const SizedBox(height: 12),
           
-          // Category filter and My Tutorials button (only for extension workers)
+          // Category filter and My Tutorials button
           Row(
             children: [
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(
+                      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey.shade50,
+                    color: isDark 
+                        ? AppColors.backgroundDark 
+                        : AppColors.backgroundLight,
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedCategory,
                       isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down),
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: isDark ? AppColors.textWhite : AppColors.textDark,
+                      ),
+                      dropdownColor: isDark 
+                          ? AppColors.surfaceDark 
+                          : AppColors.surfaceLight,
+                      style: TextStyle(
+                        color: isDark ? AppColors.textWhite : AppColors.textDark,
+                      ),
                       items: categoryMap.entries.map((entry) {
                         return DropdownMenuItem(
                           value: entry.key,
@@ -233,7 +241,6 @@ class _LMSPageContentState extends State<LMSPageContent> {
                   ),
                 ),
               ),
-              // Only show My Tutorials button for extension workers
               if (isExtensionWorker) ...[
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
@@ -241,8 +248,8 @@ class _LMSPageContentState extends State<LMSPageContent> {
                   icon: const Icon(Icons.video_library, size: 18),
                   label: const Text('My Tutorials'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.green.shade700,
-                    side: BorderSide(color: Colors.green.shade300),
+                    foregroundColor: AppColors.primaryGreen,
+                    side: BorderSide(color: AppColors.lightGreen),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -257,9 +264,14 @@ class _LMSPageContentState extends State<LMSPageContent> {
   }
 
   Widget _buildContent() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primaryGreen,
+        ),
       );
     }
 
@@ -273,24 +285,21 @@ class _LMSPageContentState extends State<LMSPageContent> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: Colors.red.shade300,
+                color: AppColors.accentRed.withOpacity(0.7),
               ),
               const SizedBox(height: 16),
               Text(
                 'Error loading tutorials',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
                 ),
               ),
               const SizedBox(height: 16),
@@ -298,10 +307,6 @@ class _LMSPageContentState extends State<LMSPageContent> {
                 onPressed: _loadTutorials,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
-                ),
               ),
             ],
           ),
@@ -319,15 +324,13 @@ class _LMSPageContentState extends State<LMSPageContent> {
               Icon(
                 Icons.video_library_outlined,
                 size: 64,
-                color: Colors.grey.shade400,
+                color: AppColors.textLight,
               ),
               const SizedBox(height: 16),
               Text(
                 'No tutorials found',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -336,9 +339,8 @@ class _LMSPageContentState extends State<LMSPageContent> {
                     ? 'Try adjusting your search or filter'
                     : 'Check back later for new tutorials',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
                 ),
               ),
             ],
@@ -349,6 +351,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
 
     return RefreshIndicator(
       onRefresh: _refreshTutorials,
+      color: AppColors.primaryGreen,
       child: GridView.builder(
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

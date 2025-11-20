@@ -4,6 +4,7 @@ import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/providers/theme_provider.dart';
 import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/config/theme.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -15,6 +16,9 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
         title: ValueListenableBuilder(
@@ -23,9 +27,6 @@ class _SettingsPageState extends State<SettingsPage> {
             return Text(AppStrings.settings);
           },
         ),
-        elevation: 0,
-        backgroundColor: Colors.green.shade700,
-        foregroundColor: Colors.white,
       ),
       body: ValueListenableBuilder(
         valueListenable: AppNotifiers.languageNotifier,
@@ -35,48 +36,79 @@ class _SettingsPageState extends State<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Appearance Section
-                _buildSectionHeader(AppStrings.appearance),
-                _buildThemeSettingTile(),
+                _buildSectionHeader(AppStrings.appearance, isDark),
+                _buildThemeSettingTile(isDark),
                 const Divider(height: 1),
 
                 // Notifications Section
-                _buildSectionHeader(AppStrings.notifications),
+                _buildSectionHeader(AppStrings.notifications, isDark),
                 _buildComingSoonTile(
                   AppStrings.pushNotifications,
                   Icons.notifications,
+                  isDark,
                 ),
                 _buildComingSoonTile(
                   AppStrings.emailNotifications,
                   Icons.email,
+                  isDark,
                 ),
                 const Divider(height: 1),
 
                 // Privacy & Security Section
-                _buildSectionHeader(AppStrings.privacySecurity),
-                _buildComingSoonTile(AppStrings.privacySettings, Icons.lock),
-                _buildComingSoonTile(AppStrings.changePassword, Icons.vpn_key),
+                _buildSectionHeader(AppStrings.privacySecurity, isDark),
+                _buildComingSoonTile(
+                  AppStrings.privacySettings,
+                  Icons.lock,
+                  isDark,
+                ),
+                _buildComingSoonTile(
+                  AppStrings.changePassword,
+                  Icons.vpn_key,
+                  isDark,
+                ),
                 const Divider(height: 1),
 
                 // Account Section
-                _buildSectionHeader(AppStrings.account),
-                _buildComingSoonTile(AppStrings.manageProfile, Icons.person),
-                _buildComingSoonTile(AppStrings.connectedApps, Icons.apps),
+                _buildSectionHeader(AppStrings.account, isDark),
+                _buildComingSoonTile(
+                  AppStrings.manageProfile,
+                  Icons.person,
+                  isDark,
+                ),
+                _buildComingSoonTile(
+                  AppStrings.connectedApps,
+                  Icons.apps,
+                  isDark,
+                ),
                 const Divider(height: 1),
 
                 // Support Section
-                _buildSectionHeader(AppStrings.support),
-                _buildComingSoonTile(AppStrings.helpFeedback, Icons.help),
-                _buildComingSoonTile(AppStrings.reportBug, Icons.bug_report),
+                _buildSectionHeader(AppStrings.support, isDark),
+                _buildComingSoonTile(
+                  AppStrings.helpFeedback,
+                  Icons.help,
+                  isDark,
+                ),
+                _buildComingSoonTile(
+                  AppStrings.reportBug,
+                  Icons.bug_report,
+                  isDark,
+                ),
                 const Divider(height: 1),
 
                 // About Section
-                _buildSectionHeader(AppStrings.about),
+                _buildSectionHeader(AppStrings.about, isDark),
                 _buildComingSoonTile(
                   AppStrings.termsOfService,
                   Icons.description,
+                  isDark,
                 ),
-                _buildComingSoonTile(AppStrings.privacyPolicy, Icons.shield),
-                _buildVersionInfo(),
+                _buildComingSoonTile(
+                  AppStrings.privacyPolicy,
+                  Icons.shield,
+                  isDark,
+                ),
+                _buildVersionInfo(isDark),
                 const SizedBox(height: 32),
 
                 // Logout Button
@@ -89,8 +121,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       icon: const Icon(Icons.logout),
                       label: Text(AppStrings.logout),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade600,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.accentRed,
+                        foregroundColor: AppColors.textWhite,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -108,7 +140,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
       child: Text(
@@ -116,27 +148,32 @@ class _SettingsPageState extends State<SettingsPage> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: Colors.green.shade700,
+          color: AppColors.primaryGreen,
         ),
       ),
     );
   }
 
-  Widget _buildThemeSettingTile() {
+  Widget _buildThemeSettingTile(bool isDark) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: Colors.white,
+          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  color: isDark 
+                      ? AppColors.primaryGreen.withOpacity(0.2)
+                      : AppColors.paleGreen,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.dark_mode, color: Colors.blue.shade700),
+                child: Icon(
+                  Icons.dark_mode,
+                  color: AppColors.primaryGreen,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -145,10 +182,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Text(
                       AppStrings.darkMode,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: isDark ? AppColors.textWhite : AppColors.textDark,
                       ),
                     ),
                     Text(
@@ -157,7 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           : AppStrings.disabled,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey.shade600,
+                        color: AppColors.textMedium,
                       ),
                     ),
                   ],
@@ -174,11 +211,12 @@ class _SettingsPageState extends State<SettingsPage> {
                             ? AppStrings.darkModeEnabled
                             : AppStrings.lightModeEnabled,
                       ),
+                      backgroundColor: AppColors.successGreen,
                       duration: const Duration(seconds: 2),
                     ),
                   );
                 },
-                activeThumbColor: Colors.green.shade700,
+                activeColor: AppColors.primaryGreen,
               ),
             ],
           ),
@@ -187,29 +225,34 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildComingSoonTile(String title, IconData icon) {
+  Widget _buildComingSoonTile(String title, IconData icon, bool isDark) {
     return GestureDetector(
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.comingSoonFor(title)),
-            backgroundColor: Colors.orange.shade600,
+            backgroundColor: AppColors.accentOrange,
             duration: const Duration(seconds: 2),
           ),
         );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: Colors.white,
+        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: isDark
+                    ? AppColors.borderDark
+                    : AppColors.borderLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: Colors.grey.shade600),
+              child: Icon(
+                icon,
+                color: AppColors.textMedium,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -218,17 +261,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+                      color: isDark ? AppColors.textWhite : AppColors.textDark,
                     ),
                   ),
                   Text(
                     AppStrings.comingSoon,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.orange.shade600,
+                      color: AppColors.accentOrange,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -238,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.grey.shade400,
+              color: AppColors.textLight,
             ),
           ],
         ),
@@ -246,19 +289,24 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildVersionInfo() {
+  Widget _buildVersionInfo(bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Colors.white,
+      color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.purple.shade100,
+              color: isDark
+                  ? AppColors.primaryGreen.withOpacity(0.2)
+                  : AppColors.paleGreen,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.info, color: Colors.purple.shade700),
+            child: Icon(
+              Icons.info,
+              color: AppColors.primaryGreen,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -267,15 +315,18 @@ class _SettingsPageState extends State<SettingsPage> {
               children: [
                 Text(
                   AppStrings.appVersion,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: isDark ? AppColors.textWhite : AppColors.textDark,
                   ),
                 ),
                 Text(
                   AppStrings.version,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMedium,
+                  ),
                 ),
               ],
             ),
@@ -301,7 +352,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Navigator.pop(context);
               _performLogout();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentRed),
             child: Text(AppStrings.logout),
           ),
         ],

@@ -45,7 +45,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     isFarmer = widget.initialData['user_type'] == 'farmer';
 
-    // Initialize User controllers
     firstNameController = TextEditingController(
       text: widget.initialData['first_name'] ?? '',
     );
@@ -59,7 +58,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       text: widget.initialData['phone_number'] ?? '',
     );
 
-    // Initialize Farmer controllers
     if (isFarmer) {
       final farmerProfile = widget.initialData['farmer_profile'] ?? {};
       farmNameController = TextEditingController(
@@ -85,7 +83,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
     }
 
-    // Listen to language changes to rebuild UI
     AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
@@ -138,14 +135,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   void _showImageSourceDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
         return SafeArea(
           child: Wrap(
             children: <Widget>[
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.green),
+                leading: Icon(Icons.photo_library, color: colorScheme.primary),
                 title: Text(AppStrings.chooseFromGallery),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -153,7 +157,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_camera, color: Colors.green),
+                leading: Icon(Icons.photo_camera, color: colorScheme.primary),
                 title: Text(AppStrings.takePhoto),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -163,7 +167,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               if (_selectedImage != null ||
                   widget.initialData['profile_picture'] != null)
                 ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
+                  leading: Icon(Icons.delete, color: colorScheme.error),
                   title: Text(AppStrings.removePhoto),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -189,7 +193,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
 
-      // Build the payload for the API
       final Map<String, dynamic> updateData = {
         'first_name': firstNameController.text,
         'last_name': lastNameController.text,
@@ -213,7 +216,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         };
       }
 
-      // Call updateProfile with optional profile picture
       await authService.updateProfile(
         updateData,
         profilePicture: _selectedImage,
@@ -251,6 +253,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return ValueListenableBuilder(
       valueListenable: AppNotifiers.languageNotifier,
       builder: (context, language, child) {
@@ -258,9 +263,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
           appBar: AppBar(
             title: Text(
               AppStrings.editProfile,
-              style: const TextStyle(color: Colors.white),
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+              ),
             ),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: colorScheme.primary,
             iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: SingleChildScrollView(
@@ -275,7 +282,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     children: [
                       CircleAvatar(
                         radius: 60,
-                        backgroundColor: Colors.green.shade100,
+                        backgroundColor: colorScheme.primary.withOpacity(0.1),
                         backgroundImage: _selectedImage != null
                             ? FileImage(_selectedImage!) as ImageProvider
                             : (widget.initialData['profile_picture'] != null &&
@@ -296,7 +303,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 _getInitials(),
                                 style: TextStyle(
                                   fontSize: 48,
-                                  color: Colors.green.shade800,
+                                  color: colorScheme.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               )
@@ -310,9 +317,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.green.shade600,
+                              color: colorScheme.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: colorScheme.surface, width: 2),
                             ),
                             child: const Icon(
                               Icons.camera_alt,
@@ -327,19 +334,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   const SizedBox(height: 10),
                   Text(
                     AppStrings.tapCameraToChangePhoto,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 30),
 
                   Text(
                     AppStrings.personalInformationTitle,
-                    style: const TextStyle(
-                      fontSize: 18,
+                    style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
                     ),
                   ),
-                  const Divider(color: Colors.green),
+                  Divider(color: colorScheme.primary),
                   _buildTextField(firstNameController, AppStrings.firstName, Icons.person),
                   _buildTextField(
                     lastNameController,
@@ -389,7 +394,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
+                        backgroundColor: colorScheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -414,25 +419,39 @@ class _EditProfilePageState extends State<EditProfilePage> {
     TextInputType keyboardType = TextInputType.text,
     bool isReadOnly = false,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         controller: controller,
         readOnly: isReadOnly,
         keyboardType: keyboardType,
+        style: theme.textTheme.bodyMedium,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: Colors.green.shade600),
+          labelStyle: theme.textTheme.bodyMedium,
+          prefixIcon: Icon(icon, color: colorScheme.primary),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.green.shade200),
+            borderSide: BorderSide(color: colorScheme.outline),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: colorScheme.outline),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.green.shade600, width: 2),
+            borderSide: BorderSide(color: colorScheme.primary, width: 2),
           ),
           filled: isReadOnly,
-          fillColor: isReadOnly ? Colors.grey.shade100 : Colors.white,
+          fillColor: isReadOnly 
+              ? (isDarkMode 
+                  ? colorScheme.surface.withOpacity(0.5)
+                  : colorScheme.outline.withOpacity(0.1))
+              : null,
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -445,17 +464,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   List<Widget> _buildFarmerFields() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return [
       const SizedBox(height: 10),
       Text(
         AppStrings.farmingProfile,
-        style: const TextStyle(
-          fontSize: 18,
+        style: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
         ),
       ),
-      const Divider(color: Colors.green),
+      Divider(color: colorScheme.primary),
       _buildTextField(farmNameController, AppStrings.farmName, Icons.agriculture),
       _buildTextField(
         farmSizeController,

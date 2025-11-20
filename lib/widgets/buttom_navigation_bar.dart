@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -12,12 +14,18 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: isDarkMode
+                ? Colors.black.withAlpha(77)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -26,34 +34,39 @@ class CustomBottomNavigationBar extends StatelessWidget {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                context,
-                icon: Icons.dashboard_rounded,
-                label: 'Dashboard',
-                index: 0,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.psychology_rounded,
-                label: 'AI Advisory',
-                index: 1,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.people_rounded,
-                label: 'Community',
-                index: 2,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.school_rounded,
-                label: 'LMS',
-                index: 3,
-              ),
-            ],
+          child: ValueListenableBuilder(
+            valueListenable: AppNotifiers.languageNotifier,
+            builder: (context, value, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    context,
+                    icon: Icons.dashboard_rounded,
+                    label: AppStrings.dashboard,
+                    index: 0,
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.psychology_rounded,
+                    label: AppStrings.aiAdvisory,
+                    index: 1,
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.people_rounded,
+                    label: AppStrings.community,
+                    index: 2,
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.school_rounded,
+                    label: AppStrings.learning,
+                    index: 3,
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -66,7 +79,23 @@ class CustomBottomNavigationBar extends StatelessWidget {
     required String label,
     required int index,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
     final bool isSelected = currentIndex == index;
+
+    // Calculate gradient colors based on theme
+    final gradientStart = isDarkMode
+        ? colorScheme.primary.withOpacity(0.8)
+        : colorScheme.primary;
+    final gradientEnd = isDarkMode
+        ? colorScheme.primary
+        : colorScheme.primary.withOpacity(0.7);
+
+    // Unselected icon/text color
+    final unselectedColor = isDarkMode
+        ? theme.textTheme.bodySmall?.color ?? Colors.grey
+        : Colors.grey;
 
     return Expanded(
       child: GestureDetector(
@@ -84,10 +113,10 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 padding: EdgeInsets.all(isSelected ? 12.0 : 8.0),
                 decoration: BoxDecoration(
                   gradient: isSelected
-                      ? const LinearGradient(
+                      ? LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF7CB342), Color(0xFF8BC34A)],
+                          colors: [gradientStart, gradientEnd],
                         )
                       : null,
                   color: isSelected ? null : Colors.transparent,
@@ -95,7 +124,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF7CB342).withOpacity(0.3),
+                            color: colorScheme.primary.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -104,7 +133,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 ),
                 child: Icon(
                   icon,
-                  color: isSelected ? Colors.white : Colors.grey,
+                  color: isSelected ? Colors.white : unselectedColor,
                   size: isSelected ? 26 : 24,
                 ),
               ),
@@ -115,7 +144,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 style: TextStyle(
                   fontSize: isSelected ? 12 : 11,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? const Color(0xFF7CB342) : Colors.grey,
+                  color: isSelected ? colorScheme.primary : unselectedColor,
                 ),
                 child: Text(
                   label,
@@ -130,7 +159,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 height: 3,
                 width: isSelected ? 24 : 0,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7CB342),
+                  color: colorScheme.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

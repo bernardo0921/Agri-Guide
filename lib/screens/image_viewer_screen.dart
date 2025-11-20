@@ -6,6 +6,7 @@ import '../services/community_api_service.dart';
 import '../widgets/comments_bottom_sheet.dart';
 import '../core/notifiers/app_notifiers.dart';
 import '../core/language/app_strings.dart';
+import '../config/theme.dart';
 
 class ImageViewerScreen extends StatefulWidget {
   final Post post;
@@ -125,7 +126,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppStrings.failedToUpdateLike}: $e'),
-            backgroundColor: Colors.red[700],
+            backgroundColor: AppColors.accentRed,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -164,29 +165,37 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   }
 
   Future<void> _handleDelete() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
         title: Text(
           AppStrings.deletePost,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: isDark ? AppColors.textWhite : AppColors.textDark,
+          ),
         ),
         content: Text(
           AppStrings.deletePostConfirm,
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(
+            color: isDark ? AppColors.textLight : AppColors.textMedium,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
             child: Text(
               AppStrings.cancel,
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(
+                color: isDark ? AppColors.textLight : AppColors.textMedium,
+              ),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentRed),
             child: Text(AppStrings.delete),
           ),
         ],
@@ -199,7 +208,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
         if (mounted) {
           Navigator.of(context).pop({'deleted': true});
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppStrings.postDeletedSuccessfully)),
+            SnackBar(
+              content: Text(AppStrings.postDeletedSuccessfully),
+              backgroundColor: AppColors.successGreen,
+            ),
           );
         }
       } catch (e) {
@@ -207,7 +219,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${AppStrings.failedToDeletePost}: $e'),
-              backgroundColor: Colors.red[700],
+              backgroundColor: AppColors.accentRed,
             ),
           );
         }
@@ -257,7 +269,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                     ? loadingProgress.cumulativeBytesLoaded /
                                         loadingProgress.expectedTotalBytes!
                                     : null,
-                                color: Colors.green[400],
+                                color: AppColors.primaryGreen,
                               ),
                             );
                           },
@@ -269,13 +281,13 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                   Icon(
                                     Icons.broken_image_outlined,
                                     size: 64,
-                                    color: Colors.grey[600],
+                                    color: AppColors.textLight,
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
                                     AppStrings.failedToLoadImage,
                                     style: TextStyle(
-                                      color: Colors.grey[400],
+                                      color: AppColors.textLight,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -333,7 +345,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                   color: Colors.white,
                                 ),
                               ),
-                              color: Colors.grey[900],
+                              color: AppColors.surfaceDark,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -369,19 +381,19 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: Colors.red[900],
+                                          color: AppColors.accentRed.withOpacity(0.2),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.delete_outline,
-                                          color: Colors.red,
+                                          color: AppColors.accentRed,
                                           size: 18,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
                                         AppStrings.deletePost,
-                                        style: const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: AppColors.accentRed),
                                       ),
                                     ],
                                   ),
@@ -402,7 +414,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                   ),
                 ),
 
-                // Bottom Controls (Author info and interaction buttons remain unchanged)
+                // Bottom Controls
                 AnimatedOpacity(
                   opacity: _showControls ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 200),
@@ -443,7 +455,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                             _isLiked
                                                 ? Icons.favorite
                                                 : Icons.favorite_border,
-                                            color: _isLiked ? Colors.red : Colors.white,
+                                            color: _isLiked ? AppColors.accentRed : Colors.white,
                                             size: 28,
                                           ),
                                         ),
@@ -496,7 +508,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                 children: [
                                   CircleAvatar(
                                     radius: 20,
-                                    backgroundColor: Colors.green[700],
+                                    backgroundColor: AppColors.primaryGreen,
                                     backgroundImage: widget.post.authorProfilePicture != null
                                         ? NetworkImage(
                                             CommunityApiService.getImageUrl(
@@ -530,7 +542,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                             Text(
                                               '@${widget.post.authorUsername}',
                                               style: TextStyle(
-                                                color: Colors.grey[400],
+                                                color: AppColors.textLight,
                                                 fontSize: 13,
                                               ),
                                             ),
@@ -541,7 +553,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                                 width: 3,
                                                 height: 3,
                                                 decoration: BoxDecoration(
-                                                  color: Colors.grey[600],
+                                                  color: AppColors.textLight,
                                                   shape: BoxShape.circle,
                                                 ),
                                               ),
@@ -549,7 +561,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                             Text(
                                               widget.post.timeAgo,
                                               style: TextStyle(
-                                                color: Colors.grey[400],
+                                                color: AppColors.textLight,
                                                 fontSize: 13,
                                               ),
                                             ),

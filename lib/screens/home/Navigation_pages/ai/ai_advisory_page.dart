@@ -1,4 +1,4 @@
-// ai_advisory_page.dart - With Streaming Typing Animation
+// ai_advisory_page.dart - With Streaming Typing Animation (Theme-aware)
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +22,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ImagePicker _imagePicker = ImagePicker();
 
-  // Base URL for constructing full image URLs (Copied from home_screen.dart)
   static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
   final List<Map<String, dynamic>> _messages = [];
@@ -32,7 +31,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   String? _currentSessionId;
   File? _selectedImage;
 
-  // For streaming animation
   String _streamingText = '';
   int _currentStreamingMessageIndex = -1;
 
@@ -73,10 +71,14 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   void _showImagePreviewDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: colorScheme.surface,
         child: Container(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -85,14 +87,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Image Preview',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
+                  Text('Image Preview', style: theme.textTheme.titleLarge),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () {
@@ -119,20 +114,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Add a message (optional)...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.green.shade300,
-                      width: 2,
-                    ),
-                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -146,10 +127,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                           _selectedImage = null;
                         });
                       },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
                       child: const Text('Cancel'),
                     ),
                   ),
@@ -160,14 +137,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                         Navigator.pop(context);
                         _sendImageMessage();
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade600,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        'Send',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: const Text('Send'),
                     ),
                   ),
                 ],
@@ -180,8 +150,12 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   void _showImageSourceDialog() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -190,17 +164,10 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Choose Image Source',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade800,
-              ),
-            ),
+            Text('Choose Image Source', style: theme.textTheme.titleLarge),
             const SizedBox(height: 20),
             ListTile(
-              leading: Icon(Icons.camera_alt, color: Colors.green.shade600),
+              leading: Icon(Icons.camera_alt, color: colorScheme.primary),
               title: const Text('Take Photo'),
               onTap: () {
                 Navigator.pop(context);
@@ -208,7 +175,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.photo_library, color: Colors.green.shade600),
+              leading: Icon(Icons.photo_library, color: colorScheme.primary),
               title: const Text('Choose from Gallery'),
               onTap: () {
                 Navigator.pop(context);
@@ -290,7 +257,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       _errorMessage = null;
       _controller.clear();
 
-      // Add placeholder for AI response
       _messages.add({'text': '', 'isUser': false, 'isStreaming': true});
       _currentStreamingMessageIndex = _messages.length - 1;
       _streamingText = '';
@@ -316,10 +282,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               setState(() {
                 _currentSessionId = newSessionId;
               });
-              print('📝 Saved new session ID: $newSessionId');
             }
           } else if (event['type'] == 'chunk') {
-            // Update streaming text
             setState(() {
               _streamingText = event['fullText'];
               if (_currentStreamingMessageIndex >= 0) {
@@ -329,7 +293,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             });
             _scrollToBottom();
           } else if (event['type'] == 'done') {
-            // Streaming complete
             setState(() {
               if (_currentStreamingMessageIndex >= 0) {
                 _messages[_currentStreamingMessageIndex]['text'] =
@@ -343,7 +306,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             _scrollToBottom();
           }
         } else {
-          // Error occurred
           setState(() {
             _errorMessage = event['error'] ?? 'Unknown error occurred';
             _isStreaming = false;
@@ -386,11 +348,14 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   void _showErrorDialog(String message) {
+    final theme = Theme.of(context);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
+        backgroundColor: theme.colorScheme.surface,
+        title: Text('Error', style: theme.textTheme.titleLarge),
+        content: Text(message, style: theme.textTheme.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -414,6 +379,9 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   Future<void> _handleSessionSelect(String sessionId) async {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     Navigator.of(context).pop();
 
     if (sessionId == 'new') {
@@ -424,7 +392,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       });
       await AIService.startNewSession();
       if (mounted) {
-        _showSnackBar('Started new chat', Colors.green);
+        _showSnackBar('Started new chat', colorScheme.primary);
       }
       return;
     }
@@ -461,7 +429,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         if (mounted) {
           _showSnackBar(
             'Loaded chat with ${history.length} messages',
-            Colors.green,
+            colorScheme.primary,
           );
         }
       } else {
@@ -478,7 +446,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     }
   }
 
-  /// Get user initials for avatar fallback (Copied from home_screen.dart)
   String _getInitials(AuthService authService) {
     final user = authService.user;
 
@@ -502,18 +469,15 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     return 'U';
   }
 
-  /// Get the full profile picture URL (Copied from home_screen.dart)
   String? _getProfilePictureUrl(AuthService authService) {
     final user = authService.user;
     if (user == null) return null;
 
     final profilePicture = user['profile_picture'] as String?;
     if (profilePicture != null && profilePicture.isNotEmpty) {
-      // If it's already a full URL, return it
       if (profilePicture.startsWith('http')) {
         return profilePicture;
       }
-      // Otherwise, prepend the base URL
       return '$baseUrl$profilePicture';
     }
     return null;
@@ -521,15 +485,16 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Consumer<AuthService>(
       builder: (context, authService, _) {
         if (authService.status == AuthStatus.unknown) {
           return Scaffold(
             body: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.green.shade600,
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
               ),
             ),
           );
@@ -542,22 +507,18 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           return Scaffold(
             body: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.green.shade600,
-                ),
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
               ),
             ),
           );
         }
 
-        // --- Calculate User Avatar Data here ---
         final String? userProfileUrl = _getProfilePictureUrl(authService);
         final String? userInitials = _getInitials(authService);
-        // ----------------------------------------
 
         return Scaffold(
           key: _scaffoldKey,
-          backgroundColor: Colors.grey.shade50,
+          backgroundColor: colorScheme.surface,
           drawer: Drawer(
             child: ChatHistoryPanel(
               onSessionSelected: _handleSessionSelect,
@@ -587,7 +548,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                             imageFile: msg['image'] as File?,
                             imageUrl: msg['imageUrl'] as String?,
                             isStreaming: msg['isStreaming'] ?? false,
-                            // Pass user avatar data only if it is a user message
                             userProfileUrl: isUserMessage
                                 ? userProfileUrl
                                 : null,
@@ -605,6 +565,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   Widget _buildErrorBanner() {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -616,7 +578,9 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           Expanded(
             child: Text(
               _errorMessage!,
-              style: TextStyle(color: Colors.red.shade700),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.red.shade700,
+              ),
             ),
           ),
           IconButton(
@@ -634,38 +598,30 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/images/logo.png', // The path to your image file
-            width:
-                80, // Use width/height to set the size, similar to the Icon's 'size' property
-            height: 80,
-            // You won't use the 'color' property here unless you're tinting a non-colored image.
-          ),
+          Image.asset('assets/images/logo.png', width: 80, height: 80),
           const SizedBox(height: 16),
           Text(
             'Hello! I\'m your AgriGuide AI',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade700,
-            ),
+            style: theme.textTheme.headlineMedium,
           ),
           const SizedBox(height: 8),
           Text(
             'Ask me anything about farming and agriculture',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             'Or send me a picture of your crops!',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.green.shade600,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.primary,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -675,11 +631,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             onPressed: openDrawer,
             icon: const Icon(Icons.history),
             label: const Text('View Chat History'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.green.shade700,
-              side: BorderSide(color: Colors.green.shade300),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
           ),
         ],
       ),
@@ -687,13 +638,16 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 
   Widget _buildMessageInput() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade300,
+            color: colorScheme.outline.withOpacity(0.2),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -702,12 +656,12 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.history, color: Colors.green.shade600),
+            icon: Icon(Icons.history, color: colorScheme.primary),
             onPressed: openDrawer,
             tooltip: 'Chat History',
           ),
           IconButton(
-            icon: Icon(Icons.image, color: Colors.green.shade600),
+            icon: Icon(Icons.image, color: colorScheme.primary),
             onPressed: (_isLoading || _isStreaming)
                 ? null
                 : _showImageSourceDialog,
@@ -722,31 +676,13 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               enabled: !_isLoading && !_isStreaming,
               decoration: InputDecoration(
                 hintText: 'Ask AgriGuide anything...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
                   borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(
-                    color: Colors.green.shade300,
-                    width: 2,
-                  ),
-                ),
-                disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
             ),
@@ -755,12 +691,15 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green.shade600, Colors.green.shade700],
+                colors: [
+                  colorScheme.primary,
+                  colorScheme.primary.withOpacity(0.8),
+                ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.shade300,
+                  color: colorScheme.primary.withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -777,7 +716,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 }
 
-// EnhancedChatMessageBubble - WhatsApp Style with Image Overlays
+// EnhancedChatMessageBubble - Theme-aware version
 class EnhancedChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
@@ -799,12 +738,14 @@ class EnhancedChatMessageBubble extends StatelessWidget {
   });
 
   void _copyToClipboard(BuildContext context, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Copied to clipboard'),
         duration: const Duration(seconds: 2),
-        backgroundColor: Colors.green.shade600,
+        backgroundColor: colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -814,17 +755,21 @@ class EnhancedChatMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
     final hasImage = imageFile != null || imageUrl != null;
     final hasText = message.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isUser) _buildAvatar(),
+          if (!isUser) _buildAvatar(context),
           const SizedBox(width: 8),
           Flexible(
             child: GestureDetector(
@@ -834,7 +779,9 @@ class EnhancedChatMessageBubble extends StatelessWidget {
                   maxWidth: MediaQuery.of(context).size.width * 0.75,
                 ),
                 decoration: BoxDecoration(
-                  color: isUser ? Colors.green.shade600 : Colors.white,
+                  color: isUser
+                      ? colorScheme.primary
+                      : (isDarkMode ? colorScheme.surface : Colors.white),
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -843,7 +790,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.shade200,
+                      color: colorScheme.outline.withOpacity(0.2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -852,237 +799,196 @@ class EnhancedChatMessageBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Image section (if exists)
-                    if (hasImage)
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(16),
-                              topRight: const Radius.circular(16),
-                              bottomLeft: Radius.circular(hasText ? 0 : (isUser ? 4 : 16)),
-                              bottomRight: Radius.circular(hasText ? 0 : (isUser ? 16 : 4)),
-                            ),
-                            child: GestureDetector(
-                              onTap: () => _showImageFullScreen(context),
-                              child: imageFile != null
-                                  ? Image.file(
-                                      imageFile!,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: 250,
-                                    )
-                                  : Image.network(
-                                      imageUrl!,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: 250,
-                                      loadingBuilder:
-                                          (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return Container(
-                                          height: 250,
-                                          color: Colors.grey.shade200,
-                                          child: Center(
-                                            child: CircularProgressIndicator(
-                                              value: loadingProgress
-                                                          .expectedTotalBytes !=
-                                                      null
-                                                  ? loadingProgress
-                                                          .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
-                                                  : null,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      errorBuilder: (context, error, stacktrace) {
-                                        return Container(
-                                          height: 250,
-                                          color: Colors.grey.shade200,
-                                          child: Center(
-                                            child: Icon(
-                                              Icons.image_not_supported,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                            ),
-                          ),
-                          // WhatsApp-style text overlay on image (only if has both image and text)
-                          if (hasText && hasImage)
-                            Positioned(
-                              bottom: 8,
-                              left: 8,
-                              right: 8,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        message,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 15,
-                                          height: 1.3,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _buildTimestamp(),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    // Text section (only if no image, or as separate section for AI)
-                    if (hasText && !hasImage)
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (isUser)
-                              Text(
-                                message,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  height: 1.4,
-                                ),
-                              )
-                            else
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: AITextFormatter(
-                                      text: message,
-                                      baseStyle: TextStyle(
-                                        color: Colors.grey.shade800,
-                                        fontSize: 15,
-                                        height: 1.4,
-                                      ),
-                                      linkColor: Colors.blue,
-                                      codeBackgroundColor: Colors.grey.shade200,
-                                      codeTextColor: Colors.red.shade700,
-                                    ),
-                                  ),
-                                  if (isStreaming)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 8),
-                                      child: _buildTypingCursor(),
-                                    ),
-                                ],
-                              ),
-                            const SizedBox(height: 4),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: _buildTimestamp(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    // AI response with image (text below image)
+                    if (hasImage) _buildImageSection(context, hasText),
+                    if (hasText && !hasImage) _buildTextSection(context),
                     if (!isUser && hasImage && hasText)
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: AITextFormatter(
-                                    text: message,
-                                    baseStyle: TextStyle(
-                                      color: Colors.grey.shade800,
-                                      fontSize: 15,
-                                      height: 1.4,
-                                    ),
-                                    linkColor: Colors.blue,
-                                    codeBackgroundColor: Colors.grey.shade200,
-                                    codeTextColor: Colors.red.shade700,
-                                  ),
-                                ),
-                                if (isStreaming)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: _buildTypingCursor(),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: _buildTimestamp(),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildTextSection(context),
                   ],
                 ),
               ),
             ),
           ),
           const SizedBox(width: 8),
-          if (isUser) _buildAvatar(),
+          if (isUser) _buildAvatar(context),
         ],
       ),
     );
   }
 
-  Widget _buildTimestamp() {
+  Widget _buildImageSection(BuildContext context, bool hasText) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(hasText ? 0 : (isUser ? 4 : 16)),
+            bottomRight: Radius.circular(hasText ? 0 : (isUser ? 16 : 4)),
+          ),
+          child: GestureDetector(
+            onTap: () => _showImageFullScreen(context),
+            child: imageFile != null
+                ? Image.file(
+                    imageFile!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 250,
+                  )
+                : Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: 250,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 250,
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stacktrace) {
+                      return Container(
+                        height: 250,
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+        if (hasText && imageFile != null || imageUrl != null)
+          Positioned(
+            bottom: 8,
+            left: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildTimestamp(context),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTextSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isUser)
+            Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white,
+                height: 1.4,
+              ),
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: AITextFormatter(
+                    text: message,
+                    baseStyle: theme.textTheme.bodyMedium!.copyWith(
+                      height: 1.4,
+                    ),
+                    linkColor: Colors.blue,
+                    codeBackgroundColor: isDarkMode
+                        ? colorScheme.surface.withOpacity(0.5)
+                        : Colors.grey.shade200,
+                    codeTextColor: Colors.red.shade700,
+                  ),
+                ),
+                if (isStreaming)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: _buildTypingCursor(context),
+                  ),
+              ],
+            ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: _buildTimestamp(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimestamp(BuildContext context) {
+    final theme = Theme.of(context);
     final now = DateTime.now();
     final timeString = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           timeString,
-          style: TextStyle(
-            fontSize: 11,
+          style: theme.textTheme.labelSmall?.copyWith(
             color: isUser
                 ? Colors.white.withOpacity(0.8)
-                : Colors.grey.shade600,
+                : theme.textTheme.bodySmall?.color,
           ),
         ),
         if (isUser) ...[
           const SizedBox(width: 4),
-          Icon(
-            Icons.done_all,
-            size: 14,
-            color: Colors.blue.shade300,
-          ),
+          Icon(Icons.done_all, size: 14, color: Colors.blue.shade300),
         ],
       ],
     );
   }
 
-  Widget _buildAvatar() {
-    final bgColor = isUser ? Colors.green.shade600 : Colors.grey.shade300;
+  Widget _buildAvatar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bgColor = isUser ? colorScheme.primary : colorScheme.surface;
 
     if (isUser) {
       return CircleAvatar(
         radius: 16,
-        backgroundColor:
-            userProfileUrl != null ? Colors.transparent : bgColor,
-        backgroundImage:
-            userProfileUrl != null ? NetworkImage(userProfileUrl!) : null,
+        backgroundColor: userProfileUrl != null ? Colors.transparent : bgColor,
+        backgroundImage: userProfileUrl != null
+            ? NetworkImage(userProfileUrl!)
+            : null,
         onBackgroundImageError: userProfileUrl != null
             ? (exception, stackTrace) {
                 debugPrint('Error loading profile image in chat: $exception');
@@ -1094,9 +1000,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: userInitials != null
-                      ? Colors.white
-                      : Colors.green.shade800,
+                  color: Colors.white,
                 ),
               )
             : null,
@@ -1117,7 +1021,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
     }
   }
 
-  Widget _buildTypingCursor() {
+  Widget _buildTypingCursor(BuildContext context) {
     return _TypingCursor(isStreaming: isStreaming);
   }
 
@@ -1207,13 +1111,15 @@ class _TypingCursorState extends State<_TypingCursor>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return FadeTransition(
       opacity: _animation,
       child: Container(
         width: 2,
         height: 16,
         decoration: BoxDecoration(
-          color: Colors.green.shade600,
+          color: colorScheme.primary,
           borderRadius: BorderRadius.circular(1),
         ),
       ),

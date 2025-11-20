@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/config/theme.dart';
 import '../../../../../services/lms_api_service.dart';
 
 class UploadTutorialScreen extends StatefulWidget {
@@ -17,17 +18,15 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
-  // FIXED: Changed default to lowercase 'crops' to match backend
+
   String _selectedCategory = 'crops';
   File? _videoFile;
   File? _thumbnailFile;
-  
+
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   String? _errorMessage;
 
-  // FIXED: Added category mapping for display vs backend values
   static const Map<String, String> categoryMap = {
     'crops': 'Crops',
     'livestock': 'Livestock',
@@ -57,15 +56,16 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
 
       if (result != null && result.files.isNotEmpty) {
         final file = File(result.files.first.path!);
-        
-        // Check file size (limit to 100MB for example)
+
         final fileSize = await file.length();
         if (fileSize > 100 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Video file too large. Please select a video under 100MB.'),
-                backgroundColor: Colors.red,
+              SnackBar(
+                content: const Text(
+                  'Video file too large. Please select a video under 100MB.',
+                ),
+                backgroundColor: AppColors.accentRed,
               ),
             );
           }
@@ -113,9 +113,9 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
 
     if (_videoFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a video file'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please select a video file'),
+          backgroundColor: AppColors.accentRed,
         ),
       );
       return;
@@ -136,12 +136,11 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
       }
 
       final apiService = LMSApiService(token);
-      
-      // FIXED: Send lowercase category to match backend
+
       await apiService.uploadTutorial(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        category: _selectedCategory, // Already lowercase
+        category: _selectedCategory,
         videoFile: _videoFile!,
         thumbnailFile: _thumbnailFile,
         onProgress: (sent, total) {
@@ -153,9 +152,9 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tutorial uploaded successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Tutorial uploaded successfully!'),
+            backgroundColor: AppColors.successGreen,
           ),
         );
         Navigator.pop(context, true);
@@ -165,12 +164,12 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
         _errorMessage = e.toString();
         _isUploading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Upload failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.accentRed,
           ),
         );
       }
@@ -180,42 +179,34 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Upload Tutorial'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Upload Tutorial')),
       body: _isUploading ? _buildUploadingView() : _buildForm(),
     );
   }
 
   Widget _buildUploadingView() {
+    final theme = Theme.of(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
+            CircularProgressIndicator(color: AppColors.primaryGreen),
             const SizedBox(height: 24),
-            const Text(
-              'Uploading tutorial...',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text('Uploading tutorial...', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 16),
             LinearProgressIndicator(
               value: _uploadProgress,
-              backgroundColor: Colors.grey.shade200,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade600),
+              backgroundColor: AppColors.borderLight,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
             ),
             const SizedBox(height: 8),
             Text(
               '${(_uploadProgress * 100).toStringAsFixed(0)}%',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMedium,
               ),
             ),
           ],
@@ -225,6 +216,9 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
   }
 
   Widget _buildForm() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -238,18 +232,20 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: AppColors.accentRed.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
+                    border: Border.all(
+                      color: AppColors.accentRed.withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red.shade700),
+                      Icon(Icons.error_outline, color: AppColors.accentRed),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: TextStyle(color: Colors.red.shade700),
+                          style: TextStyle(color: AppColors.accentRed),
                         ),
                       ),
                     ],
@@ -264,9 +260,6 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 decoration: InputDecoration(
                   labelText: 'Title *',
                   hintText: 'Enter tutorial title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                   prefixIcon: const Icon(Icons.title),
                 ),
                 validator: (value) {
@@ -288,9 +281,6 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 decoration: InputDecoration(
                   labelText: 'Description *',
                   hintText: 'Describe what this tutorial covers',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                   prefixIcon: const Icon(Icons.description),
                   alignLabelWithHint: true,
                 ),
@@ -308,15 +298,19 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Category dropdown - FIXED to use lowercase values
+              // Category dropdown
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade400),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonFormField<String>(
-                  initialValue: _selectedCategory,
+                  value: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category *',
                     border: InputBorder.none,
@@ -324,8 +318,8 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                   ),
                   items: categoryMap.entries.map((entry) {
                     return DropdownMenuItem(
-                      value: entry.key, // lowercase value
-                      child: Text(entry.value), // display name
+                      value: entry.key,
+                      child: Text(entry.value),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -345,6 +339,7 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 file: _videoFile,
                 icon: Icons.video_library,
                 onTap: _pickVideo,
+                isDark: isDark,
               ),
               const SizedBox(height: 16),
 
@@ -354,6 +349,7 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 file: _thumbnailFile,
                 icon: Icons.image,
                 onTap: _pickThumbnail,
+                isDark: isDark,
               ),
               const SizedBox(height: 24),
 
@@ -363,8 +359,6 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 icon: const Icon(Icons.upload),
                 label: const Text('Upload Tutorial'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -383,6 +377,7 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
     required File? file,
     required IconData icon,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
     return InkWell(
       onTap: onTap,
@@ -390,15 +385,21 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          ),
           borderRadius: BorderRadius.circular(12),
-          color: file != null ? Colors.green.shade50 : Colors.grey.shade50,
+          color: file != null
+              ? AppColors.paleGreen
+              : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: file != null ? Colors.green.shade700 : Colors.grey.shade600,
+              color: file != null
+                  ? AppColors.primaryGreen
+                  : AppColors.textMedium,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -410,7 +411,7 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
+                      color: isDark ? AppColors.textWhite : AppColors.textDark,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -421,8 +422,8 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       color: file != null
-                          ? Colors.green.shade700
-                          : Colors.grey.shade600,
+                          ? AppColors.primaryGreen
+                          : AppColors.textMedium,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -442,13 +443,13 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                     }
                   });
                 },
-                color: Colors.red.shade600,
+                color: AppColors.accentRed,
               )
             else
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: Colors.grey.shade600,
+                color: AppColors.textMedium,
               ),
           ],
         ),

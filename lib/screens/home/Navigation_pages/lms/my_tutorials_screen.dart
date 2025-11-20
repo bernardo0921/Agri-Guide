@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
+import 'package:agri_guide/config/theme.dart';
 import '../../../../../services/lms_api_service.dart';
 import '../../../../../models/tutorial.dart';
 import 'video_player_screen.dart';
@@ -34,7 +35,6 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
     final user = authService.user;
     
     if (user != null) {
-      // Check for user_type field - adjust these values based on your backend
       final userType = user['user_type']?.toString().toLowerCase();
       _isExtensionWorker = userType == 'extension_worker' || 
                           userType == 'extension' ||
@@ -84,7 +84,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentRed),
             child: const Text('Delete'),
           ),
         ],
@@ -111,9 +111,9 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tutorial deleted successfully'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Tutorial deleted successfully'),
+            backgroundColor: AppColors.successGreen,
           ),
         );
       }
@@ -122,7 +122,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.accentRed,
           ),
         );
       }
@@ -166,10 +166,8 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('My Tutorials'),
-          elevation: 0,
         ),
         body: _buildBody(),
-        // Only show upload button for extension workers
         floatingActionButton: _isExtensionWorker ? _buildUploadButton() : null,
       ),
     );
@@ -178,15 +176,23 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   Widget _buildUploadButton() {
     return FloatingActionButton.extended(
       onPressed: _navigateToUploadTutorial,
-      backgroundColor: Colors.green.shade600,
+      backgroundColor: AppColors.primaryGreen,
+      foregroundColor: AppColors.textWhite,
       icon: const Icon(Icons.add),
       label: const Text('Upload'),
     );
   }
 
   Widget _buildBody() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primaryGreen,
+        ),
+      );
     }
 
     if (_errorMessage != null) {
@@ -196,31 +202,31 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.accentRed.withOpacity(0.7),
+              ),
               const SizedBox(height: 16),
               Text(
                 'Error loading tutorials',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: _loadMyTutorials,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade600,
-                  foregroundColor: Colors.white,
-                ),
               ),
             ],
           ),
@@ -238,15 +244,13 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               Icon(
                 Icons.video_library_outlined,
                 size: 64,
-                color: Colors.grey.shade400,
+                color: AppColors.textLight,
               ),
               const SizedBox(height: 16),
               Text(
                 'No tutorials yet',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -255,7 +259,9 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                     ? 'Tap the Upload button to create your first tutorial'
                     : 'You haven\'t uploaded any tutorials',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMedium,
+                ),
               ),
             ],
           ),
@@ -265,25 +271,24 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadMyTutorials,
+      color: AppColors.primaryGreen,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _myTutorials.length,
         itemBuilder: (context, index) {
           final tutorial = _myTutorials[index];
-          return _buildTutorialItem(tutorial);
+          return _buildTutorialItem(tutorial, isDark);
         },
       ),
     );
   }
 
-  Widget _buildTutorialItem(Tutorial tutorial) {
+  Widget _buildTutorialItem(Tutorial tutorial, bool isDark) {
     final thumbnailUrl = tutorial.thumbnailUrl;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => _navigateToVideoPlayer(tutorial),
         child: Padding(
@@ -297,7 +302,9 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                 child: Container(
                   width: 120,
                   height: 68,
-                  color: Colors.grey.shade200,
+                  color: isDark 
+                      ? AppColors.backgroundDark 
+                      : AppColors.backgroundLight,
                   child: thumbnailUrl != null
                       ? Image.network(
                           thumbnailUrl,
@@ -319,10 +326,11 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                     // Title
                     Text(
                       tutorial.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         height: 1.3,
+                        color: isDark ? AppColors.textWhite : AppColors.textDark,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -336,7 +344,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
+                        color: AppColors.paleGreen,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -344,7 +352,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: Colors.green.shade700,
+                          color: AppColors.primaryGreen,
                         ),
                       ),
                     ),
@@ -356,21 +364,21 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                         Icon(
                           Icons.play_circle_outline,
                           size: 13,
-                          color: Colors.grey.shade600,
+                          color: AppColors.textMedium,
                         ),
                         const SizedBox(width: 3),
                         Text(
                           '${tutorial.getFormattedViewCount()} views',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade600,
+                            color: AppColors.textMedium,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Icon(
                           Icons.schedule,
                           size: 13,
-                          color: Colors.grey.shade600,
+                          color: AppColors.textMedium,
                         ),
                         const SizedBox(width: 3),
                         Expanded(
@@ -378,7 +386,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                             tutorial.getRelativeTime(),
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey.shade600,
+                              color: AppColors.textMedium,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -389,10 +397,13 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                 ),
               ),
 
-              // Delete button - only show for extension workers
+              // Delete button
               if (_isExtensionWorker)
                 IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.red.shade600),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: AppColors.accentRed,
+                  ),
                   onPressed: () => _deleteTutorial(tutorial),
                   tooltip: 'Delete',
                 ),
@@ -405,12 +416,12 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
   Widget _buildDefaultThumbnail() {
     return Container(
-      color: Colors.green.shade100,
+      color: AppColors.paleGreen,
       child: Center(
         child: Icon(
           Icons.play_circle_filled,
           size: 32,
-          color: Colors.green.shade400,
+          color: AppColors.primaryGreen,
         ),
       ),
     );
