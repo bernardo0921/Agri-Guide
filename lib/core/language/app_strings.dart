@@ -1256,7 +1256,7 @@ class AppStrings {
       case AppLanguage.english:
         return "Top Community Posts";
       case AppLanguage.sesotho:
-        return "Liposo tse Holimo tsa Sechaba";
+        return "Hodimo Posts";
     }
   }
 

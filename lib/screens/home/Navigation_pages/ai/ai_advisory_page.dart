@@ -1,6 +1,8 @@
-// ai_advisory_page.dart - With Language Selection Support
+// ai_advisory_page.dart - Integrated with App Language System
 import 'dart:io';
 import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/core/language/app_language.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -34,13 +36,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
   String _streamingText = '';
   int _currentStreamingMessageIndex = -1;
-  
-  // Language selection state
-  String _selectedLanguage = 'english'; // Default language
-  final List<Map<String, String>> _availableLanguages = [
-    {'value': 'english', 'label': 'English'},
-    {'value': 'sesotho', 'label': 'Sesotho'},
-  ];
 
   @override
   void initState() {
@@ -58,61 +53,14 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     _scaffoldKey.currentState?.openDrawer();
   }
 
-  void _showLanguageSelector() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.language, color: colorScheme.primary),
-                const SizedBox(width: 12),
-                Text('Select Language', style: theme.textTheme.titleLarge),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ..._availableLanguages.map((lang) => ListTile(
-              leading: Radio<String>(
-                value: lang['value']!,
-                groupValue: _selectedLanguage,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLanguage = value!;
-                  });
-                  Navigator.pop(context);
-                  _showSnackBar(
-                    'Language changed to ${lang['label']}',
-                    colorScheme.primary,
-                  );
-                },
-              ),
-              title: Text(lang['label']!),
-              onTap: () {
-                setState(() {
-                  _selectedLanguage = lang['value']!;
-                });
-                Navigator.pop(context);
-                _showSnackBar(
-                  'Language changed to ${lang['label']}',
-                  colorScheme.primary,
-                );
-              },
-            )),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
+  // Convert AppLanguage enum to backend language string
+  String _getBackendLanguage() {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'english';
+      case AppLanguage.sesotho:
+        return 'sesotho';
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -192,7 +140,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                           _selectedImage = null;
                         });
                       },
-                      child: const Text('Cancel'),
+                      child: Text(AppStrings.cancel),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -278,11 +226,11 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
     _scrollToBottom();
 
-    // Include language parameter
+    // Use current app language
     final result = await AIService.sendImageMessage(
       _selectedImage!,
       message: message.isEmpty ? null : message,
-      language: _selectedLanguage, // Pass selected language
+      language: _getBackendLanguage(),
     );
 
     setState(() {
@@ -332,10 +280,10 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     _scrollToBottom();
 
     try {
-      // Include language parameter
+      // Use current app language
       final requestData = {
         'message': prompt,
-        'language': _selectedLanguage, // Pass selected language
+        'language': _getBackendLanguage(),
         if (_currentSessionId != null) 'session_id': _currentSessionId,
       };
 
@@ -706,10 +654,6 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   Widget _buildMessageInput() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
-    // Get current language label
-    final currentLangLabel = _availableLanguages
-        .firstWhere((lang) => lang['value'] == _selectedLanguage)['label'];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -723,103 +667,62 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Language indicator bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(20),
+          IconButton(
+            icon: Icon(Icons.history, color: colorScheme.primary),
+            onPressed: openDrawer,
+            tooltip: AppStrings.chatHistory,
+          ),
+          IconButton(
+            icon: Icon(Icons.image, color: colorScheme.primary),
+            onPressed: (_isLoading || _isStreaming)
+                ? null
+                : _showImageSourceDialog,
+            tooltip: 'Share Image',
+          ),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _sendMessage(),
+              maxLines: null,
+              enabled: !_isLoading && !_isStreaming,
+              decoration: InputDecoration(
+                hintText: AppStrings.captionInAiChatTextBox,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
+                ),
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.language,
-                  size: 16,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Language: $currentLangLabel',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: _showLanguageSelector,
-                  child: Icon(
-                    Icons.edit,
-                    size: 14,
-                    color: colorScheme.primary,
-                  ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primary,
+                  colorScheme.primary.withOpacity(0.8),
+                ],
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-          ),
-          // Input row
-          Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.history, color: colorScheme.primary),
-                onPressed: openDrawer,
-                tooltip: AppStrings.chatHistory,
-              ),
-              IconButton(
-                icon: Icon(Icons.image, color: colorScheme.primary),
-                onPressed: (_isLoading || _isStreaming)
-                    ? null
-                    : _showImageSourceDialog,
-                tooltip: 'Share Image',
-              ),
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _sendMessage(),
-                  maxLines: null,
-                  enabled: !_isLoading && !_isStreaming,
-                  decoration: InputDecoration(
-                    hintText: AppStrings.captionInAiChatTextBox,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      colorScheme.primary,
-                      colorScheme.primary.withOpacity(0.8),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.send_rounded, color: Colors.white),
-                  onPressed: (_isLoading || _isStreaming) ? null : _sendMessage,
-                ),
-              ),
-            ],
+            child: IconButton(
+              icon: const Icon(Icons.send_rounded, color: Colors.white),
+              onPressed: (_isLoading || _isStreaming) ? null : _sendMessage,
+            ),
           ),
         ],
       ),
@@ -827,7 +730,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   }
 }
 
-// EnhancedChatMessageBubble - Unchanged (keeping existing code)
+// EnhancedChatMessageBubble - Theme-aware version
 class EnhancedChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
