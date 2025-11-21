@@ -6,210 +6,184 @@ import 'package:http_parser/http_parser.dart';
 
 /// Service for handling AI chat functionality with authentication
 class AIService {
-  /// Base URL for your Django backend
   static const String _baseUrl =
       'https://agriguide-backend-79j2.onrender.com/api';
 
-  /// Cached authentication token
   static String? _cachedToken;
-
-  /// Cached session ID
   static String? _cachedSessionId;
 
-  /// Gets the authentication token from SharedPreferences
   static Future<String?> _getAuthToken() async {
     if (_cachedToken != null) return _cachedToken;
-
     final prefs = await SharedPreferences.getInstance();
     _cachedToken = prefs.getString('token');
     return _cachedToken;
   }
 
-  /// Sets the authentication token (call this after login)
   static Future<void> setAuthToken(String token) async {
     _cachedToken = token;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
   }
 
-  /// Clears the authentication token (call this after logout)
   static Future<void> clearAuthToken() async {
     _cachedToken = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
   }
 
-  /// Gets the current session ID from SharedPreferences
   static Future<String?> _getSessionId() async {
     if (_cachedSessionId != null) return _cachedSessionId;
-
     final prefs = await SharedPreferences.getInstance();
     _cachedSessionId = prefs.getString('ai_session_id');
     return _cachedSessionId;
   }
 
-  /// Sets the session ID
   static Future<void> _setSessionId(String sessionId) async {
     _cachedSessionId = sessionId;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('ai_session_id', sessionId);
   }
 
-  /// Clears the session ID
   static Future<void> _clearSessionId() async {
     _cachedSessionId = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('ai_session_id');
   }
 
- // ai_service.dart - FIXED sendMessageStream method
-// Replace the existing sendMessageStream method with this corrected version
-
-/// Sends a message to the AI with streaming support (for typing animation)
-///
-/// Returns a Stream of Maps with:
-/// - 'success': bool
-/// - 'type': String ('session_id', 'chunk', 'done', 'error')
-/// - 'chunk': String (text chunk for streaming)
-/// - 'fullText': String (accumulated text so far)
-/// - 'response': String (complete AI response when done)
-/// - 'sessionId': String (session ID for conversation continuity)
-/// - 'error': String (error message if failed)
-static Stream<Map<String, dynamic>> sendMessageStream({
-  required Map<String, dynamic> requestData,
-}) async* {
-  final token = await _getAuthToken();
-  if (token == null) {
-    yield {'success': false, 'error': 'Not authenticated'};
-    return;
-  }
-
-  // Extract message and session_id from requestData
-  final message = requestData['message'] as String?;
-  final sessionId = requestData['session_id'] as String?;
-
-  if (message == null || message.isEmpty) {
-    yield {'success': false, 'error': 'Message is required'};
-    return;
-  }
-
-  final url = Uri.parse('$_baseUrl/chat-stream/');
-  final request = http.Request('POST', url);
-
-  request.headers.addAll({
-    'Authorization': 'Token $token',
-    'Content-Type': 'application/json',
-  });
-
-  // FIXED: Include session_id in request body
-  final requestBody = {
-    'message': message,
-    if (sessionId != null) 'session_id': sessionId, // ✅ CRITICAL FIX
-  };
-
-  request.body = json.encode(requestBody);
-
-  print('🚀 Sending stream request with session_id: $sessionId');
-
-  try {
-    final streamedResponse = await request.send();
-
-    if (streamedResponse.statusCode != 200) {
-      if (streamedResponse.statusCode == 401) {
-        yield {
-          'success': false,
-          'error': 'Authentication failed. Please login again.',
-          'requiresLogin': true,
-        };
-      } else {
-        yield {
-          'success': false,
-          'error': 'Server error: ${streamedResponse.statusCode}'
-        };
-      }
+  /// Sends a message to the AI with streaming support
+  /// Now accepts 'language' in requestData: 'english' or 'sesotho'
+  static Stream<Map<String, dynamic>> sendMessageStream({
+    required Map<String, dynamic> requestData,
+  }) async* {
+    final token = await _getAuthToken();
+    if (token == null) {
+      yield {'success': false, 'error': 'Not authenticated'};
       return;
     }
 
-    String buffer = '';
-    String fullResponse = '';
+    final message = requestData['message'] as String?;
+    final sessionId = requestData['session_id'] as String?;
+    final language = requestData['language'] as String? ?? 'english';
 
-    await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
-      buffer += chunk;
+    if (message == null || message.isEmpty) {
+      yield {'success': false, 'error': 'Message is required'};
+      return;
+    }
 
-      // Process complete SSE messages (format: "data: {...}\n\n")
-      while (buffer.contains('\n\n')) {
-        final index = buffer.indexOf('\n\n');
-        final message = buffer.substring(0, index);
-        buffer = buffer.substring(index + 2);
+    final url = Uri.parse('$_baseUrl/chat-stream/');
+    final request = http.Request('POST', url);
 
-        if (message.startsWith('data: ')) {
-          final jsonStr = message.substring(6).trim();
-          try {
-            final data = json.decode(jsonStr);
+    request.headers.addAll({
+      'Authorization': 'Token $token',
+      'Content-Type': 'application/json',
+    });
 
-            if (data['type'] == 'session_id') {
-              final newSessionId = data['session_id'];
-              if (newSessionId != null) {
-                await _setSessionId(newSessionId);
-                print('✅ Received and saved session_id: $newSessionId');
+    final requestBody = {
+      'message': message,
+      'language': language,
+      if (sessionId != null) 'session_id': sessionId,
+    };
+
+    request.body = json.encode(requestBody);
+
+    print('🚀 Sending stream request | session: $sessionId | language: $language');
+
+    try {
+      final streamedResponse = await request.send();
+
+      if (streamedResponse.statusCode != 200) {
+        if (streamedResponse.statusCode == 401) {
+          yield {
+            'success': false,
+            'error': 'Authentication failed. Please login again.',
+            'requiresLogin': true,
+          };
+        } else {
+          yield {
+            'success': false,
+            'error': 'Server error: ${streamedResponse.statusCode}'
+          };
+        }
+        return;
+      }
+
+      String buffer = '';
+      String fullResponse = '';
+
+      await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
+        buffer += chunk;
+
+        while (buffer.contains('\n\n')) {
+          final index = buffer.indexOf('\n\n');
+          final message = buffer.substring(0, index);
+          buffer = buffer.substring(index + 2);
+
+          if (message.startsWith('data: ')) {
+            final jsonStr = message.substring(6).trim();
+            try {
+              final data = json.decode(jsonStr);
+
+              if (data['type'] == 'session_id') {
+                final newSessionId = data['session_id'];
+                if (newSessionId != null) {
+                  await _setSessionId(newSessionId);
+                  print('✅ Received session_id: $newSessionId | language: ${data['language']}');
+                }
+                yield {
+                  'success': true,
+                  'type': 'session_id',
+                  'sessionId': newSessionId,
+                  'language': data['language'],
+                };
+              } else if (data['type'] == 'chunk') {
+                fullResponse += data['text'];
+                yield {
+                  'success': true,
+                  'type': 'chunk',
+                  'chunk': data['text'],
+                  'fullText': fullResponse,
+                };
+              } else if (data['type'] == 'done') {
+                yield {
+                  'success': true,
+                  'type': 'done',
+                  'response': data['full_text'],
+                  'sessionId': _cachedSessionId,
+                };
+              } else if (data['type'] == 'error') {
+                yield {
+                  'success': false,
+                  'type': 'error',
+                  'error': data['error'],
+                };
               }
-              yield {
-                'success': true,
-                'type': 'session_id',
-                'sessionId': newSessionId,
-              };
-            } else if (data['type'] == 'chunk') {
-              fullResponse += data['text'];
-              yield {
-                'success': true,
-                'type': 'chunk',
-                'chunk': data['text'],
-                'fullText': fullResponse,
-              };
-            } else if (data['type'] == 'done') {
-              yield {
-                'success': true,
-                'type': 'done',
-                'response': data['full_text'],
-                'sessionId': _cachedSessionId,
-              };
-            } else if (data['type'] == 'error') {
-              yield {
-                'success': false,
-                'type': 'error',
-                'error': data['error'],
-              };
+            } catch (e) {
+              print('Error parsing SSE data: $e');
             }
-          } catch (e) {
-            print('Error parsing SSE data: $e');
-            // Continue processing other chunks
           }
         }
       }
+    } on http.ClientException catch (e) {
+      yield {
+        'success': false,
+        'error': 'Network error: ${e.message}. Please check your connection.',
+      };
+    } on SocketException catch (e) {
+      yield {
+        'success': false,
+        'error': 'Connection error: ${e.message}. Check your internet.',
+      };
+    } catch (e) {
+      yield {'success': false, 'error': 'Connection error: $e'};
     }
-  } on http.ClientException catch (e) {
-    yield {
-      'success': false,
-      'error': 'Network error: ${e.message}. Please check your connection.',
-    };
-  } on SocketException catch (e) {
-    yield {
-      'success': false,
-      'error': 'Connection error: ${e.message}. Check your internet.',
-    };
-  } catch (e) {
-    yield {'success': false, 'error': 'Connection error: $e'};
   }
-}
 
-  /// Sends a message to the AI (non-streaming, legacy support)
-  ///
-  /// Returns a Map with:
-  /// - 'success': bool
-  /// - 'response': String (AI response text)
-  /// - 'sessionId': String (session ID for conversation continuity)
-  /// - 'error': String (error message if failed)
-  static Future<Map<String, dynamic>> sendMessage(String message) async {
+  /// Sends a message to the AI (non-streaming)
+  /// [language] - 'english' or 'sesotho'
+  static Future<Map<String, dynamic>> sendMessage(
+    String message, {
+    String language = 'english',
+  }) async {
     final token = await _getAuthToken();
     if (token == null) {
       return {'success': false, 'error': 'Not authenticated'};
@@ -226,6 +200,7 @@ static Stream<Map<String, dynamic>> sendMessageStream({
         },
         body: json.encode({
           'message': message,
+          'language': language,
           if (sessionId != null) 'session_id': sessionId,
         }),
       );
@@ -234,7 +209,6 @@ static Stream<Map<String, dynamic>> sendMessageStream({
         final data = jsonDecode(response.body);
         final newSessionId = data['session_id'];
 
-        // Cache the session ID for future requests
         if (newSessionId != null) {
           await _setSessionId(newSessionId);
         }
@@ -243,6 +217,7 @@ static Stream<Map<String, dynamic>> sendMessageStream({
           'success': true,
           'response': data['response'] ?? 'No response received.',
           'sessionId': newSessionId,
+          'language': data['language'],
         };
       } else if (response.statusCode == 401) {
         return {
@@ -259,15 +234,13 @@ static Stream<Map<String, dynamic>> sendMessageStream({
         final errorData = jsonDecode(response.body);
         return {
           'success': false,
-          'error':
-              errorData['error'] ??
-              'Error ${response.statusCode}: ${response.body}',
+          'error': errorData['error'] ?? 'Error ${response.statusCode}',
         };
       }
     } on http.ClientException catch (e) {
       return {
         'success': false,
-        'error': 'Network error: ${e.message}. Please check your connection.',
+        'error': 'Network error: ${e.message}.',
       };
     } on FormatException catch (e) {
       return {
@@ -280,16 +253,11 @@ static Stream<Map<String, dynamic>> sendMessageStream({
   }
 
   /// Sends an image with optional text message to the AI
-  ///
-  /// Returns a Map with:
-  /// - 'success': bool
-  /// - 'response': String (AI response text)
-  /// - 'sessionId': String (session ID for conversation continuity)
-  /// - 'imageUrl': String (URL of the uploaded image)
-  /// - 'error': String (error message if failed)
+  /// [language] - 'english' or 'sesotho'
   static Future<Map<String, dynamic>> sendImageMessage(
     File imageFile, {
     String? message,
+    String language = 'english',
   }) async {
     final token = await _getAuthToken();
     if (token == null) {
@@ -301,20 +269,19 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     try {
       var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/chat/'));
 
-      // Add headers
       request.headers['Authorization'] = 'Token $token';
 
-      // Add session ID if exists
+      // Add language field
+      request.fields['language'] = language;
+
       if (sessionId != null) {
         request.fields['session_id'] = sessionId;
       }
 
-      // Add text message if provided
       if (message != null && message.isNotEmpty) {
         request.fields['message'] = message;
       }
 
-      // Add image file
       var imageStream = http.ByteStream(imageFile.openRead());
       var imageLength = await imageFile.length();
 
@@ -328,7 +295,8 @@ static Stream<Map<String, dynamic>> sendMessageStream({
 
       request.files.add(multipartFile);
 
-      // Send request
+      print('📸 Sending image | language: $language');
+
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
@@ -337,7 +305,6 @@ static Stream<Map<String, dynamic>> sendMessageStream({
         final newSessionId = data['session_id'];
         final imageUrl = data['image_url'];
 
-        // Cache the session ID for future requests
         if (newSessionId != null) {
           await _setSessionId(newSessionId);
         }
@@ -347,6 +314,7 @@ static Stream<Map<String, dynamic>> sendMessageStream({
           'response': data['response'] ?? 'Image analyzed successfully.',
           'sessionId': newSessionId,
           'imageUrl': imageUrl,
+          'language': data['language'],
         };
       } else if (response.statusCode == 401) {
         return {
@@ -363,31 +331,29 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     } on http.ClientException catch (e) {
       return {
         'success': false,
-        'error': 'Network error: ${e.message}. Please check your connection.',
+        'error': 'Network error: ${e.message}.',
       };
     } catch (e) {
       return {'success': false, 'error': 'Request failed: $e'};
     }
   }
 
-  /// Gets all chat sessions for the authenticated user
+  // ========== Remaining methods unchanged ==========
+
   static Future<Map<String, dynamic>> getChatSessions() async {
     try {
       final token = await _getAuthToken();
-
       if (token == null) {
         return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/chat/sessions/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/chat/sessions/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -409,24 +375,20 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     }
   }
 
-  /// Gets chat history for a specific session
   static Future<Map<String, dynamic>> getChatHistory(String sessionId) async {
     try {
       final token = await _getAuthToken();
-
       if (token == null) {
         return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/chat/history/$sessionId/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/chat/history/$sessionId/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -454,7 +416,6 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     }
   }
 
-  /// Clears the current chat session
   static Future<Map<String, dynamic>> clearCurrentSession() async {
     try {
       final token = await _getAuthToken();
@@ -465,22 +426,18 @@ static Stream<Map<String, dynamic>> sendMessageStream({
       }
 
       if (sessionId == null) {
-        // No active session to clear
         return {'success': true, 'message': 'No active session.'};
       }
 
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/chat/clear/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-            body: jsonEncode({'session_id': sessionId}),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.post(
+        Uri.parse('$_baseUrl/chat/clear/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+        body: jsonEncode({'session_id': sessionId}),
+      ).timeout(const Duration(seconds: 15));
 
-      // Clear local session ID regardless of server response
       await _clearSessionId();
 
       if (response.statusCode == 200) {
@@ -492,36 +449,29 @@ static Stream<Map<String, dynamic>> sendMessageStream({
           'requiresLogin': true,
         };
       } else {
-        // Session cleared locally, but server returned error
         return {'success': true, 'message': 'Session cleared locally.'};
       }
     } catch (e) {
-      // Clear local session even if request fails
       await _clearSessionId();
       return {'success': true, 'message': 'Session cleared locally.'};
     }
   }
 
-  /// Deletes a specific chat session
   static Future<Map<String, dynamic>> deleteSession(String sessionId) async {
     try {
       final token = await _getAuthToken();
-
       if (token == null) {
         return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http
-          .delete(
-            Uri.parse('$_baseUrl/chat/delete/$sessionId/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/chat/delete/$sessionId/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      ).timeout(const Duration(seconds: 15));
 
-      // If deleting current session, clear local cache
       final currentSessionId = await _getSessionId();
       if (currentSessionId == sessionId) {
         await _clearSessionId();
@@ -548,24 +498,20 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     }
   }
 
-  /// Tests the connection to the backend
   static Future<Map<String, dynamic>> testConnection() async {
     try {
       final token = await _getAuthToken();
-
       if (token == null) {
         return {'success': false, 'error': 'Authentication required.'};
       }
 
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/test/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-          )
-          .timeout(const Duration(seconds: 10));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/test/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -591,24 +537,20 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     }
   }
 
-  /// Verifies if the current token is valid
   static Future<Map<String, dynamic>> verifyToken() async {
     try {
       final token = await _getAuthToken();
-
       if (token == null) {
         return {'success': false, 'error': 'No token found.'};
       }
 
-      final response = await http
-          .get(
-            Uri.parse('$_baseUrl/auth/verify-token/'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Token $token',
-            },
-          )
-          .timeout(const Duration(seconds: 10));
+      final response = await http.get(
+        Uri.parse('$_baseUrl/auth/verify-token/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -625,12 +567,10 @@ static Stream<Map<String, dynamic>> sendMessageStream({
     }
   }
 
-  /// Starts a new chat session (clears current and starts fresh)
   static Future<void> startNewSession() async {
     await _clearSessionId();
   }
 
-  /// Public setter to set the current session id (persists locally)
   static Future<void> setSessionId(String sessionId) async {
     await _setSessionId(sessionId);
   }
