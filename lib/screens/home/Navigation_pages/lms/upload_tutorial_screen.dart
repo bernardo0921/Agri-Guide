@@ -310,7 +310,7 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category *',
                     border: InputBorder.none,

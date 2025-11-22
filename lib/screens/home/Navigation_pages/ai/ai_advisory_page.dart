@@ -531,7 +531,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         }
 
         final String? userProfileUrl = _getProfilePictureUrl(authService);
-        final String? userInitials = _getInitials(authService);
+        final String userInitials = _getInitials(authService);
 
         return Scaffold(
           key: _scaffoldKey,

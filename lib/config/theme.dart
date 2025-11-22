@@ -36,6 +36,7 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: AppColors.primaryGreen,
       scaffoldBackgroundColor: AppColors.backgroundLight,
+      fontFamily: 'Aller', // ✅ Added Aller font
       
       // Color Scheme
       colorScheme: ColorScheme.light(
@@ -57,6 +58,7 @@ class AppTheme {
           color: AppColors.textDark,
           fontSize: 18,
           fontWeight: FontWeight.w600,
+          fontFamily: 'Aller', // ✅ Explicit for AppBar
         ),
       ),
 
@@ -66,71 +68,85 @@ class AppTheme {
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         displayMedium: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         displaySmall: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         headlineMedium: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         headlineSmall: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         titleLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         titleMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         titleSmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textMedium,
+          fontFamily: 'Aller',
         ),
         bodySmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: AppColors.textLight,
+          fontFamily: 'Aller',
         ),
         labelLarge: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textDark,
+          fontFamily: 'Aller',
         ),
         labelSmall: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppColors.textLight,
+          fontFamily: 'Aller',
         ),
       ),
 
@@ -147,6 +163,7 @@ class AppTheme {
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Aller',
           ),
         ),
       ),
@@ -162,6 +179,7 @@ class AppTheme {
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Aller',
           ),
         ),
       ),
@@ -173,6 +191,7 @@ class AppTheme {
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Aller',
           ),
         ),
       ),
@@ -184,6 +203,7 @@ class AppTheme {
         hintStyle: const TextStyle(
           color: AppColors.textLight,
           fontSize: 14,
+          fontFamily: 'Aller',
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
@@ -211,6 +231,8 @@ class AppTheme {
         unselectedItemColor: AppColors.textLight,
         elevation: 8,
         type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: const TextStyle(fontFamily: 'Aller'),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Aller'),
       ),
 
       // Card Theme
@@ -237,6 +259,7 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: AppColors.primaryGreen,
       scaffoldBackgroundColor: AppColors.backgroundDark,
+      fontFamily: 'Aller', // ✅ Added Aller font
       
       // Color Scheme
       colorScheme: ColorScheme.dark(
@@ -258,6 +281,7 @@ class AppTheme {
           color: AppColors.textWhite,
           fontSize: 18,
           fontWeight: FontWeight.w600,
+          fontFamily: 'Aller', // ✅ Explicit for AppBar
         ),
       ),
 
@@ -267,71 +291,85 @@ class AppTheme {
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         displayMedium: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         displaySmall: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         headlineMedium: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         headlineSmall: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         titleLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         titleMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         titleSmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textLight,
+          fontFamily: 'Aller',
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: AppColors.textLight,
+          fontFamily: 'Aller',
         ),
         bodySmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w400,
           color: AppColors.textLight,
+          fontFamily: 'Aller',
         ),
         labelLarge: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.textWhite,
+          fontFamily: 'Aller',
         ),
         labelSmall: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppColors.textLight,
+          fontFamily: 'Aller',
         ),
       ),
 
@@ -348,6 +386,7 @@ class AppTheme {
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Aller',
           ),
         ),
       ),
@@ -363,6 +402,7 @@ class AppTheme {
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Aller',
           ),
         ),
       ),
@@ -374,6 +414,7 @@ class AppTheme {
           textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            fontFamily: 'Aller',
           ),
         ),
       ),
@@ -385,6 +426,7 @@ class AppTheme {
         hintStyle: const TextStyle(
           color: AppColors.textLight,
           fontSize: 14,
+          fontFamily: 'Aller',
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
@@ -412,6 +454,8 @@ class AppTheme {
         unselectedItemColor: AppColors.textLight,
         elevation: 8,
         type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: const TextStyle(fontFamily: 'Aller'),
+        unselectedLabelStyle: const TextStyle(fontFamily: 'Aller'),
       ),
 
       // Card Theme

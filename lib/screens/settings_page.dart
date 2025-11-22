@@ -216,7 +216,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   );
                 },
-                activeColor: AppColors.primaryGreen,
+                activeThumbColor: AppColors.primaryGreen,
               ),
             ],
           ),

@@ -1,4 +1,5 @@
 // lib/screens/home/Navigation_pages/pages/dashboard_page.dart
+import 'package:agri_guide/core/language/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:agri_guide/services/weather_service.dart';
 import 'package:agri_guide/services/community_api_service.dart';
@@ -91,7 +92,17 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         throw Exception('Not authenticated');
       }
 
-      final result = await _farmingTipService.getDailyFarmingTip(token);
+      // Get current language from notifier
+      final currentLanguage = AppNotifiers.languageNotifier.value;
+      final languageCode = currentLanguage == AppLanguage.english
+          ? 'english'
+          : 'sesotho';
+
+      // Fetch tip with language parameter
+      final result = await _farmingTipService.getDailyFarmingTip(
+        token,
+        language: languageCode,
+      );
 
       setState(() {
         _farmingTip = result['tip'];
@@ -363,15 +374,9 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               color: theme.textTheme.bodySmall?.color,
             ),
             const SizedBox(height: 12),
-            Text(
-              AppStrings.noPostsYet,
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(AppStrings.noPostsYet, style: theme.textTheme.titleMedium),
             const SizedBox(height: 4),
-            Text(
-              AppStrings.beFirstToShare,
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(AppStrings.beFirstToShare, style: theme.textTheme.bodySmall),
           ],
         ),
       );
@@ -516,10 +521,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
             ),
@@ -617,8 +619,8 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               ),
             )
           : _weatherData == null
-              ? _buildWeatherError()
-              : _buildWeatherContent(formattedDate),
+          ? _buildWeatherError()
+          : _buildWeatherContent(formattedDate),
     );
   }
 
@@ -802,11 +804,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            Icon(
-              Icons.cloud,
-              size: 56,
-              color: Colors.white.withOpacity(0.9),
-            ),
+            Icon(Icons.cloud, size: 56, color: Colors.white.withOpacity(0.9)),
             Positioned(
               top: -8,
               right: -8,

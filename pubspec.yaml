@@ -37,6 +37,27 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Aller
+      fonts:
+        - asset: assets/fonts/Aller_Std_Rg.ttf
+        - asset: assets/fonts/Aller_Std_Bd.ttf
+          weight: 700
+        - asset: assets/fonts/Aller_Std_It.ttf
+          style: italic
+        - asset: assets/fonts/Aller_Std_BdIt.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/Aller_Std_Lt.ttf
+          weight: 300
+        - asset: assets/fonts/Aller_Std_LtIt.ttf
+          weight: 300
+          style: italic
+    
+    - family: AllerDisplay
+      fonts:
+        - asset: assets/fonts/AllerDisplay_Std_Rg.ttf
+
 
   assets:
     - assets/images/
