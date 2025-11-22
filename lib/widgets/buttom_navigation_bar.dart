@@ -86,11 +86,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
     // Calculate gradient colors based on theme
     final gradientStart = isDarkMode
-        ? colorScheme.primary.withOpacity(0.8)
+        ? colorScheme.primary.withValues(alpha: 0.8)
         : colorScheme.primary;
     final gradientEnd = isDarkMode
         ? colorScheme.primary
-        : colorScheme.primary.withOpacity(0.7);
+        : colorScheme.primary.withValues(alpha: 0.7);
 
     // Unselected icon/text color
     final unselectedColor = isDarkMode
@@ -124,7 +124,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: colorScheme.primary.withOpacity(0.3),
+                            color: colorScheme.primary.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),

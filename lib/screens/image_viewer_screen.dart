@@ -311,7 +311,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.6),
+                          Colors.black.withValues(alpha: 0.6),
                           Colors.transparent,
                         ],
                       ),
@@ -329,7 +329,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                               }),
                               icon: const Icon(Icons.arrow_back, color: Colors.white),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.black.withOpacity(0.3),
+                                backgroundColor: Colors.black.withValues(alpha: 0.3),
                               ),
                             ),
                             const Spacer(),
@@ -337,7 +337,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                               icon: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
+                                  color: Colors.black.withValues(alpha: 0.3),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -381,7 +381,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: AppColors.accentRed.withOpacity(0.2),
+                                          color: AppColors.accentRed.withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Icon(
@@ -426,7 +426,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withValues(alpha: 0.8),
                             Colors.transparent,
                           ],
                         ),
@@ -446,7 +446,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                     children: [
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.3),
+                                          color: Colors.black.withValues(alpha: 0.3),
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(
@@ -477,7 +477,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                     children: [
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.3),
+                                          color: Colors.black.withValues(alpha: 0.3),
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(

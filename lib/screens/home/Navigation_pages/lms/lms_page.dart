@@ -16,7 +16,7 @@ class LMSPageContent extends StatefulWidget {
 }
 
 class _LMSPageContentState extends State<LMSPageContent> {
-  List<Tutorial> _tutorials = [];
+  // List<Tutorial> _tutorials = [];
   List<Tutorial> _filteredTutorials = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -84,7 +84,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
       );
 
       setState(() {
-        _tutorials = tutorials;
+        // _tutorials = tutorials;
         _filteredTutorials = tutorials;
         _isLoading = false;
       });
@@ -163,7 +163,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
         boxShadow: [
           BoxShadow(
             color: isDark 
-                ? Colors.black.withOpacity(0.3)
+                ? Colors.black.withValues(alpha: 0.3)
                 : AppColors.borderLight,
             blurRadius: 4,
             offset: const Offset(0, 2),
@@ -285,7 +285,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppColors.accentRed.withOpacity(0.7),
+                color: AppColors.accentRed.withValues(alpha: 0.7),
               ),
               const SizedBox(height: 16),
               Text(

@@ -86,7 +86,7 @@ class AIService {
 
     request.body = json.encode(requestBody);
 
-    print('🚀 Sending stream request | session: $sessionId | language: $language');
+    // // // print('🚀 Sending stream request | session: $sessionId | language: $language');
 
     try {
       final streamedResponse = await request.send();
@@ -127,7 +127,7 @@ class AIService {
                 final newSessionId = data['session_id'];
                 if (newSessionId != null) {
                   await _setSessionId(newSessionId);
-                  print('✅ Received session_id: $newSessionId | language: ${data['language']}');
+                  // print('✅ Received session_id: $newSessionId | language: ${data['language']}');
                 }
                 yield {
                   'success': true,
@@ -158,7 +158,7 @@ class AIService {
                 };
               }
             } catch (e) {
-              print('Error parsing SSE data: $e');
+              // // print('Error parsing SSE data: $e');
             }
           }
         }
@@ -295,7 +295,7 @@ class AIService {
 
       request.files.add(multipartFile);
 
-      print('📸 Sending image | language: $language');
+      // // print('📸 Sending image | language: $language');
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);

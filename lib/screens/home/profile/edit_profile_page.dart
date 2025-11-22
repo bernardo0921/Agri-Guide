@@ -282,7 +282,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     children: [
                       CircleAvatar(
                         radius: 60,
-                        backgroundColor: colorScheme.primary.withOpacity(0.1),
+                        backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
                         backgroundImage: _selectedImage != null
                             ? FileImage(_selectedImage!) as ImageProvider
                             : (widget.initialData['profile_picture'] != null &&
@@ -449,8 +449,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
           filled: isReadOnly,
           fillColor: isReadOnly 
               ? (isDarkMode 
-                  ? colorScheme.surface.withOpacity(0.5)
-                  : colorScheme.outline.withOpacity(0.1))
+                  ? colorScheme.surface.withValues(alpha: 0.5)
+                  : colorScheme.outline.withValues(alpha: 0.1))
               : null,
         ),
         validator: (value) {

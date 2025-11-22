@@ -160,7 +160,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppColors.accentRed.withOpacity(0.7),
+                color: AppColors.accentRed.withValues(alpha: 0.7),
               ),
               const SizedBox(height: 16),
               Text(

@@ -70,7 +70,7 @@ class LMSApiService {
       await _dio.post('/api/tutorials/$id/increment_views/');
     } on DioException catch (e) {
       // Don't throw error for view count increment failure
-      print('Failed to increment views: ${e.message}');
+     // print('Failed to increment views: ${e.message}');
     }
   }
 

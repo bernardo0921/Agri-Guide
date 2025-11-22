@@ -23,11 +23,11 @@ class WeatherService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        print('Failed to load weather: ${response.statusCode}');
+       // print('Failed to load weather: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      print('Error fetching weather: $e');
+     // print('Error fetching weather: $e');
       return null;
     }
   }

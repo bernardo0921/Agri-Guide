@@ -661,7 +661,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: colorScheme.outline.withOpacity(0.2),
+            color: colorScheme.outline.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -707,13 +707,13 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               gradient: LinearGradient(
                 colors: [
                   colorScheme.primary,
-                  colorScheme.primary.withOpacity(0.8),
+                  colorScheme.primary.withValues(alpha: 0.8),
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: colorScheme.primary.withOpacity(0.3),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -804,7 +804,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: colorScheme.outline.withOpacity(0.2),
+                      color: colorScheme.outline.withValues(alpha: 0.2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -891,7 +891,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -946,7 +946,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
                     ),
                     linkColor: Colors.blue,
                     codeBackgroundColor: isDarkMode
-                        ? colorScheme.surface.withOpacity(0.5)
+                        ? colorScheme.surface.withValues(alpha: 0.5)
                         : Colors.grey.shade200,
                     codeTextColor: Colors.red.shade700,
                   ),
@@ -980,7 +980,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
           timeString,
           style: theme.textTheme.labelSmall?.copyWith(
             color: isUser
-                ? Colors.white.withOpacity(0.8)
+                ? Colors.white.withValues(alpha: 0.8)
                 : theme.textTheme.bodySmall?.color,
           ),
         ),
@@ -1049,7 +1049,7 @@ class EnhancedChatMessageBubble extends StatelessWidget {
             GestureDetector(
               onTap: () => Navigator.pop(context),
               child: Container(
-                color: Colors.black.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: 0.9),
                 child: Center(
                   child: InteractiveViewer(
                     child: imageFile != null

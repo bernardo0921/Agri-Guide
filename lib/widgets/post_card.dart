@@ -153,7 +153,7 @@ class _PostCardState extends State<PostCard>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -207,7 +207,7 @@ class _PostCardState extends State<PostCard>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            (isDark ? AppColors.surfaceDark : AppColors.paleGreen).withOpacity(0.3),
+            (isDark ? AppColors.surfaceDark : AppColors.paleGreen).withValues(alpha: 0.3),
             Colors.transparent,
           ],
         ),
@@ -224,7 +224,7 @@ class _PostCardState extends State<PostCard>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryGreen.withOpacity(0.3),
+                    color: AppColors.primaryGreen.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -363,7 +363,7 @@ class _PostCardState extends State<PostCard>
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.accentRed.withOpacity(0.1),
+                            color: AppColors.accentRed.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -480,7 +480,7 @@ class _PostCardState extends State<PostCard>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -533,7 +533,7 @@ class _PostCardState extends State<PostCard>
                 return Container(
                   height: 240,
                   decoration: BoxDecoration(
-                    color: AppColors.accentRed.withOpacity(0.1),
+                    color: AppColors.accentRed.withValues(alpha: 0.1),
                   ),
                   child: Center(
                     child: Column(
@@ -546,7 +546,7 @@ class _PostCardState extends State<PostCard>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.accentRed.withOpacity(0.2),
+                                color: AppColors.accentRed.withValues(alpha: 0.2),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -596,18 +596,18 @@ class _PostCardState extends State<PostCard>
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: isDark 
-                ? AppColors.primaryGreen.withOpacity(0.2)
+                ? AppColors.primaryGreen.withValues(alpha: 0.2)
                 : AppColors.paleGreen,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isDark 
-                  ? AppColors.primaryGreen.withOpacity(0.5)
+                  ? AppColors.primaryGreen.withValues(alpha: 0.5)
                   : AppColors.lightGreen,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryGreen.withOpacity(0.1),
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),

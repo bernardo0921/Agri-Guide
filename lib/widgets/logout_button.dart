@@ -92,10 +92,10 @@ class LogoutButton extends StatelessWidget {
         // Get auth service and logout
         final authService = Provider.of<AuthService>(context, listen: false);
 
-        print('🔐 Starting logout process...');
+        // print('🔐 Starting logout process...');
         await authService.logout(context);
 
-        print('✅ Logout successful');
+        // print('✅ Logout successful');
 
         if (context.mounted) {
           // Close loading indicator
@@ -106,7 +106,7 @@ class LogoutButton extends StatelessWidget {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } catch (e) {
-        print('❌ Logout error: $e');
+        // print('❌ Logout error: $e');
 
         if (context.mounted) {
           // Close loading indicator
@@ -159,7 +159,7 @@ class UserMenuButton extends StatelessWidget {
         return PopupMenuButton<String>(
           icon: CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.white.withOpacity(0.2),
+            backgroundColor: Colors.white.withValues(alpha: 0.2),
             child: Text(
               (user?['username'] ?? 'U')[0].toUpperCase(),
               style: const TextStyle(

@@ -20,7 +20,7 @@ Future<String?> pickImageFile() async {
     }
   } catch (e) {
     // Handle error during file picking
-    print('Error picking image file: $e');
+    // print('Error picking image file: $e');
     return null;
   }
 }

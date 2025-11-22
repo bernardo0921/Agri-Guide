@@ -232,10 +232,10 @@ class _UploadTutorialScreenState extends State<UploadTutorialScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.accentRed.withOpacity(0.1),
+                    color: AppColors.accentRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.accentRed.withOpacity(0.3),
+                      color: AppColors.accentRed.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(

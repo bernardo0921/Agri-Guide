@@ -174,7 +174,7 @@ class _CreatePostModalState extends State<CreatePostModal>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: color, size: 24),
@@ -289,7 +289,7 @@ class _CreatePostModalState extends State<CreatePostModal>
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -339,7 +339,7 @@ class _CreatePostModalState extends State<CreatePostModal>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryGreen.withOpacity(0.3),
+                color: AppColors.primaryGreen.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -437,7 +437,7 @@ class _CreatePostModalState extends State<CreatePostModal>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -471,10 +471,10 @@ class _CreatePostModalState extends State<CreatePostModal>
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
+                      color: Colors.black.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Colors.white.withValues(alpha: 0.3),
                         width: 1.5,
                       ),
                     ),
@@ -496,7 +496,7 @@ class _CreatePostModalState extends State<CreatePostModal>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -582,7 +582,7 @@ class _CreatePostModalState extends State<CreatePostModal>
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -664,7 +664,7 @@ class _CreatePostModalState extends State<CreatePostModal>
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppColors.primaryGreen.withOpacity(0.3),
+                              color: AppColors.primaryGreen.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -743,7 +743,7 @@ class _CreatePostModalState extends State<CreatePostModal>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryGreen.withOpacity(0.4),
+                  color: AppColors.primaryGreen.withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),

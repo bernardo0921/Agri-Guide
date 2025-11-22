@@ -70,18 +70,18 @@ class AuthService with ChangeNotifier {
         await prefs.setString('user', response.body);
 
         _status = AuthStatus.authenticated;
-        print('✅ Auto-login successful');
+        // print('✅ Auto-login successful');
       } else if (response.statusCode == 401) {
-        print('⚠️ Token invalid, clearing storage');
+        // print('⚠️ Token invalid, clearing storage');
         await _clearStorage(prefs);
         _status = AuthStatus.unauthenticated;
       } else {
-        print('⚠️ Server error (${response.statusCode}), clearing storage');
+        // print('⚠️ Server error (${response.statusCode}), clearing storage');
         await _clearStorage(prefs);
         _status = AuthStatus.unauthenticated;
       }
     } catch (e) {
-      print('❌ Auto-login error: $e');
+      // print('❌ Auto-login error: $e');
       _status = AuthStatus.unauthenticated;
     }
 

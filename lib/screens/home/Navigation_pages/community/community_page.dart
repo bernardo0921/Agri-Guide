@@ -190,8 +190,8 @@ class _CommunityPageState extends State<CommunityPage> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.05),
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -252,7 +252,7 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    // final colorScheme = theme.colorScheme;
 
     return Center(
       child: Column(
@@ -286,7 +286,7 @@ class _CommunityPageState extends State<CommunityPage> {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: colorScheme.error.withOpacity(0.7),
+            color: colorScheme.error.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 16),
           Text('Failed to load posts', style: theme.textTheme.titleLarge),

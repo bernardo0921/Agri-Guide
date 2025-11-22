@@ -126,7 +126,7 @@ class _SplashScreenState extends State<SplashScreen>
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.primaryGreen.withOpacity(
+                            color: AppColors.primaryGreen.withValues(alpha: 
                               opacity * 0.8 + 0.2,
                             ),
                           ),

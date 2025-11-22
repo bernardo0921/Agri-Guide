@@ -166,7 +166,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isDark 
-                      ? AppColors.primaryGreen.withOpacity(0.2)
+                      ? AppColors.primaryGreen.withValues(alpha: 0.2)
                       : AppColors.paleGreen,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -299,7 +299,7 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.primaryGreen.withOpacity(0.2)
+                  ? AppColors.primaryGreen.withValues(alpha: 0.2)
                   : AppColors.paleGreen,
               borderRadius: BorderRadius.circular(10),
             ),

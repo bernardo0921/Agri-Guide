@@ -313,7 +313,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Icon(
               Icons.error_outline,
-              color: colorScheme.error.withOpacity(0.7),
+              color: colorScheme.error.withValues(alpha: 0.7),
               size: 64,
             ),
             const SizedBox(height: 16),
@@ -365,7 +365,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: colorScheme.primary.withOpacity(0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -373,7 +373,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: CircleAvatar(
                 radius: 65,
-                backgroundColor: colorScheme.primary.withOpacity(0.1),
+                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
                 backgroundImage: profilePictureUrl != null
                     ? NetworkImage(profilePictureUrl)
                     : null,
@@ -434,10 +434,10 @@ class _ProfilePageState extends State<ProfilePage> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.3),
+              color: colorScheme.primary.withValues(alpha: 0.3),
               width: 1,
             ),
           ),
@@ -561,14 +561,14 @@ class _ProfilePageState extends State<ProfilePage> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.3),
+          color: colorScheme.outline.withValues(alpha: 0.3),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : colorScheme.outline.withOpacity(0.1),
+                ? Colors.black.withValues(alpha: 0.3)
+                : colorScheme.outline.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -579,7 +579,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: colorScheme.primary, size: 24),

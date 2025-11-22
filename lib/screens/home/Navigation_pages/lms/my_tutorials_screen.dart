@@ -21,7 +21,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   bool _hasChanges = false;
   bool _isExtensionWorker = false;
 
-  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
+  // static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
   @override
   void initState() {
@@ -158,7 +158,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult:(didPop, result) =>  (didPop) async {
         if (!didPop) {
           Navigator.pop(context, _hasChanges);
         }
@@ -205,7 +205,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppColors.accentRed.withOpacity(0.7),
+                color: AppColors.accentRed.withValues(alpha: 0.7),
               ),
               const SizedBox(height: 16),
               Text(
