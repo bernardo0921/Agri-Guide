@@ -1,10 +1,11 @@
-// lib/screens/login_screen.dart
+// lib/screens/login_screen.dart - UPDATED with 2FA
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../core/notifiers/app_notifiers.dart';
 import '../../core/language/app_strings.dart';
 import 'role_selection_screen.dart';
+import 'verification_code_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +16,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -30,11 +31,44 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await Provider.of<AuthService>(
-        context,
-        listen: false,
-      ).login(_usernameController.text, _passwordController.text);
-      // If login is successful, the AuthWrapper will handle navigation
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // Step 1: Request verification code
+      await authService.requestLoginCode(email);
+
+      if (!mounted) return;
+
+      // Step 2: Navigate to verification screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => VerificationCodeScreen(
+            email: email,
+            purpose: 'login',
+            onVerify: (code) async {
+              // Step 3: Verify code and login
+              await authService.verifyAndLogin(email, code, password);
+
+              if (mounted) {
+                // Pop verification screen
+                Navigator.of(context).pop();
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Login successful!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            onResend: () async {
+              await authService.resendVerificationCode(email, 'login');
+            },
+          ),
+        ),
+      );
     } catch (e) {
       // Show error message
       if (mounted) {
@@ -56,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -99,21 +133,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 40),
 
-                      // Username Field
+                      // Email Field (changed from username)
                       TextFormField(
-                        controller: _usernameController,
+                        controller: _emailController,
                         decoration: InputDecoration(
-                          labelText: AppStrings.username,
+                          labelText: 'Email',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          prefixIcon: const Icon(Icons.person),
+                          prefixIcon: const Icon(Icons.email),
                           filled: true,
                           fillColor: Colors.grey[50],
                         ),
+                        keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your username';
+                            return 'Please enter your email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Please enter a valid email';
                           }
                           return null;
                         },

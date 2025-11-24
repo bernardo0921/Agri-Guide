@@ -1,9 +1,10 @@
-// lib/screens/register_farmer_screen.dart
+// lib/screens/register_farmer_screen.dart - UPDATED with 2FA
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../core/notifiers/app_notifiers.dart';
 import '../../core/language/app_strings.dart';
+import 'verification_code_screen.dart';
 
 class FarmerRegisterScreen extends StatefulWidget {
   const FarmerRegisterScreen({super.key});
@@ -17,7 +18,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
   bool _isLoading = false;
 
   // Using a map to hold all form data
-  final Map<String, String> _formData = {
+  final Map<String, dynamic> _formData = {
     'username': '',
     'email': '',
     'password': '',
@@ -25,12 +26,13 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     'first_name': '',
     'last_name': '',
     'phone_number': '',
+    'user_type': 'farmer',
     'farm_name': '',
     'farm_size': '',
     'location': '',
     'region': '',
-    'crops_grown': '',
-    'farming_method': 'conventional', // Default value
+    'crops_grown': [],
+    'farming_method': 'conventional',
     'years_of_experience': '',
   };
 
@@ -55,39 +57,71 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
       _isLoading = true;
     });
 
-    // Build the nested data structure required by the serializer
-    final Map<String, dynamic> registrationData = {
-      'username': _formData['username'],
-      'email': _formData['email'],
-      'password': _formData['password'],
-      'password_confirm': _formData['password_confirm'],
-      'first_name': _formData['first_name'],
-      'last_name': _formData['last_name'],
-      'phone_number': _formData['phone_number'],
-      'farmer_profile': {
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      
+      // Parse crops_grown from comma-separated string to list
+      final cropsString = _formData['crops_grown'] as String;
+      final cropsList = cropsString.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+
+      // Prepare registration data for 2FA
+      final registrationData = {
+        'email': _formData['email'],
+        'username': _formData['username'],
+        'password': _formData['password'],
+        'password_confirm': _formData['password_confirm'],
+        'first_name': _formData['first_name'],
+        'last_name': _formData['last_name'],
+        'phone_number': _formData['phone_number'],
+        'user_type': 'farmer',
         'farm_name': _formData['farm_name'],
-        'farm_size': double.tryParse(_formData['farm_size'] ?? '0'),
+        'farm_size': _formData['farm_size'],
         'location': _formData['location'],
         'region': _formData['region'],
-        'crops_grown': _formData['crops_grown'],
+        'crops_grown': cropsList,
         'farming_method': _formData['farming_method'],
-        'years_of_experience': int.tryParse(
-          _formData['years_of_experience'] ?? '0',
-        ),
-      },
-    };
+        'years_of_experience': int.tryParse(_formData['years_of_experience'] ?? '0') ?? 0,
+      };
 
-    try {
-      await Provider.of<AuthService>(
-        context,
-        listen: false,
-      ).registerFarmer(registrationData);
-      // If successful, the AuthWrapper will navigate to Home
-      // But we are in a sub-page, so pop back to the login screen
-      // which will then be rebuilt by AuthWrapper
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      // Step 1: Request verification code
+      await authService.requestRegistrationCode(registrationData);
+
+      if (!mounted) return;
+
+      // Step 2: Navigate to verification screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => VerificationCodeScreen(
+            email: _formData['email'],
+            purpose: 'registration',
+            registrationData: registrationData,
+            onVerify: (code) async {
+              // Step 3: Verify code and complete registration
+              await authService.verifyAndRegister(_formData['email'], code);
+              
+              if (mounted) {
+                // Pop both verification screen and registration screen
+                Navigator.of(context).pop(); // Pop verification screen
+                Navigator.of(context).pop(); // Pop registration screen
+                
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Registration successful! Welcome!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            onResend: () async {
+              await authService.resendVerificationCode(
+                _formData['email'],
+                'registration',
+              );
+            },
+          ),
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -207,7 +241,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
                   ),
                   _buildTextFormField(
                     'crops_grown',
-                    AppStrings.cropsGrown,
+                    '${AppStrings.cropsGrown} (comma-separated)',
                     Icons.eco,
                   ),
                   _buildTextFormField(
@@ -288,12 +322,13 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
               return AppStrings.pleaseEnterValidEmail;
             }
           }
-          if (value == null || value.isEmpty) {
-            // Make some fields optional if needed, based on your model
-            if (key == 'farm_name' || key == 'farm_size' || key == 'location') {
-              return null; // These can be blank
+          // Required fields
+          if (['username', 'email', 'password', 'password_confirm', 
+               'first_name', 'last_name', 'phone_number', 
+               'farm_name', 'location', 'region'].contains(key)) {
+            if (value == null || value.isEmpty) {
+              return AppStrings.fieldRequired;
             }
-            return AppStrings.fieldRequired;
           }
           return null;
         },
@@ -304,3 +339,6 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     );
   }
 }
+
+
+

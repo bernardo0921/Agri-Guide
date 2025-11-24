@@ -142,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirmed == true && mounted) {
       final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.logout(context);
+      await authService.logout();
 
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
