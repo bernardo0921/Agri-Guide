@@ -33,12 +33,13 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   void _checkUserRole() {
     final authService = Provider.of<AuthService>(context, listen: false);
     final user = authService.user;
-    
+
     if (user != null) {
       final userType = user['user_type']?.toString().toLowerCase();
-      _isExtensionWorker = userType == 'extension_worker' || 
-                          userType == 'extension' ||
-                          userType == 'extensionworker';
+      _isExtensionWorker =
+          userType == 'extension_worker' ||
+          userType == 'extension' ||
+          userType == 'extensionworker';
     }
   }
 
@@ -158,15 +159,13 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult:(didPop, result) =>  (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (!didPop) {
           Navigator.pop(context, _hasChanges);
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('My Tutorials'),
-        ),
+        appBar: AppBar(title: const Text('My Tutorials')),
         body: _buildBody(),
         floatingActionButton: _isExtensionWorker ? _buildUploadButton() : null,
       ),
@@ -186,12 +185,10 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   Widget _buildBody() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     if (_isLoading) {
       return Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primaryGreen,
-        ),
+        child: CircularProgressIndicator(color: AppColors.primaryGreen),
       );
     }
 
@@ -302,8 +299,8 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                 child: Container(
                   width: 120,
                   height: 68,
-                  color: isDark 
-                      ? AppColors.backgroundDark 
+                  color: isDark
+                      ? AppColors.backgroundDark
                       : AppColors.backgroundLight,
                   child: thumbnailUrl != null
                       ? Image.network(
@@ -330,7 +327,9 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         height: 1.3,
-                        color: isDark ? AppColors.textWhite : AppColors.textDark,
+                        color: isDark
+                            ? AppColors.textWhite
+                            : AppColors.textDark,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -400,10 +399,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               // Delete button
               if (_isExtensionWorker)
                 IconButton(
-                  icon: Icon(
-                    Icons.delete_outline,
-                    color: AppColors.accentRed,
-                  ),
+                  icon: Icon(Icons.delete_outline, color: AppColors.accentRed),
                   onPressed: () => _deleteTutorial(tutorial),
                   tooltip: 'Delete',
                 ),

@@ -7,17 +7,17 @@ class LMSApiService {
   final Dio _dio;
 
   LMSApiService(String token)
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: baseUrl,
-            headers: {
-              'Authorization': 'Token $token',
-              'Content-Type': 'application/json',
-            },
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 30),
-          ),
-        );
+    : _dio = Dio(
+        BaseOptions(
+          baseUrl: baseUrl,
+          headers: {
+            'Authorization': 'Token $token',
+            'Content-Type': 'application/json',
+          },
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
 
   /// Fetch all tutorials with optional search and category filter
   Future<List<Tutorial>> getTutorials({
@@ -40,7 +40,9 @@ class LMSApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List<dynamic>;
-        return data.map((json) => Tutorial.fromJson(json as Map<String, dynamic>)).toList();
+        return data
+            .map((json) => Tutorial.fromJson(json as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception('Failed to load tutorials');
       }
@@ -66,12 +68,12 @@ class LMSApiService {
 
   /// Increment view count for a tutorial
   Future<void> incrementViews(int id) async {
-    try {
-      await _dio.post('/api/tutorials/$id/increment_views/');
-    } on DioException catch (e) {
-      // Don't throw error for view count increment failure
-     // print('Failed to increment views: ${e.message}');
-    }
+    // try {
+    await _dio.post('/api/tutorials/$id/increment_views/');
+    // } on DioException catch (ie) {
+    //   // Don't throw error for view count increment failure
+    //  // print('Failed to increment views: ${e.message}');
+    // }
   }
 
   /// Upload a new tutorial
@@ -104,11 +106,7 @@ class LMSApiService {
         '/api/tutorials/',
         data: formData,
         onSendProgress: onProgress,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
 
       if (response.statusCode == 201) {
@@ -128,7 +126,9 @@ class LMSApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data as List<dynamic>;
-        return data.map((json) => Tutorial.fromJson(json as Map<String, dynamic>)).toList();
+        return data
+            .map((json) => Tutorial.fromJson(json as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception('Failed to load my tutorials');
       }

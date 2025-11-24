@@ -1,7 +1,7 @@
 // widgets/notification_badge.dart
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
-import '../screens/notifications_page.dart';
+// import '../screens/notifications_page.dart';
 
 class NotificationBadge extends StatefulWidget {
   const NotificationBadge({super.key});
@@ -45,10 +45,10 @@ class _NotificationBadgeState extends State<NotificationBadge> {
   }
 
   void _navigateToNotifications() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const NotificationsPage()),
-    );
+    // final result = await Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => const NotificationsPage()),
+    // );
     
     // Refresh count when returning from notifications page
     _loadUnreadCount();

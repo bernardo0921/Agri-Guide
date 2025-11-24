@@ -88,11 +88,11 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
     }
   }
 
-  void _onCodeDeleted(int index) {
-    if (index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-  }
+  // void _onCodeDeleted(int index) {
+  //   if (index > 0) {
+  //     _focusNodes[index - 1].requestFocus();
+  //   }
+  // }
 
   Future<void> _verifyCode() async {
     final code = _getCode();

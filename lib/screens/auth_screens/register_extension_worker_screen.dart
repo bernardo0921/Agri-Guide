@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
-import '../../core/notifiers/app_notifiers.dart';
+// import '../../core/notifiers/app_notifiers.dart';
 import '../../core/language/app_strings.dart';
 import 'verification_code_screen.dart';
 
@@ -73,7 +73,7 @@ class _ExtensionWorkerRegisterScreenState
 
     // ✅ Convert regions_covered string to list
     final regionsList =
-        (_formData['regions_covered'] as String?)
+        (_formData['regions_covered'])
             ?.split(',')
             .map((e) => e.trim())
             .where((e) => e.isNotEmpty)
