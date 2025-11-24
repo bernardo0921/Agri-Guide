@@ -29,6 +29,8 @@ dependencies:
   record: ^6.1.2
   speech_to_text: ^7.3.0
   flutter_tts: ^4.2.3
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:

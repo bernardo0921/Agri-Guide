@@ -1,4 +1,4 @@
-// lib/screens/register_farmer_screen.dart - UPDATED with 2FA
+// lib/screens/auth_screens/register_farmer_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -17,7 +17,6 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Using a map to hold all form data
   final Map<String, dynamic> _formData = {
     'username': '',
     'email': '',
@@ -31,314 +30,126 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     'farm_size': '',
     'location': '',
     'region': '',
-    'crops_grown': [],
+    'crops_grown': '', // String initially
     'farming_method': 'conventional',
     'years_of_experience': '',
   };
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    // Check if passwords match
     if (_formData['password'] != _formData['password_confirm']) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.passwordsDoNotMatch),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(AppStrings.passwordsDoNotMatch), backgroundColor: Colors.red),
       );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       
-      // Parse crops_grown from comma-separated string to list
-      final cropsString = _formData['crops_grown'] as String;
-      final cropsList = cropsString.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      // Process Data
+      final cropsList = (_formData['crops_grown'] as String)
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
 
-      // Prepare registration data for 2FA
       final registrationData = {
-        'email': _formData['email'],
-        'username': _formData['username'],
-        'password': _formData['password'],
-        'password_confirm': _formData['password_confirm'],
-        'first_name': _formData['first_name'],
-        'last_name': _formData['last_name'],
-        'phone_number': _formData['phone_number'],
-        'user_type': 'farmer',
-        'farm_name': _formData['farm_name'],
-        'farm_size': _formData['farm_size'],
-        'location': _formData['location'],
-        'region': _formData['region'],
+        ..._formData,
         'crops_grown': cropsList,
-        'farming_method': _formData['farming_method'],
-        'years_of_experience': int.tryParse(_formData['years_of_experience'] ?? '0') ?? 0,
+        'years_of_experience': int.tryParse(_formData['years_of_experience'].toString()) ?? 0,
       };
 
-      // Step 1: Request verification code
+      // Step 1: Request Code
       await authService.requestRegistrationCode(registrationData);
 
       if (!mounted) return;
 
-      // Step 2: Navigate to verification screen
+      // Step 2: Navigate to Verify
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (ctx) => VerificationCodeScreen(
             email: _formData['email'],
             purpose: 'registration',
-            registrationData: registrationData,
             onVerify: (code) async {
-              // Step 3: Verify code and complete registration
+              // The backend might need full data OR cached data. 
+              // Assuming 'verifyAndRegister' needs generic data or just email/code.
+              // If backend fails saying "missing fields", we must pass 'registrationData' here.
+              // Based on AuthService, it sends email + code.
               await authService.verifyAndRegister(_formData['email'], code);
               
               if (mounted) {
-                // Pop both verification screen and registration screen
-                Navigator.of(context).pop(); // Pop verification screen
-                Navigator.of(context).pop(); // Pop registration screen
-                
-                // Show success message
+                Navigator.of(context).popUntil((route) => route.isFirst);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Registration successful! Welcome!'),
-                    backgroundColor: Colors.green,
-                  ),
+                  const SnackBar(content: Text('Welcome, Farmer!'), backgroundColor: Colors.green),
                 );
               }
             },
             onResend: () async {
-              await authService.resendVerificationCode(
-                _formData['email'],
-                'registration',
-              );
+              await authService.resendVerificationCode(_formData['email'], 'registration');
             },
           ),
         ),
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst("Exception: ", "")),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", "")), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: ValueListenableBuilder(
-          valueListenable: AppNotifiers.languageNotifier,
-          builder: (context, language, child) {
-            return Text(AppStrings.registerAsFarmer);
-          },
-        ),
-      ),
+      appBar: AppBar(title: Text(AppStrings.registerAsFarmer)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: ValueListenableBuilder(
-          valueListenable: AppNotifiers.languageNotifier,
-          builder: (context, language, child) {
-            return Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Text(
-                    AppStrings.createFarmerAccount,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // --- Account Fields ---
-                  _buildTextFormField(
-                    'username',
-                    AppStrings.username,
-                    Icons.person,
-                  ),
-                  _buildTextFormField(
-                    'email',
-                    AppStrings.email,
-                    Icons.email,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  _buildTextFormField(
-                    'password',
-                    AppStrings.password,
-                    Icons.lock,
-                    obscureText: true,
-                  ),
-                  _buildTextFormField(
-                    'password_confirm',
-                    AppStrings.confirmPassword,
-                    Icons.lock_outline,
-                    obscureText: true,
-                  ),
-
-                  // --- Personal Fields ---
-                  const SizedBox(height: 16),
-                  _buildTextFormField(
-                    'first_name',
-                    AppStrings.firstName,
-                    Icons.badge,
-                  ),
-                  _buildTextFormField(
-                    'last_name',
-                    AppStrings.lastName,
-                    Icons.badge,
-                  ),
-                  _buildTextFormField(
-                    'phone_number',
-                    AppStrings.phoneNumber,
-                    Icons.phone,
-                    keyboardType: TextInputType.phone,
-                  ),
-
-                  // --- Farmer Profile Fields ---
-                  const SizedBox(height: 16),
-                  Text(
-                    AppStrings.farmDetails,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildTextFormField(
-                    'farm_name',
-                    AppStrings.farmName,
-                    Icons.home_work,
-                  ),
-                  _buildTextFormField(
-                    'farm_size',
-                    AppStrings.farmSize,
-                    Icons.landscape,
-                    keyboardType: TextInputType.number,
-                  ),
-                  _buildTextFormField(
-                    'location',
-                    AppStrings.location,
-                    Icons.location_on,
-                  ),
-                  _buildTextFormField(
-                    'region',
-                    AppStrings.region,
-                    Icons.map,
-                  ),
-                  _buildTextFormField(
-                    'crops_grown',
-                    '${AppStrings.cropsGrown} (comma-separated)',
-                    Icons.eco,
-                  ),
-                  _buildTextFormField(
-                    'years_of_experience',
-                    AppStrings.yearsOfExperience,
-                    Icons.history,
-                    keyboardType: TextInputType.number,
-                  ),
-
-                  // Farming Method Dropdown
-                  DropdownButtonFormField<String>(
-                    initialValue: _formData['farming_method'],
-                    decoration: InputDecoration(
-                      labelText: AppStrings.farmingMethod,
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.agriculture),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildTextFormField('username', AppStrings.username, Icons.person),
+              _buildTextFormField('email', AppStrings.email, Icons.email, keyboardType: TextInputType.emailAddress),
+              _buildTextFormField('password', AppStrings.password, Icons.lock, obscureText: true),
+              _buildTextFormField('password_confirm', AppStrings.confirmPassword, Icons.lock_outline, obscureText: true),
+              _buildTextFormField('first_name', AppStrings.firstName, Icons.badge),
+              _buildTextFormField('last_name', AppStrings.lastName, Icons.badge),
+              _buildTextFormField('phone_number', AppStrings.phoneNumber, Icons.phone, keyboardType: TextInputType.phone),
+              _buildTextFormField('farm_name', AppStrings.farmName, Icons.home_work),
+              _buildTextFormField('location', AppStrings.location, Icons.location_on),
+              _buildTextFormField('crops_grown', 'Crops (comma separated)', Icons.eco),
+              
+              const SizedBox(height: 20),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _submit,
+                      child: Text(AppStrings.register),
                     ),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'conventional',
-                        child: Text(AppStrings.conventional),
-                      ),
-                      DropdownMenuItem(
-                        value: 'organic',
-                        child: Text(AppStrings.organic),
-                      ),
-                      DropdownMenuItem(
-                        value: 'mixed',
-                        child: Text(AppStrings.mixed),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _formData['farming_method'] = value!;
-                      });
-                    },
-                  ),
-
-                  const SizedBox(height: 24),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : ElevatedButton(
-                          onPressed: _submit,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: Text(AppStrings.register),
-                        ),
-                ],
-              ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTextFormField(
-    String key,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-    bool obscureText = false,
-  }) {
+  Widget _buildTextFormField(String key, String label, IconData icon,
+      {TextInputType keyboardType = TextInputType.text, bool obscureText = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          prefixIcon: Icon(icon),
-        ),
+        decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon), border: const OutlineInputBorder()),
         keyboardType: keyboardType,
         obscureText: obscureText,
-        validator: (value) {
-          if (key == 'email') {
-            if (value == null || value.isEmpty || !value.contains('@')) {
-              return AppStrings.pleaseEnterValidEmail;
-            }
-          }
-          // Required fields
-          if (['username', 'email', 'password', 'password_confirm', 
-               'first_name', 'last_name', 'phone_number', 
-               'farm_name', 'location', 'region'].contains(key)) {
-            if (value == null || value.isEmpty) {
-              return AppStrings.fieldRequired;
-            }
-          }
-          return null;
-        },
-        onSaved: (value) {
-          _formData[key] = value ?? '';
-        },
+        validator: (value) => (value == null || value.isEmpty) ? AppStrings.fieldRequired : null,
+        onSaved: (value) => _formData[key] = value ?? '',
       ),
     );
   }
 }
-
-
-

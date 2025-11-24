@@ -362,6 +362,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _performLogout() {
     final authService = Provider.of<AuthService>(context, listen: false);
-    authService.logout();
+    authService.logout(context);
   }
 }

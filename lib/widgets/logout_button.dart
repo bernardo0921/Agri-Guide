@@ -93,7 +93,7 @@ class LogoutButton extends StatelessWidget {
         final authService = Provider.of<AuthService>(context, listen: false);
 
         // print('🔐 Starting logout process...');
-        await authService.logout();
+        await authService.logout(context);
 
         // print('✅ Logout successful');
 
@@ -342,7 +342,7 @@ class UserMenuButton extends StatelessWidget {
         // Get auth service and logout
         final authService = Provider.of<AuthService>(context, listen: false);
 
-        await authService.logout();
+        await authService.logout(context);
 
         if (context.mounted) {
           // Close loading indicator

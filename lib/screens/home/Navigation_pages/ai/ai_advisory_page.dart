@@ -25,7 +25,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ImagePicker _imagePicker = ImagePicker();
 
-  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
+  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com/api';
 
   final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;

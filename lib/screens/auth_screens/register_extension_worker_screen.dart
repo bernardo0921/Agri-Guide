@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../services/auth_service.dart';
 import '../../core/notifiers/app_notifiers.dart';
 import '../../core/language/app_strings.dart';
+import 'verification_code_screen.dart';
 
 class ExtensionWorkerRegisterScreen extends StatefulWidget {
   const ExtensionWorkerRegisterScreen({super.key});
@@ -22,7 +23,6 @@ class _ExtensionWorkerRegisterScreenState
   File? _verificationDocument;
   final _imagePicker = ImagePicker();
 
-  // Using a map to hold all form data
   final Map<String, String> _formData = {
     'username': '',
     'email': '',
@@ -43,29 +43,22 @@ class _ExtensionWorkerRegisterScreenState
         source: ImageSource.gallery,
       );
       if (file != null) {
-        setState(() {
-          _verificationDocument = File(file.path);
-        });
+        setState(() => _verificationDocument = File(file.path));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${AppStrings.errorPickingFile}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error picking file: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    // Check if passwords match
     if (_formData['password'] != _formData['password_confirm']) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -76,11 +69,17 @@ class _ExtensionWorkerRegisterScreenState
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    // Build the nested data structure required by the serializer
+    // ✅ Convert regions_covered string to list
+    final regionsList =
+        (_formData['regions_covered'] as String?)
+            ?.split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList() ??
+        [];
+
     final Map<String, dynamic> registrationData = {
       'username': _formData['username'],
       'email': _formData['email'],
@@ -89,244 +88,169 @@ class _ExtensionWorkerRegisterScreenState
       'first_name': _formData['first_name'],
       'last_name': _formData['last_name'],
       'phone_number': _formData['phone_number'],
-      'extension_worker_profile': {
-        'organization': _formData['organization'],
-        'employee_id': _formData['employee_id'],
-        'specialization': _formData['specialization'],
-        'regions_covered': _formData['regions_covered'],
-      },
+      'user_type': 'extension_worker',
+      'organization': _formData['organization'],
+      'employee_id': _formData['employee_id'],
+      'specialization': _formData['specialization'],
+      'regions_covered': regionsList, // ✅ Send as list
     };
 
     try {
-      await Provider.of<AuthService>(
-        context,
-        listen: false,
-      ).registerExtensionWorker(
-        registrationData,
-        verificationDocument: _verificationDocument,
+      final authService = Provider.of<AuthService>(context, listen: false);
+
+      // Step 1: Request Code
+      await authService.initiateExtensionWorkerRegistration(registrationData);
+
+      if (!mounted) return;
+
+      // Step 2: Navigate to Verification
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => VerificationCodeScreen(
+            email: _formData['email']!,
+            purpose: 'registration',
+            onVerify: (code) async {
+              // Step 3: Complete Registration (Upload + Code)
+              await authService.completeExtensionWorkerRegistration(
+                registrationData: registrationData,
+                verificationCode: code,
+                verificationDocument: _verificationDocument,
+              );
+
+              if (mounted) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Registration Successful!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            onResend: () async {
+              await authService.resendVerificationCode(
+                _formData['email']!,
+                'registration',
+              );
+            },
+          ),
+        ),
       );
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppStrings.registrationSuccessful),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-        Navigator.of(context).pop();
-      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst("Exception: ", "")),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst("Exception: ", "")),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: ValueListenableBuilder(
-          valueListenable: AppNotifiers.languageNotifier,
-          builder: (context, language, child) {
-            return Text(AppStrings.registerAsExtensionWorker);
-          },
-        ),
-      ),
+      appBar: AppBar(title: Text(AppStrings.registerAsExtensionWorker)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
-        child: ValueListenableBuilder(
-          valueListenable: AppNotifiers.languageNotifier,
-          builder: (context, language, child) {
-            return Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.createExtensionWorkerAccount,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppStrings.accountPendingApproval,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.orange[700]),
-                  ),
-                  const SizedBox(height: 24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              _buildTextFormField(
+                'username',
+                AppStrings.username,
+                Icons.person,
+              ),
+              _buildTextFormField(
+                'email',
+                AppStrings.email,
+                Icons.email,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              _buildTextFormField(
+                'password',
+                AppStrings.password,
+                Icons.lock,
+                obscureText: true,
+              ),
+              _buildTextFormField(
+                'password_confirm',
+                AppStrings.confirmPassword,
+                Icons.lock_outline,
+                obscureText: true,
+              ),
+              const Divider(height: 30),
+              _buildTextFormField(
+                'first_name',
+                AppStrings.firstName,
+                Icons.badge,
+              ),
+              _buildTextFormField(
+                'last_name',
+                AppStrings.lastName,
+                Icons.badge,
+              ),
+              _buildTextFormField(
+                'phone_number',
+                AppStrings.phoneNumber,
+                Icons.phone,
+                keyboardType: TextInputType.phone,
+              ),
+              const Divider(height: 30),
+              _buildTextFormField(
+                'organization',
+                AppStrings.organization,
+                Icons.business,
+              ),
+              _buildTextFormField(
+                'employee_id',
+                AppStrings.employeeId,
+                Icons.badge_outlined,
+              ),
+              _buildTextFormField(
+                'specialization',
+                AppStrings.specialization,
+                Icons.science,
+              ),
+              _buildTextFormField(
+                'regions_covered',
+                AppStrings.regionsCovered,
+                Icons.map,
+              ),
+              const SizedBox(height: 20),
 
-                  // --- Account Fields ---
-                  Text(
-                    AppStrings.accountInformation,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+              // Document Upload UI
+              if (_verificationDocument != null)
+                ListTile(
+                  leading: const Icon(Icons.check_circle, color: Colors.green),
+                  title: Text(_verificationDocument!.path.split('/').last),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () =>
+                        setState(() => _verificationDocument = null),
                   ),
-                  const SizedBox(height: 12),
-                  _buildTextFormField(
-                    'username',
-                    AppStrings.username,
-                    Icons.person,
-                  ),
-                  _buildTextFormField(
-                    'email',
-                    AppStrings.email,
-                    Icons.email,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  _buildTextFormField(
-                    'password',
-                    AppStrings.password,
-                    Icons.lock,
-                    obscureText: true,
-                  ),
-                  _buildTextFormField(
-                    'password_confirm',
-                    AppStrings.confirmPassword,
-                    Icons.lock_outline,
-                    obscureText: true,
-                  ),
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: _pickVerificationDocument,
+                  icon: const Icon(Icons.upload_file),
+                  label: Text(AppStrings.uploadDocument),
+                ),
 
-                  // --- Personal Fields ---
-                  const SizedBox(height: 24),
-                  Text(
-                    AppStrings.personalInformation,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextFormField(
-                    'first_name',
-                    AppStrings.firstName,
-                    Icons.badge,
-                  ),
-                  _buildTextFormField(
-                    'last_name',
-                    AppStrings.lastName,
-                    Icons.badge,
-                  ),
-                  _buildTextFormField(
-                    'phone_number',
-                    AppStrings.phoneNumber,
-                    Icons.phone,
-                    keyboardType: TextInputType.phone,
-                  ),
-
-                  // --- Extension Worker Profile Fields ---
-                  const SizedBox(height: 24),
-                  Text(
-                    AppStrings.professionalDetails,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildTextFormField(
-                    'organization',
-                    AppStrings.organization,
-                    Icons.business,
-                  ),
-                  _buildTextFormField(
-                    'employee_id',
-                    AppStrings.employeeId,
-                    Icons.badge_outlined,
-                  ),
-                  _buildTextFormField(
-                    'specialization',
-                    AppStrings.specialization,
-                    Icons.science,
-                  ),
-                  _buildTextFormField(
-                    'regions_covered',
-                    AppStrings.regionsCovered,
-                    Icons.map,
-                  ),
-
-                  // --- Verification Document ---
-                  const SizedBox(height: 24),
-                  Text(
-                    AppStrings.verificationDocument,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppStrings.uploadDocumentDescription,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Colors.grey[600]),
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (_verificationDocument != null)
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(
-                          Icons.insert_drive_file,
-                          color: Colors.blue,
-                        ),
-                        title: Text(
-                          _verificationDocument!.path.split('/').last,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              _verificationDocument = null;
-                            });
-                          },
-                        ),
-                      ),
-                    )
-                  else
-                    OutlinedButton.icon(
-                      onPressed: _pickVerificationDocument,
-                      icon: const Icon(Icons.upload_file),
-                      label: Text(AppStrings.uploadDocument),
-                      style: OutlinedButton.styleFrom(
+              const SizedBox(height: 30),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
                       ),
+                      child: Text(AppStrings.register),
                     ),
-
-                  const SizedBox(height: 32),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                          onPressed: _submit,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: Text(AppStrings.register),
-                        ),
-                ],
-              ),
-            );
-          },
+            ],
+          ),
         ),
       ),
     );
@@ -344,25 +268,14 @@ class _ExtensionWorkerRegisterScreenState
       child: TextFormField(
         decoration: InputDecoration(
           labelText: label,
-          border: const OutlineInputBorder(),
           prefixIcon: Icon(icon),
+          border: const OutlineInputBorder(),
         ),
         keyboardType: keyboardType,
         obscureText: obscureText,
-        validator: (value) {
-          if (key == 'email') {
-            if (value == null || value.isEmpty || !value.contains('@')) {
-              return AppStrings.pleaseEnterValidEmail;
-            }
-          }
-          if (value == null || value.isEmpty) {
-            return AppStrings.fieldRequired;
-          }
-          return null;
-        },
-        onSaved: (value) {
-          _formData[key] = value ?? '';
-        },
+        validator: (value) =>
+            (value == null || value.isEmpty) ? AppStrings.fieldRequired : null,
+        onSaved: (value) => _formData[key] = value?.trim() ?? '',
       ),
     );
   }
