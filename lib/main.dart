@@ -2,6 +2,7 @@
 import 'package:agri_guide/screens/auth_wrapper.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/providers/theme_provider.dart';
+import 'package:agri_guide/services/local_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,7 +12,15 @@ import 'config/routes.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
   await dotenv.load(fileName: ".env");
+
+  // Initialize local notifications
+  await LocalNotificationService.initialize();
+  
+  // Request notification permissions
+  await LocalNotificationService.requestPermissions();
 
   // Initialize ThemeProvider before running the app
   final themeProvider = ThemeProvider();

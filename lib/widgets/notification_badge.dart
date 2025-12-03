@@ -1,7 +1,7 @@
 // widgets/notification_badge.dart
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
-// import '../screens/notifications_page.dart';
+import '../screens/notifications_page.dart';
 
 class NotificationBadge extends StatefulWidget {
   const NotificationBadge({super.key});
@@ -41,14 +41,17 @@ class _NotificationBadgeState extends State<NotificationBadge> {
           _isLoading = false;
         });
       }
+      // Silently fail - don't show error for badge
     }
   }
 
   void _navigateToNotifications() async {
-    // final result = await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => const NotificationsPage()),
-    // );
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationsPage(),
+      ),
+    );
     
     // Refresh count when returning from notifications page
     _loadUnreadCount();
@@ -56,11 +59,17 @@ class _NotificationBadgeState extends State<NotificationBadge> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Stack(
       children: [
         IconButton(
-          icon: const Icon(Icons.notifications_outlined),
+          icon: Icon(
+            Icons.notifications_outlined,
+            color: colorScheme.onSurface,
+          ),
           onPressed: _navigateToNotifications,
+          tooltip: 'Notifications',
         ),
         if (_unreadCount > 0)
           Positioned(
@@ -75,7 +84,10 @@ class _NotificationBadgeState extends State<NotificationBadge> {
               decoration: BoxDecoration(
                 color: Colors.red[600],
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
+                border: Border.all(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  width: 1.5,
+                ),
               ),
               child: Center(
                 child: Text(

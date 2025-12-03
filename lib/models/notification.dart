@@ -1,7 +1,7 @@
 // models/notification.dart
 class AppNotification {
   final int id;
-  final String notificationType;
+  final String notificationType; // 'like' or 'comment'
   final String senderName;
   final String? senderProfilePicture;
   final int postId;
@@ -28,17 +28,19 @@ class AppNotification {
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
-      id: json['id'],
-      notificationType: json['notification_type'],
-      senderName: json['sender_name'],
+      id: json['id'] ?? 0,
+      notificationType: json['notification_type'] ?? '',
+      senderName: json['sender_name'] ?? '',
       senderProfilePicture: json['sender_profile_picture'],
-      postId: json['post_id'],
+      postId: json['post_id'] ?? 0,
       postContentPreview: json['post_content_preview'] ?? '',
       commentContent: json['comment_content'],
-      isRead: json['is_read'],
-      createdAt: DateTime.parse(json['created_at']),
-      timeAgo: json['time_ago'],
-      message: json['message'],
+      isRead: json['is_read'] ?? false,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      timeAgo: json['time_ago'] ?? '',
+      message: json['message'] ?? '',
     );
   }
 
@@ -56,5 +58,33 @@ class AppNotification {
       'time_ago': timeAgo,
       'message': message,
     };
+  }
+
+  AppNotification copyWith({
+    int? id,
+    String? notificationType,
+    String? senderName,
+    String? senderProfilePicture,
+    int? postId,
+    String? postContentPreview,
+    String? commentContent,
+    bool? isRead,
+    DateTime? createdAt,
+    String? timeAgo,
+    String? message,
+  }) {
+    return AppNotification(
+      id: id ?? this.id,
+      notificationType: notificationType ?? this.notificationType,
+      senderName: senderName ?? this.senderName,
+      senderProfilePicture: senderProfilePicture ?? this.senderProfilePicture,
+      postId: postId ?? this.postId,
+      postContentPreview: postContentPreview ?? this.postContentPreview,
+      commentContent: commentContent ?? this.commentContent,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+      timeAgo: timeAgo ?? this.timeAgo,
+      message: message ?? this.message,
+    );
   }
 }

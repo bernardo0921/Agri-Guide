@@ -7,6 +7,9 @@ import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/screens/auth_screens/login_screen.dart';
 import 'package:agri_guide/core/language/app_strings.dart';
 import 'package:agri_guide/core/notifiers/app_notifiers.dart';
+import 'package:agri_guide/widgets/notification_badge.dart';
+import 'package:agri_guide/services/notification_polling_service.dart';
+import 'package:agri_guide/services/local_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'profile/profile_page.dart';
@@ -43,12 +46,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // Listen to language changes to rebuild UI
     AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
+    
+    // Initialize notifications
+    _initializeNotifications();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
+    
+    // Stop notification polling
+    NotificationPollingService.stopPolling();
+    
     super.dispose();
   }
 
@@ -63,6 +73,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Re-check authentication when app comes to foreground
     if (state == AppLifecycleState.resumed) {
       _checkAuthentication();
+      // Force check for new notifications when app resumes
+      NotificationPollingService.forceCheck();
+    }
+  }
+
+  /// Initialize notification service
+  Future<void> _initializeNotifications() async {
+    try {
+      // Request permissions
+      final hasPermission = await LocalNotificationService.requestPermissions();
+      
+      if (hasPermission) {
+        // Start polling for notifications every 2 minutes
+        await NotificationPollingService.startPolling(
+          interval: const Duration(minutes: 2),
+        );
+        debugPrint('✅ Notification polling started');
+      } else {
+        debugPrint('⚠️ Notification permissions denied');
+      }
+    } catch (e) {
+      debugPrint('❌ Error initializing notifications: $e');
     }
   }
 
@@ -72,6 +104,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // If not authenticated, redirect to login
     if (!authService.isLoggedIn) {
+      // Stop polling and clear notification history on logout
+      NotificationPollingService.stopPolling();
+      await NotificationPollingService.clearHistory();
+      
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -86,78 +122,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _selectedIndex = index;
     });
   }
-
-  // void _handleMenuSelection(String value) {
-  //   switch (value) {
-  //     case 'profile':
-  //       Navigator.of(
-  //         context,
-  //       ).push(MaterialPageRoute(builder: (context) => const ProfilePage()));
-  //       break;
-  //     case 'settings':
-  //       ScaffoldMessenger.of(
-  //         context,
-  //       ).showSnackBar(SnackBar(content: Text(AppStrings.settingsComingSoon)));
-  //       break;
-  //     case 'help':
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text(AppStrings.helpSupportComingSoon)),
-  //       );
-  //       break;
-  //     case 'logout':
-  //       _handleLogout();
-  //       break;
-  //   }
-  // }
-
-  // PopupMenuItem<String> _buildMenuItem(
-  //   String value,
-  //   IconData icon,
-  //   String text,
-  //   Color color,
-  // ) {
-  //   return PopupMenuItem<String>(
-  //     value: value,
-  //     child: Container(
-  //       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-  //       child: Row(
-  //         children: [
-  //           Icon(icon, size: 20, color: color),
-  //           const SizedBox(width: 12),
-  //           Text(
-  //             text,
-  //             style: TextStyle(color: color, fontWeight: FontWeight.w500),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // Future<void> _handleLogout() async {
-  //   final confirmed = await showDialog<bool>(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       title: Text(AppStrings.logoutTitle),
-  //       content: Text(AppStrings.logoutConfirm),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.of(context).pop(false),
-  //           child: Text(AppStrings.cancel),
-  //         ),
-  //         TextButton(
-  //           onPressed: () => Navigator.of(context).pop(true),
-  //           child: Text(AppStrings.logout),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-
-  //   if (confirmed == true && mounted) {
-  //     final authService = Provider.of<AuthService>(context, listen: false);
-  //     await authService.logout(context);
-  //   }
-  // }
 
   /// Get user initials for avatar fallback
   String _getInitials(AuthService authService) {
@@ -206,6 +170,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final initials = _getInitials(authService);
 
     return [
+      // Notification Badge
+      const NotificationBadge(),
       Padding(
         padding: const EdgeInsets.only(right: 8.0),
         child: InkWell(
@@ -272,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             }
           });
 
-          return Scaffold(
+          return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
