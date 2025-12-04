@@ -1,4 +1,4 @@
-// lib/services/auth_service.dart - UPDATED WITH BETTER 2FA HANDLING
+// lib/services/auth_service.dart - WITH APPROVAL ERROR HANDLING
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
@@ -15,16 +15,17 @@ class AuthService with ChangeNotifier {
   Map<String, dynamic>? _user;
   AuthStatus _status = AuthStatus.unknown;
 
-  // Getters exposed to other services
   String? get token => _token;
   Map<String, dynamic>? get user => _user;
   bool get isLoggedIn => _status == AuthStatus.authenticated;
   AuthStatus get status => _status;
 
-  // Helper getters for UI
   String? get userType => _user?['user_type'];
   String? get username => _user?['username'];
   String? get email => _user?['email'];
+  
+  // 🔒 NEW: Check if extension worker is approved
+  bool get isApproved => _user?['is_approved'] ?? true;
 
   AuthService() {
     _initialize();
@@ -78,7 +79,7 @@ class AuthService with ChangeNotifier {
 
         await prefs.setString('user', response.body);
         _status = AuthStatus.authenticated;
-      } else if (response.statusCode == 401) {
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
         await _clearStorage(prefs);
         _status = AuthStatus.unauthenticated;
       } else {
@@ -116,11 +117,10 @@ class AuthService with ChangeNotifier {
 
   // ==================== 1. NEW 2FA LOGIN FLOW ====================
 
-  /// Step 1: Request Login Verification Code
   Future<void> requestLoginCode(String email) async {
     final url = Uri.parse('$_baseUrl/api/auth/request-verification/');
     
-    debugPrint('🔐 Requesting login code for: $email');
+    debugPrint('🔑 Requesting login code for: $email');
     
     try {
       final response = await http
@@ -153,7 +153,6 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  /// Step 2: Verify Code and Login
   Future<void> verifyAndLogin(
     String email,
     String code,
@@ -183,6 +182,13 @@ class AuthService with ChangeNotifier {
         final data = json.decode(response.body);
         await _saveAuthData(data['token'], data['user']);
         debugPrint('✅ Login successful');
+      } else if (response.statusCode == 403) {
+        // 🔒 CHECK FOR APPROVAL ERROR
+        final errorData = json.decode(response.body);
+        if (errorData['error_code'] == 'ACCOUNT_PENDING_APPROVAL') {
+          throw Exception('Your account is pending approval. Please wait for admin approval.');
+        }
+        throw _parseError(response);
       } else {
         throw _parseError(response);
       }
@@ -194,13 +200,11 @@ class AuthService with ChangeNotifier {
 
   // ==================== 2. NEW 2FA FARMER REGISTRATION ====================
 
-  /// Step 1: Request Registration Code
   Future<void> requestRegistrationCode(
     Map<String, dynamic> registrationData,
   ) async {
     final url = Uri.parse('$_baseUrl/api/auth/request-verification/');
 
-    // Add purpose to the registration data
     final requestData = {
       ...registrationData,
       'purpose': 'registration',
@@ -239,7 +243,6 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  /// Step 2: Verify Code and Complete Farmer Registration
   Future<void> verifyAndRegister(String email, String code) async {
     final url = Uri.parse('$_baseUrl/api/auth/verify-and-register/');
     
@@ -273,15 +276,12 @@ class AuthService with ChangeNotifier {
 
   // ==================== 3. NEW 2FA EXTENSION WORKER FLOW ====================
 
-  /// Step 1: Initiate Extension Worker Registration
   Future<void> initiateExtensionWorkerRegistration(
     Map<String, dynamic> data,
   ) async {
-    // Reuses the standard request code endpoint
     await requestRegistrationCode(data);
   }
 
-  /// Step 2: Complete Extension Worker Registration with File Upload
   Future<void> completeExtensionWorkerRegistration({
     required Map<String, dynamic> registrationData,
     required String verificationCode,
@@ -294,11 +294,9 @@ class AuthService with ChangeNotifier {
     try {
       var request = http.MultipartRequest('POST', url);
 
-      // Add email and code
       request.fields['email'] = registrationData['email'];
       request.fields['code'] = verificationCode;
 
-      // Add verification document if provided
       if (verificationDocument != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -309,7 +307,6 @@ class AuthService with ChangeNotifier {
         debugPrint('📄 Verification document attached');
       }
 
-      // Send request
       final streamedResponse = await request.send().timeout(
         const Duration(seconds: 60),
         onTimeout: () {
@@ -325,7 +322,7 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = json.decode(response.body);
         await _saveAuthData(data['token'], data['user']);
-        debugPrint('✅ Extension worker registration successful');
+        debugPrint('✅ Extension worker registration successful (PENDING APPROVAL)');
       } else {
         throw _parseError(response);
       }
@@ -424,6 +421,11 @@ class AuthService with ChangeNotifier {
         _status = AuthStatus.authenticated;
         notifyListeners();
       } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // 🔒 CHECK FOR APPROVAL ERROR
+        final errorData = json.decode(response.body);
+        if (errorData['detail']?.contains('pending approval') ?? false) {
+          throw Exception('Your account is pending approval. Please wait for admin approval.');
+        }
         final prefs = await SharedPreferences.getInstance();
         await _clearStorage(prefs);
         throw Exception('Authentication failed. Please log in again.');
@@ -432,7 +434,7 @@ class AuthService with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('❌ Profile fetch error: $e');
-      throw Exception('Could not connect to the server or load profile data.');
+      rethrow;
     }
   }
 
@@ -462,15 +464,6 @@ class AuthService with ChangeNotifier {
             request.fields[key] = value.toString();
           }
         });
-
-        if (updateData.containsKey('farmer_profile')) {
-          final farmerProfile = updateData['farmer_profile'] as Map<String, dynamic>;
-          farmerProfile.forEach((key, value) {
-            if (value != null) {
-              request.fields['farmer_profile.$key'] = value.toString();
-            }
-          });
-        }
         
         final streamedResponse = await request.send();
         response = await http.Response.fromStream(streamedResponse);
@@ -491,6 +484,9 @@ class AuthService with ChangeNotifier {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('user', json.encode(_user));
         notifyListeners();
+      } else if (response.statusCode == 403) {
+        // 🔒 CHECK FOR APPROVAL ERROR
+        throw Exception('Your account is pending approval. Please wait for admin approval.');
       } else {
         throw _parseError(response);
       }
@@ -500,7 +496,6 @@ class AuthService with ChangeNotifier {
     }
   }
 
-  /// Helper to parse error messages from backend
   Exception _parseError(http.Response response) {
     try {
       final responseData = json.decode(response.body);
