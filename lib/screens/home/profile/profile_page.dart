@@ -1,4 +1,5 @@
 // lib/screens/home/profile/profile_page.dart
+// 🎨 SUPERB ENHANCED VERSION - Beautiful, Modern, Premium UI
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:agri_guide/core/language/app_strings.dart';
 import 'edit_profile_page.dart';
 import 'package:agri_guide/screens/auth_screens/login_screen.dart';
 import 'package:agri_guide/core/notifiers/app_notifiers.dart';
+import 'dart:ui';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -15,22 +17,34 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
 
   Map<String, dynamic>? _profileData;
   bool _isLoading = true;
   String? _error;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
     _fetchProfileData();
     AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -57,6 +71,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _profileData = user;
       });
+      _animationController.forward();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -73,28 +88,18 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Map<String, dynamic>? _getFarmerProfile() {
-    return _profileData?['farmer_profile'] as Map<String, dynamic>?;
-  }
-
   String _getInitials() {
     if (_profileData != null) {
       final firstName = _profileData!['first_name'] as String? ?? '';
       final lastName = _profileData!['last_name'] as String? ?? '';
 
       String initials = '';
-      if (firstName.isNotEmpty) {
-        initials += firstName[0];
-      }
-      if (lastName.isNotEmpty) {
-        initials += lastName[0];
-      }
+      if (firstName.isNotEmpty) initials += firstName[0];
+      if (lastName.isNotEmpty) initials += lastName[0];
 
       if (initials.isEmpty) {
         final username = _profileData!['username'] as String? ?? '';
-        if (username.isNotEmpty) {
-          initials = username[0];
-        }
+        if (username.isNotEmpty) initials = username[0];
       }
 
       return initials.toUpperCase();
@@ -119,24 +124,57 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: colorScheme.surface,
-        title: Text(AppStrings.logoutTitle, style: theme.textTheme.titleLarge),
-        content: Text(
-          AppStrings.logoutConfirm,
-          style: theme.textTheme.bodyMedium,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.logout, color: colorScheme.error),
+              const SizedBox(width: 12),
+              Text(
+                AppStrings.logoutTitle,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            AppStrings.logoutConfirm,
+            style: theme.textTheme.bodyLarge,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+              child: Text(AppStrings.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.error,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(AppStrings.logout),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(AppStrings.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: colorScheme.error),
-            child: Text(AppStrings.logout),
-          ),
-        ],
       ),
     );
 
@@ -157,6 +195,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     final String userType = _profileData?['user_type'] ?? 'user';
     final String firstName = _profileData?['first_name'] ?? 'Guest';
@@ -168,380 +207,418 @@ class _ProfilePageState extends State<ProfilePage> {
       valueListenable: AppNotifiers.languageNotifier,
       builder: (context, language, child) {
         return Scaffold(
+          extendBodyBehindAppBar: true,
           appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
             title: Text(
               AppStrings.myProfile,
               style: theme.textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    offset: const Offset(0, 2),
+                    blurRadius: 4,
+                  ),
+                ],
               ),
             ),
-            backgroundColor: colorScheme.primary,
-            elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.white),
+                onPressed: () {
+                  if (_profileData != null) {
+                    Navigator.of(context)
+                        .push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditProfilePage(initialData: _profileData!),
+                          ),
+                        )
+                        .then((_) => _fetchProfileData());
+                  }
+                },
+              ),
+            ],
           ),
           body: _isLoading
               ? Center(
-                  child: CircularProgressIndicator(color: colorScheme.primary),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: colorScheme.primary),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading profile...',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               : _error != null
               ? _buildErrorState()
-              : ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: <Widget>[
-                    _buildProfileHeader(
-                      fullName,
-                      userType,
-                      _profileData?['is_verified'] ?? false,
-                    ),
-                    const SizedBox(height: 25),
-
-                    _buildSectionHeader(AppStrings.accountDetails),
-                    _buildDetailCard(
-                      Icons.person_outline,
-                      AppStrings.username,
-                      _profileData?['username'] ?? 'N/A',
-                    ),
-                    _buildDetailCard(
-                      Icons.email_outlined,
-                      AppStrings.emailAddress,
-                      _profileData?['email'] ?? 'N/A',
-                    ),
-                    _buildDetailCard(
-                      Icons.phone_outlined,
-                      AppStrings.phoneNumber,
-                      _profileData?['phone_number'] ?? 'N/A',
-                    ),
-                    const SizedBox(height: 10),
-
-                    if (isFarmer) ..._buildFarmerDetails(),
-
-                    if (!isFarmer) ...[
-                      _buildSectionHeader(AppStrings.workerDetails),
-                      _buildDetailCard(
-                        Icons.work_outline,
-                        AppStrings.organization,
-                        _profileData?['extension_worker_profile']?['organization'] ??
-                            'N/A',
+              : FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: CustomScrollView(
+                    slivers: [
+                      // 🎨 STUNNING HEADER WITH GRADIENT
+                      SliverToBoxAdapter(
+                        child: _buildStunningHeader(
+                          fullName,
+                          userType,
+                          _profileData?['is_verified'] ?? false,
+                          isDarkMode,
+                          colorScheme,
+                        ),
                       ),
-                      _buildDetailCard(
-                        Icons.badge_outlined,
-                        AppStrings.employeeId,
-                        _profileData?['extension_worker_profile']?['employee_id'] ??
-                            'N/A',
+
+                      // 🌟 QUICK STATS (Optional - looks cool!)
+                      if (isFarmer)
+                        SliverToBoxAdapter(child: _buildQuickStats()),
+
+                      // 📋 ACCOUNT DETAILS CARD
+                      SliverToBoxAdapter(
+                        child: _buildModernSection(
+                          'Account Details',
+                          Icons.account_circle,
+                          [
+                            _buildModernInfoTile(
+                              Icons.person_outline,
+                              'Username',
+                              _profileData?['username'] ?? 'N/A',
+                              colorScheme,
+                            ),
+                            _buildModernInfoTile(
+                              Icons.email_outlined,
+                              'Email Address',
+                              _profileData?['email'] ?? 'N/A',
+                              colorScheme,
+                            ),
+                            _buildModernInfoTile(
+                              Icons.phone_outlined,
+                              'Phone Number',
+                              _profileData?['phone_number'] ?? 'N/A',
+                              colorScheme,
+                            ),
+                          ],
+                        ),
                       ),
-                      _buildDetailCard(
-                        Icons.school_outlined,
-                        AppStrings.specialization,
-                        _profileData?['extension_worker_profile']?['specialization'] ??
-                            'N/A',
+
+                      // 🌾 FARMER WELCOME CARD
+                      if (isFarmer)
+                        SliverToBoxAdapter(
+                          child: _buildPremiumFarmerCard(colorScheme),
+                        ),
+
+                      // 👨‍🏫 EXTENSION WORKER DETAILS
+                      if (!isFarmer)
+                        SliverToBoxAdapter(
+                          child: _buildModernSection(
+                            'Professional Details',
+                            Icons.work,
+                            [
+                              _buildModernInfoTile(
+                                Icons.business_outlined,
+                                'Organization',
+                                _profileData?['extension_worker_profile']?['organization'] ??
+                                    'N/A',
+                                colorScheme,
+                              ),
+                              _buildModernInfoTile(
+                                Icons.badge_outlined,
+                                'Employee ID',
+                                _profileData?['extension_worker_profile']?['employee_id'] ??
+                                    'N/A',
+                                colorScheme,
+                              ),
+                              _buildModernInfoTile(
+                                Icons.school_outlined,
+                                'Specialization',
+                                _profileData?['extension_worker_profile']?['specialization'] ??
+                                    'N/A',
+                                colorScheme,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      // 🚀 ACTION BUTTONS
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              // Edit Profile Button
+                              _buildModernButton(
+                                icon: Icons.edit_rounded,
+                                label: 'Edit Profile',
+                                gradient: LinearGradient(
+                                  colors: [
+                                    colorScheme.primary,
+                                    colorScheme.primary.withValues(alpha: 0.7),
+                                  ],
+                                ),
+                                onPressed: () {
+                                  if (_profileData != null) {
+                                    Navigator.of(context)
+                                        .push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EditProfilePage(
+                                                  initialData: _profileData!,
+                                                ),
+                                          ),
+                                        )
+                                        .then((_) => _fetchProfileData());
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Logout Button
+                              _buildModernButton(
+                                icon: Icons.logout_rounded,
+                                label: 'Logout',
+                                gradient: LinearGradient(
+                                  colors: [
+                                    colorScheme.error,
+                                    colorScheme.error.withValues(alpha: 0.7),
+                                  ],
+                                ),
+                                onPressed: _handleLogout,
+                                isOutlined: true,
+                              ),
+
+                              const SizedBox(height: 40),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
-
-                    const SizedBox(height: 30),
-
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          if (_profileData != null) {
-                            Navigator.of(context)
-                                .push(
-                                  MaterialPageRoute(
-                                    builder: (context) => EditProfilePage(
-                                      initialData: _profileData!,
-                                    ),
-                                  ),
-                                )
-                                .then((_) {
-                                  _fetchProfileData();
-                                });
-                          }
-                        },
-                        icon: const Icon(Icons.edit, color: Colors.white),
-                        label: Text(
-                          AppStrings.editProfile,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 30,
-                            vertical: 15,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 3,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    Center(
-                      child: TextButton.icon(
-                        onPressed: _handleLogout,
-                        icon: Icon(Icons.logout, color: colorScheme.error),
-                        label: Text(
-                          AppStrings.logout,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: colorScheme.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
         );
       },
     );
   }
 
-  Widget _buildErrorState() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              color: colorScheme.error.withValues(alpha: 0.7),
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppStrings.failedToLoadProfile,
-              style: theme.textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _error ?? AppStrings.unknownErrorOccurred,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _fetchProfileData,
-              icon: const Icon(Icons.refresh),
-              label: Text(AppStrings.retry),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader(
+  // 🎨 STUNNING GRADIENT HEADER
+  Widget _buildStunningHeader(
     String fullName,
     String userType,
     bool isVerified,
+    bool isDarkMode,
+    ColorScheme colorScheme,
   ) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final profilePictureUrl = _getProfilePictureUrl();
 
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDarkMode
+              ? [
+                  colorScheme.primary.withValues(alpha: 0.3),
+                  colorScheme.secondary.withValues(alpha: 0.2),
+                ]
+              : [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.7),
                 ],
-              ),
-              child: CircleAvatar(
-                radius: 65,
-                backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
-                backgroundImage: profilePictureUrl != null
-                    ? NetworkImage(profilePictureUrl)
-                    : null,
-                onBackgroundImageError: profilePictureUrl != null
-                    ? (exception, stackTrace) {
-                        debugPrint('Error loading profile image: $exception');
-                      }
-                    : null,
-                child: profilePictureUrl == null
-                    ? Text(
-                        _getInitials(),
-                        style: TextStyle(
-                          fontSize: 48,
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-            if (isVerified)
-              Positioned(
-                bottom: 5,
-                right: 5,
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 60, 20, 40),
+          child: Column(
+            children: [
+              // Profile Picture with Glow Effect
+              Hero(
+                tag: 'profile_picture',
                 child: Container(
-                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade600,
                     shape: BoxShape.circle,
-                    border: Border.all(color: colorScheme.surface, width: 3),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blue.shade200,
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: Colors.white.withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        spreadRadius: 5,
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.verified,
-                    size: 20,
-                    color: Colors.white,
+                  child: Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.5),
+                              Colors.white.withValues(alpha: 0.1),
+                            ],
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 70,
+                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          backgroundImage: profilePictureUrl != null
+                              ? NetworkImage(profilePictureUrl)
+                              : null,
+                          onBackgroundImageError: profilePictureUrl != null
+                              ? (exception, stackTrace) {
+                                  debugPrint('Error loading image: $exception');
+                                }
+                              : null,
+                          child: profilePictureUrl == null
+                              ? Text(
+                                  _getInitials(),
+                                  style: const TextStyle(
+                                    fontSize: 52,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
+                        ),
+                      ),
+                      if (isVerified)
+                        Positioned(
+                          bottom: 5,
+                          right: 5,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade600,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue.withValues(alpha: 0.5),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.verified,
+                              size: 24,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          fullName.isNotEmpty ? fullName : 'User',
-          style: theme.textTheme.displaySmall?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: colorScheme.primary.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                userType == 'farmer' ? Icons.agriculture : Icons.work,
-                size: 16,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(width: 6),
+              const SizedBox(height: 20),
+
+              // Name
               Text(
-                userType == 'farmer'
-                    ? AppStrings.farmer
-                    : AppStrings.extensionWorker,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.primary,
-                  fontWeight: FontWeight.w600,
+                fullName.isNotEmpty ? fullName : 'User',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black26,
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              // User Type Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      userType == 'farmer' ? Icons.agriculture : Icons.work,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      userType == 'farmer' ? 'Farmer' : 'Extension Worker',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
-  List<Widget> _buildFarmerDetails() {
-    final farmerProfile = _getFarmerProfile();
-    if (farmerProfile == null) {
-      return [
-        _buildSectionHeader(AppStrings.farmingProfile),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              AppStrings.noFarmingProfileAvailable,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ),
-      ];
-    }
-
-    final String location = farmerProfile['location'] ?? 'N/A';
-    final String region = farmerProfile['region'] ?? 'N/A';
-    final String farmName = farmerProfile['farm_name'] ?? 'N/A';
-    final String farmSize = farmerProfile['farm_size'] != null
-        ? '${farmerProfile['farm_size']} ${AppStrings.acres}'
-        : 'N/A';
-    final String cropsGrown = farmerProfile['crops_grown'] ?? 'N/A';
-    final String farmingMethod = farmerProfile['farming_method'] ?? 'N/A';
-    final String yearsOfExperience =
-        farmerProfile['years_of_experience'] != null
-        ? '${farmerProfile['years_of_experience']} ${AppStrings.years}'
-        : 'N/A';
-
-    return [
-      _buildSectionHeader(AppStrings.farmingProfile),
-      if (farmName != 'N/A')
-        _buildDetailCard(Icons.agriculture, AppStrings.farmName, farmName),
-      if (farmSize != 'N/A')
-        _buildDetailCard(Icons.landscape, AppStrings.farmSize, farmSize),
-      if (location != 'N/A')
-        _buildDetailCard(Icons.location_on, AppStrings.location, location),
-      if (region != 'N/A')
-        _buildDetailCard(Icons.map, AppStrings.region, region),
-      if (cropsGrown != 'N/A')
-        _buildDetailCard(Icons.grass, AppStrings.cropsGrownLabel, cropsGrown),
-      if (farmingMethod != 'N/A')
-        _buildDetailCard(Icons.eco, AppStrings.farmingMethod, farmingMethod),
-      if (yearsOfExperience != 'N/A')
-        _buildDetailCard(
-          Icons.trending_up,
-          AppStrings.yearsOfExperience,
-          yearsOfExperience,
-        ),
-      const SizedBox(height: 10),
-    ];
-  }
-
-  Widget _buildSectionHeader(String title) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+  // 🌟 QUICK STATS SECTION
+  Widget _buildQuickStats() {
     return Padding(
-      padding: const EdgeInsets.only(top: 15.0, bottom: 12.0),
+      padding: const EdgeInsets.all(20),
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 24,
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              borderRadius: BorderRadius.circular(2),
+          Expanded(
+            child: _buildStatCard(
+              icon: Icons.article,
+              label: 'Posts',
+              value: '12',
+              color: Colors.blue,
             ),
           ),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w700,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              icon: Icons.favorite,
+              label: 'Likes',
+              value: '48',
+              color: Colors.pink,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStatCard(
+              icon: Icons.comment,
+              label: 'Comments',
+              value: '23',
+              color: Colors.orange,
             ),
           ),
         ],
@@ -549,38 +626,105 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildDetailCard(IconData icon, String title, String value) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDarkMode = theme.brightness == Brightness.dark;
-
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode
-                ? Colors.black.withValues(alpha: 0.3)
-                : colorScheme.outline.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  // 📋 MODERN SECTION
+  Widget _buildModernSection(
+    String title,
+    IconData icon,
+    List<Widget> children,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 24),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(children: children),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 📝 MODERN INFO TILE
+  Widget _buildModernInfoTile(
+    IconData icon,
+    String label,
+    String value,
+    ColorScheme colorScheme,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: colorScheme.primary, size: 24),
           ),
@@ -590,15 +734,18 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -606,6 +753,219 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // 🌾 PREMIUM FARMER CARD
+  Widget _buildPremiumFarmerCard(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.green.shade400, Colors.green.shade600],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -20,
+              top: -20,
+              child: Icon(
+                Icons.agriculture,
+                size: 150,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.emoji_nature, color: Colors.white, size: 40),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Welcome, Farmer! 🌾',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Connect with the community, share your experiences, and learn from fellow farmers!',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      _buildFarmerFeature(Icons.forum, 'Community'),
+                      const SizedBox(width: 20),
+                      _buildFarmerFeature(Icons.tips_and_updates, 'AI Tips'),
+                      const SizedBox(width: 20),
+                      _buildFarmerFeature(Icons.school, 'Learn'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFarmerFeature(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white, size: 20),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 🎯 MODERN BUTTON
+  Widget _buildModernButton({
+    required IconData icon,
+    required String label,
+    required Gradient gradient,
+    required VoidCallback onPressed,
+    bool isOutlined = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isOutlined ? null : gradient,
+        borderRadius: BorderRadius.circular(16),
+        border: isOutlined
+            ? Border.all(color: Theme.of(context).colorScheme.error, width: 2)
+            : null,
+        boxShadow: isOutlined
+            ? null
+            : [
+                BoxShadow(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: isOutlined
+                      ? Theme.of(context).colorScheme.error
+                      : Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isOutlined
+                        ? Theme.of(context).colorScheme.error
+                        : Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ⚠️ ERROR STATE
+  Widget _buildErrorState() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colorScheme.error.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                color: colorScheme.error,
+                size: 64,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Oops! Something went wrong',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _error ?? 'Unable to load profile',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _fetchProfileData,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

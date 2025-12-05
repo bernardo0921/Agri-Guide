@@ -52,11 +52,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 }
               } catch (e) {
                 // 🔒 HANDLE APPROVAL ERROR
-                final errorMessage = e.toString().replaceFirst("Exception: ", "");
-                
+                final errorMessage = e.toString().replaceFirst(
+                  "Exception: ",
+                  "",
+                );
+
                 if (mounted) {
                   Navigator.of(context).pop(); // Pop verification screen
-                  
+
                   if (errorMessage.contains('pending approval')) {
                     // Show special dialog for pending approval
                     _showApprovalPendingDialog();
@@ -81,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (e) {
       final errorMessage = e.toString().replaceFirst("Exception: ", "");
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -131,9 +134,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info_outline, 
-                             color: Colors.orange[700], 
-                             size: 20),
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.orange[700],
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
@@ -191,13 +196,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Welcome back to AgriGuide',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Email Field
                   TextFormField(
                     controller: _emailController,
@@ -209,13 +211,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       fillColor: Colors.grey[50],
                     ),
                     keyboardType: TextInputType.emailAddress,
-                    validator: (v) =>
-                        (v!.isEmpty || !v.contains('@'))
-                            ? 'Valid email required'
-                            : null,
+                    validator: (v) => (v!.isEmpty || !v.contains('@'))
+                        ? 'Valid email required'
+                        : null,
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Password Field
                   TextFormField(
                     controller: _passwordController,
@@ -227,9 +228,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       filled: true,
                       fillColor: Colors.grey[50],
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off),
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
                         onPressed: () => setState(
                           () => _obscurePassword = !_obscurePassword,
                         ),
@@ -238,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: (v) => v!.isEmpty ? 'Password required' : null,
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Login Button
                   _isLoading
                       ? const CircularProgressIndicator()
@@ -256,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                   const SizedBox(height: 24),
-                  
+
                   // Create Account Button
                   TextButton(
                     onPressed: () => Navigator.of(context).push(
@@ -269,9 +272,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(fontSize: 15),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Info Box for Extension Workers
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -282,9 +285,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info_outline, 
-                             color: Colors.blue[700], 
-                             size: 20),
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.blue[700],
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(

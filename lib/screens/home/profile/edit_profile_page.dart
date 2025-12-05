@@ -1,4 +1,5 @@
 // lib/screens/home/Navigation_pages/pages/edit_profile_page.dart
+// UPDATED - Removed all farm-specific fields
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -21,20 +22,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   late bool isFarmer;
 
-  // Base User Fields
+  // ✅ SIMPLIFIED - Only Basic User Fields
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
   late TextEditingController emailController;
   late TextEditingController phoneNumberController;
-
-  // Farmer Profile Fields
-  late TextEditingController farmNameController;
-  late TextEditingController farmSizeController;
-  late TextEditingController locationController;
-  late TextEditingController regionController;
-  late TextEditingController cropsGrownController;
-  late TextEditingController farmingMethodController;
-  late TextEditingController yearsOfExperienceController;
 
   bool _isSaving = false;
   File? _selectedImage;
@@ -45,6 +37,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     isFarmer = widget.initialData['user_type'] == 'farmer';
 
+    // Initialize basic fields
     firstNameController = TextEditingController(
       text: widget.initialData['first_name'] ?? '',
     );
@@ -58,31 +51,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       text: widget.initialData['phone_number'] ?? '',
     );
 
-    if (isFarmer) {
-      final farmerProfile = widget.initialData['farmer_profile'] ?? {};
-      farmNameController = TextEditingController(
-        text: farmerProfile['farm_name'] ?? '',
-      );
-      farmSizeController = TextEditingController(
-        text: (farmerProfile['farm_size']?.toString() ?? ''),
-      );
-      locationController = TextEditingController(
-        text: farmerProfile['location'] ?? '',
-      );
-      regionController = TextEditingController(
-        text: farmerProfile['region'] ?? '',
-      );
-      cropsGrownController = TextEditingController(
-        text: farmerProfile['crops_grown'] ?? '',
-      );
-      farmingMethodController = TextEditingController(
-        text: farmerProfile['farming_method'] ?? '',
-      );
-      yearsOfExperienceController = TextEditingController(
-        text: (farmerProfile['years_of_experience']?.toString() ?? ''),
-      );
-    }
-
     AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
   }
 
@@ -92,15 +60,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     lastNameController.dispose();
     emailController.dispose();
     phoneNumberController.dispose();
-    if (isFarmer) {
-      farmNameController.dispose();
-      farmSizeController.dispose();
-      locationController.dispose();
-      regionController.dispose();
-      cropsGrownController.dispose();
-      farmingMethodController.dispose();
-      yearsOfExperienceController.dispose();
-    }
     AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
     super.dispose();
   }
@@ -128,7 +87,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppStrings.failedToPickImage}: ${e.toString()}')),
+          SnackBar(
+            content: Text('${AppStrings.failedToPickImage}: ${e.toString()}'),
+          ),
         );
       }
     }
@@ -193,28 +154,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
 
+      // ✅ SIMPLIFIED - Only basic user fields
       final Map<String, dynamic> updateData = {
         'first_name': firstNameController.text,
         'last_name': lastNameController.text,
         'email': emailController.text,
         'phone_number': phoneNumberController.text,
       };
-
-      if (isFarmer) {
-        updateData['farmer_profile'] = {
-          'farm_name': farmNameController.text,
-          'farm_size': farmSizeController.text.isNotEmpty
-              ? double.tryParse(farmSizeController.text)
-              : null,
-          'location': locationController.text,
-          'region': regionController.text,
-          'crops_grown': cropsGrownController.text,
-          'farming_method': farmingMethodController.text,
-          'years_of_experience': yearsOfExperienceController.text.isNotEmpty
-              ? int.tryParse(yearsOfExperienceController.text)
-              : null,
-        };
-      }
 
       await authService.updateProfile(
         updateData,
@@ -223,14 +169,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.profileUpdatedSuccessfully)),
+          SnackBar(
+            content: Text(AppStrings.profileUpdatedSuccessfully),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppStrings.failedToUpdateProfile}: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              '${AppStrings.failedToUpdateProfile}: ${e.toString()}',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -282,20 +236,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     children: [
                       CircleAvatar(
                         radius: 60,
-                        backgroundColor: colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundColor:
+                            colorScheme.primary.withValues(alpha: 0.1),
                         backgroundImage: _selectedImage != null
                             ? FileImage(_selectedImage!) as ImageProvider
                             : (widget.initialData['profile_picture'] != null &&
-                                      widget.initialData['profile_picture']
-                                          .toString()
-                                          .isNotEmpty
-                                  ? NetworkImage(
-                                      widget.initialData['profile_picture'],
-                                    )
-                                  : null),
-                        child:
-                            (_selectedImage == null &&
-                                (widget.initialData['profile_picture'] == null ||
+                                    widget.initialData['profile_picture']
+                                        .toString()
+                                        .isNotEmpty
+                                ? NetworkImage(
+                                    widget.initialData['profile_picture'],
+                                  )
+                                : null),
+                        child: (_selectedImage == null &&
+                                (widget.initialData['profile_picture'] ==
+                                        null ||
                                     widget.initialData['profile_picture']
                                         .toString()
                                         .isEmpty))
@@ -319,7 +274,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             decoration: BoxDecoration(
                               color: colorScheme.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: colorScheme.surface, width: 2),
+                              border: Border.all(
+                                color: colorScheme.surface,
+                                width: 2,
+                              ),
                             ),
                             child: const Icon(
                               Icons.camera_alt,
@@ -338,6 +296,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const SizedBox(height: 30),
 
+                  // Section Header
                   Text(
                     AppStrings.personalInformationTitle,
                     style: theme.textTheme.titleLarge?.copyWith(
@@ -345,7 +304,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ),
                   Divider(color: colorScheme.primary),
-                  _buildTextField(firstNameController, AppStrings.firstName, Icons.person),
+                  const SizedBox(height: 10),
+
+                  // Basic Fields Only
+                  _buildTextField(
+                    firstNameController,
+                    AppStrings.firstName,
+                    Icons.person,
+                  ),
                   _buildTextField(
                     lastNameController,
                     AppStrings.lastName,
@@ -367,10 +333,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                   const SizedBox(height: 30),
 
-                  if (isFarmer) ..._buildFarmerFields(),
+                  // Info Box for Farmers
+                  if (isFarmer)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.blue[700]),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Farm-specific details have been simplified. You can now focus on connecting with the community!',
+                              style: TextStyle(
+                                color: Colors.blue[900],
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
 
+                  // Save Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -447,8 +438,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             borderSide: BorderSide(color: colorScheme.primary, width: 2),
           ),
           filled: isReadOnly,
-          fillColor: isReadOnly 
-              ? (isDarkMode 
+          fillColor: isReadOnly
+              ? (isDarkMode
                   ? colorScheme.surface.withValues(alpha: 0.5)
                   : colorScheme.outline.withValues(alpha: 0.1))
               : null,
@@ -461,42 +452,5 @@ class _EditProfilePageState extends State<EditProfilePage> {
         },
       ),
     );
-  }
-
-  List<Widget> _buildFarmerFields() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return [
-      const SizedBox(height: 10),
-      Text(
-        AppStrings.farmingProfile,
-        style: theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      Divider(color: colorScheme.primary),
-      _buildTextField(farmNameController, AppStrings.farmName, Icons.agriculture),
-      _buildTextField(
-        farmSizeController,
-        AppStrings.farmSizeAcres,
-        Icons.fence,
-        keyboardType: TextInputType.number,
-      ),
-      _buildTextField(
-        locationController,
-        AppStrings.specificLocation,
-        Icons.location_on,
-      ),
-      _buildTextField(regionController, AppStrings.region, Icons.map),
-      _buildTextField(cropsGrownController, AppStrings.cropsGrownLabel, Icons.grain),
-      _buildTextField(farmingMethodController, AppStrings.farmingMethod, Icons.eco),
-      _buildTextField(
-        yearsOfExperienceController,
-        AppStrings.yearsOfExperience,
-        Icons.trending_up,
-        keyboardType: TextInputType.number,
-      ),
-    ];
   }
 }
