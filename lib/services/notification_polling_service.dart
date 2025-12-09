@@ -29,9 +29,9 @@ class NotificationPollingService {
       await _checkForNewNotifications();
     });
 
-    print(
-      '✅ Notification polling started (checking every ${interval.inMinutes} minute(s))',
-    );
+    // print(
+    //   '✅ Notification polling started (checking every ${interval.inMinutes} minute(s))',
+    // );
   }
 
   /// Stop polling
@@ -39,7 +39,7 @@ class NotificationPollingService {
     _pollingTimer?.cancel();
     _pollingTimer = null;
     _isPolling = false;
-    print('🛑 Notification polling stopped');
+    // print('🛑 Notification polling stopped');
   }
 
   /// Check for new notifications
@@ -59,7 +59,7 @@ class NotificationPollingService {
         }
       }
     } catch (e) {
-      print('Error checking notifications: $e');
+      // print('Error checking notifications: $e');
     }
   }
 
@@ -105,7 +105,7 @@ class NotificationPollingService {
         _shownNotificationIds = ids.map((id) => int.parse(id)).toSet();
       }
     } catch (e) {
-      print('Error loading shown notifications: $e');
+      // print('Error loading shown notifications: $e');
     }
   }
 
@@ -118,7 +118,7 @@ class NotificationPollingService {
           .toList();
       await prefs.setStringList('shown_notification_ids', ids);
     } catch (e) {
-      print('Error saving shown notifications: $e');
+      // print('Error saving shown notifications: $e');
     }
   }
 
