@@ -72,7 +72,7 @@ class NotificationPollingService {
         await LocalNotificationService.showLikeNotification(
           notificationId: notification.id,
           userName: notification.senderName,
-          postPreview: notification.postContentPreview ?? 'your post',
+          postPreview: notification.postContentPreview,
           postId: notification.postId,
         );
         break;
