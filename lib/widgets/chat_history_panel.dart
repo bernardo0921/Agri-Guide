@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:agri_guide/services/ai_service.dart';
+import 'package:agri_guide/services/ai_services/ai_service.dart';
 import 'package:agri_guide/core/language/app_strings.dart';
 
 class ChatHistoryPanel extends StatefulWidget {

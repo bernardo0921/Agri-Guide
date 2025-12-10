@@ -2,8 +2,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/post.dart';
-import '../models/comment.dart';
+import '../../models/post.dart';
+import '../../models/comment.dart';
 
 class CommunityApiService {
   static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';

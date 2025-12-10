@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/post.dart';
-import '../services/community_api_service.dart';
+import '../services/community_services/community_api_service.dart';
 import '../widgets/comments_bottom_sheet.dart';
 import '../screens/image_viewer_screen.dart';
 import '../config/theme.dart';

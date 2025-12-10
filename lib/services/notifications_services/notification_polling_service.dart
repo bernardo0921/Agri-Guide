@@ -1,9 +1,9 @@
 // services/notification_polling_service.dart
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/notification_service.dart';
-import '../services/local_notification_service.dart';
-import '../models/notification.dart';
+import 'notification_service.dart';
+import 'local_notification_service.dart';
+import '../../models/notification.dart';
 
 class NotificationPollingService {
   static Timer? _pollingTimer;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../models/post.dart';
-import '../services/community_api_service.dart';
+import '../services/community_services/community_api_service.dart';
 import '../config/theme.dart';
 
 class CreatePostModal extends StatefulWidget {

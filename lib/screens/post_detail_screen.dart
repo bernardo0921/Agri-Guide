@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/post.dart';
-import '../services/community_api_service.dart';
+import '../services/community_services/community_api_service.dart';
 import '../widgets/post_card.dart';
 import '../core/notifiers/app_notifiers.dart';
 import '../core/language/app_strings.dart';

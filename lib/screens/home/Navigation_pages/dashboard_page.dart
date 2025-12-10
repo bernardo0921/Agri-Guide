@@ -2,10 +2,10 @@
 import 'package:agri_guide/core/language/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:agri_guide/services/weather_service.dart';
-import 'package:agri_guide/services/community_api_service.dart';
+import 'package:agri_guide/services/community_services/community_api_service.dart';
 import 'package:agri_guide/services/lms_api_service.dart';
 import 'package:agri_guide/services/auth_service.dart';
-import 'package:agri_guide/services/farming_tip_service.dart';
+import 'package:agri_guide/services/ai_services/farming_tip_service.dart';
 import 'package:agri_guide/models/post.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/post_card.dart';

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
-import '../services/community_api_service.dart';
+import '../services/community_services/community_api_service.dart';
 import './comment_card.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
