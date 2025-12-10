@@ -11,10 +11,7 @@ import '../config/theme.dart';
 class ImageViewerScreen extends StatefulWidget {
   final Post post;
 
-  const ImageViewerScreen({
-    super.key,
-    required this.post,
-  });
+  const ImageViewerScreen({super.key, required this.post});
 
   @override
   State<ImageViewerScreen> createState() => _ImageViewerScreenState();
@@ -26,7 +23,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
       TransformationController();
   late AnimationController _animationController;
   Animation<Matrix4>? _animation;
-  
+
   late bool _isLiked;
   late int _likesCount;
   late int _commentsCount;
@@ -37,13 +34,14 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    )..addListener(() {
-        _transformationController.value = _animation!.value;
-      });
+
+    _animationController =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 300),
+        )..addListener(() {
+          _transformationController.value = _animation!.value;
+        });
 
     _isLiked = widget.post.isLiked;
     _likesCount = widget.post.likesCount;
@@ -77,38 +75,38 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
       final double newScale = 2.5;
       final double dx = -position.dx * (newScale - 1);
       final double dy = -position.dy * (newScale - 1);
-      
+
       final Matrix4 matrix = Matrix4.identity()
-        ..translate(dx, dy)
-        ..scale(newScale);
-      
+        ..setEntry(0, 3, dx)
+        ..setEntry(1, 3, dy)
+        ..setEntry(0, 0, newScale)
+        ..setEntry(1, 1, newScale);
+
       _animateZoom(matrix);
     }
   }
 
   void _animateZoom(Matrix4 end) {
-    _animation = Matrix4Tween(
-      begin: _transformationController.value,
-      end: end,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _animation = Matrix4Tween(begin: _transformationController.value, end: end)
+        .animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        );
     _animationController.forward(from: 0);
   }
 
   Future<void> _handleLike() async {
     if (_isLikeLoading) return;
-    
+
     setState(() {
       _isLikeLoading = true;
     });
 
     final previousLiked = _isLiked;
     final previousCount = _likesCount;
-    
+
     setState(() {
       _isLiked = !_isLiked;
       _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
@@ -121,7 +119,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
         _isLiked = previousLiked;
         _likesCount = previousCount;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -147,7 +145,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsBottomSheet(post: widget.post),
     );
-    
+
     if (result != null && mounted) {
       setState(() {
         _commentsCount = result;
@@ -166,11 +164,13 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
 
   Future<void> _handleDelete() async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        backgroundColor: isDark
+            ? AppColors.surfaceDark
+            : AppColors.surfaceLight,
         title: Text(
           AppStrings.deletePost,
           style: TextStyle(
@@ -231,14 +231,15 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
   Widget build(BuildContext context) {
     final imageUrl = CommunityApiService.getImageUrl(widget.post.image);
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         Navigator.of(context).pop({
           'likesCount': _likesCount,
           'commentsCount': _commentsCount,
           'isLiked': _isLiked,
         });
-        return false;
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -265,9 +266,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                             if (loadingProgress == null) return child;
                             return Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                                 color: AppColors.primaryGreen,
                               ),
@@ -327,9 +329,14 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                 'commentsCount': _commentsCount,
                                 'isLiked': _isLiked,
                               }),
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.black.withValues(alpha: 0.3),
+                                backgroundColor: Colors.black.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                             const Spacer(),
@@ -358,7 +365,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: Colors.blue[900],
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: const Icon(
                                           Icons.share,
@@ -369,7 +378,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                       const SizedBox(width: 12),
                                       Text(
                                         AppStrings.share,
-                                        style: const TextStyle(color: Colors.white),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -381,8 +392,12 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: AppColors.accentRed.withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: AppColors.accentRed.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Icon(
                                           Icons.delete_outline,
@@ -393,7 +408,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                       const SizedBox(width: 12),
                                       Text(
                                         AppStrings.deletePost,
-                                        style: TextStyle(color: AppColors.accentRed),
+                                        style: TextStyle(
+                                          color: AppColors.accentRed,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -446,7 +463,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                     children: [
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.3),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(
@@ -455,7 +474,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                             _isLiked
                                                 ? Icons.favorite
                                                 : Icons.favorite_border,
-                                            color: _isLiked ? AppColors.accentRed : Colors.white,
+                                            color: _isLiked
+                                                ? AppColors.accentRed
+                                                : Colors.white,
                                             size: 28,
                                           ),
                                         ),
@@ -477,7 +498,9 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                     children: [
                                       Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.3),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.3,
+                                          ),
                                           shape: BoxShape.circle,
                                         ),
                                         child: IconButton(
@@ -509,14 +532,16 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                   CircleAvatar(
                                     radius: 20,
                                     backgroundColor: AppColors.primaryGreen,
-                                    backgroundImage: widget.post.authorProfilePicture != null
+                                    backgroundImage:
+                                        widget.post.authorProfilePicture != null
                                         ? NetworkImage(
                                             CommunityApiService.getImageUrl(
                                               widget.post.authorProfilePicture,
                                             ),
                                           )
                                         : null,
-                                    child: widget.post.authorProfilePicture == null
+                                    child:
+                                        widget.post.authorProfilePicture == null
                                         ? const Icon(
                                             Icons.person,
                                             color: Colors.white,
@@ -527,7 +552,8 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           widget.post.authorName,
@@ -547,8 +573,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                                               ),
                                             ),
                                             Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                  ),
                                               child: Container(
                                                 width: 3,
                                                 height: 3,

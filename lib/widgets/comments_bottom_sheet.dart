@@ -144,11 +144,12 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         // Return the updated comment count when closing
         Navigator.of(context).pop(_comments.length);
-        return false;
       },
       child: Padding(
         padding: EdgeInsets.only(

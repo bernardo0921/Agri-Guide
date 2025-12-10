@@ -38,6 +38,7 @@ class _ExtensionWorkerRegisterScreenState
   };
 
   Future<void> _pickVerificationDocument() async {
+    final messanger = ScaffoldMessenger.of(context);
     try {
       final XFile? file = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -46,7 +47,7 @@ class _ExtensionWorkerRegisterScreenState
         setState(() => _verificationDocument = File(file.path));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messanger.showSnackBar(
         SnackBar(
           content: Text('Error picking file: $e'),
           backgroundColor: Colors.red,

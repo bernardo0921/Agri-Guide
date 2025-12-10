@@ -73,6 +73,8 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
   }
 
   Future<void> _deleteTutorial(Tutorial tutorial) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -95,7 +97,6 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
     if (confirmed != true) return;
 
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
       final token = authService.token;
 
       if (token == null) {
@@ -105,12 +106,12 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
       final apiService = LMSApiService(token);
       await apiService.deleteTutorial(tutorial.id);
 
-      setState(() {
-        _myTutorials.removeWhere((t) => t.id == tutorial.id);
-        _hasChanges = true;
-      });
-
       if (mounted) {
+        setState(() {
+          _myTutorials.removeWhere((t) => t.id == tutorial.id);
+          _hasChanges = true;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Tutorial deleted successfully'),

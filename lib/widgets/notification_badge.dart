@@ -46,7 +46,7 @@ class _NotificationBadgeState extends State<NotificationBadge> {
   }
 
   void _navigateToNotifications() async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const NotificationsPage(),

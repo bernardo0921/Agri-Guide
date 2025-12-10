@@ -2,12 +2,17 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
+import 'package:flutter/material.dart';
 
 class LocalNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   static bool _isInitialized = false;
+
+  /// Global navigation key for handling notification navigation
+  /// Set this in main.dart after creating the MaterialApp
+  static GlobalKey<NavigatorState>? navigatorKey;
 
   /// Initialize the notification service
   static Future<void> initialize() async {
@@ -20,16 +25,16 @@ class LocalNotificationService {
     // iOS initialization settings
     const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        );
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _notificationsPlugin.initialize(
       initializationSettings,
@@ -51,12 +56,9 @@ class LocalNotificationService {
     } else if (Platform.isIOS) {
       final bool? granted = await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
       return granted ?? false;
     }
     return false;
@@ -65,10 +67,25 @@ class LocalNotificationService {
   /// Handle notification tap
   static void _onNotificationTapped(NotificationResponse response) {
     final String? payload = response.payload;
-    if (payload != null) {
-      // TODO: Navigate to the specific post or notification page
-      print('Notification tapped with payload: $payload');
-      // You can use a navigation service or global key to navigate
+    if (payload != null && navigatorKey != null) {
+      debugPrint('Notification tapped with payload: $payload');
+
+      // Parse payload format: "post:postId" or "notification:notificationId"
+      final parts = payload.split(':');
+
+      if (parts.length == 2) {
+        final type = parts[0]; // "post" or "notification"
+        final id = parts[1]; // the ID
+
+        // Navigate based on notification type
+        if (type == 'post') {
+          // Navigate to post detail screen with the post ID
+          navigatorKey!.currentState?.pushNamed('/post_detail', arguments: id);
+        } else if (type == 'notification') {
+          // Navigate to notifications page
+          navigatorKey!.currentState?.pushNamed('/notifications');
+        }
+      }
     }
   }
 
@@ -126,15 +143,15 @@ class LocalNotificationService {
   }) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'agriguide_channel', // channel ID
-      'AgriGuide Notifications', // channel name
-      channelDescription: 'Notifications for likes, comments, and posts',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
-      playSound: true,
-    );
+          'agriguide_channel', // channel ID
+          'AgriGuide Notifications', // channel name
+          channelDescription: 'Notifications for likes, comments, and posts',
+          importance: Importance.high,
+          priority: Priority.high,
+          showWhen: true,
+          enableVibration: true,
+          playSound: true,
+        );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -168,7 +185,7 @@ class LocalNotificationService {
 
   /// Get pending notifications
   static Future<List<PendingNotificationRequest>>
-      getPendingNotifications() async {
+  getPendingNotifications() async {
     return await _notificationsPlugin.pendingNotificationRequests();
   }
 }

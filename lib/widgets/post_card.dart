@@ -183,7 +183,9 @@ class _PostCardState extends State<PostCard>
                   const SizedBox(height: 12),
                   Divider(
                     height: 1,
-                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                    color: isDark
+                        ? AppColors.borderDark
+                        : AppColors.borderLight,
                   ),
                   _buildFooter(context, isDark),
                 ],
@@ -207,7 +209,9 @@ class _PostCardState extends State<PostCard>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            (isDark ? AppColors.surfaceDark : AppColors.paleGreen).withValues(alpha: 0.3),
+            (isDark ? AppColors.surfaceDark : AppColors.paleGreen).withValues(
+              alpha: 0.3,
+            ),
             Colors.transparent,
           ],
         ),
@@ -264,7 +268,9 @@ class _PostCardState extends State<PostCard>
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
-                          color: isDark ? AppColors.textWhite : AppColors.textDark,
+                          color: isDark
+                              ? AppColors.textWhite
+                              : AppColors.textDark,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -277,7 +283,10 @@ class _PostCardState extends State<PostCard>
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.lightGreen, AppColors.primaryGreen],
+                          colors: [
+                            AppColors.lightGreen,
+                            AppColors.primaryGreen,
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -340,7 +349,9 @@ class _PostCardState extends State<PostCard>
               icon: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+                  color: isDark
+                      ? AppColors.backgroundDark
+                      : AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -406,9 +417,7 @@ class _PostCardState extends State<PostCard>
       maxLines: 3,
       textDirection: TextDirection.ltr,
     );
-    textPainter.layout(
-      maxWidth: MediaQuery.of(context).size.width - 48,
-    );
+    textPainter.layout(maxWidth: MediaQuery.of(context).size.width - 48);
 
     final isContentTruncated = textPainter.didExceedMaxLines;
 
@@ -496,9 +505,7 @@ class _PostCardState extends State<PostCard>
                 if (loadingProgress == null) return child;
                 return Container(
                   height: 240,
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundLight,
-                  ),
+                  decoration: BoxDecoration(color: AppColors.backgroundLight),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -546,7 +553,9 @@ class _PostCardState extends State<PostCard>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.accentRed.withValues(alpha: 0.2),
+                                color: AppColors.accentRed.withValues(
+                                  alpha: 0.2,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -595,12 +604,12 @@ class _PostCardState extends State<PostCard>
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isDark 
+            color: isDark
                 ? AppColors.primaryGreen.withValues(alpha: 0.2)
                 : AppColors.paleGreen,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isDark 
+              color: isDark
                   ? AppColors.primaryGreen.withValues(alpha: 0.5)
                   : AppColors.lightGreen,
               width: 1,
@@ -616,11 +625,7 @@ class _PostCardState extends State<PostCard>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.local_offer,
-                size: 12,
-                color: AppColors.primaryGreen,
-              ),
+              Icon(Icons.local_offer, size: 12, color: AppColors.primaryGreen),
               const SizedBox(width: 6),
               Text(
                 tag,
@@ -676,7 +681,9 @@ class _PostCardState extends State<PostCard>
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+                  color: isDark
+                      ? AppColors.backgroundDark
+                      : AppColors.backgroundLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -707,25 +714,28 @@ class _PostCardState extends State<PostCard>
   }
 
   Future<void> _onShare(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final postId = widget.post.id;
-      final deepLinkUrl = 'https://agriguide-backend-79j2.onrender.com/post/$postId';
+      final deepLinkUrl =
+          'https://agriguide-backend-79j2.onrender.com/post/$postId';
 
-      final shareText = '''
+      final shareText =
+          '''
 Check out this post from ${widget.post.authorName}:
 
 ${widget.post.content.length > 100 ? '${widget.post.content.substring(0, 100)}...' : widget.post.content}
 
 View on AgriGuide: $deepLinkUrl
 ''';
-
+      
       final result = await SharePlus.instance.share(
         ShareParams(text: shareText, subject: 'Post from AgriGuide Community'),
       );
 
       if (result.status == ShareResultStatus.success) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             SnackBar(
               content: const Text('Post shared successfully!'),
               backgroundColor: AppColors.successGreen,
@@ -736,7 +746,7 @@ View on AgriGuide: $deepLinkUrl
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Failed to share post: $e'),
             backgroundColor: AppColors.accentRed,
@@ -763,13 +773,15 @@ View on AgriGuide: $deepLinkUrl
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isActive 
-                ? color 
-                : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight),
+            color: isActive
+                ? color
+                : (isDark
+                      ? AppColors.backgroundDark
+                      : AppColors.backgroundLight),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isActive 
-                  ? Colors.transparent 
+              color: isActive
+                  ? Colors.transparent
                   : (isDark ? AppColors.borderDark : AppColors.borderLight),
               width: 1,
             ),
@@ -780,8 +792,8 @@ View on AgriGuide: $deepLinkUrl
               Icon(
                 icon,
                 size: 18,
-                color: isActive 
-                    ? AppColors.textWhite 
+                color: isActive
+                    ? AppColors.textWhite
                     : (isDark ? AppColors.textWhite : AppColors.textDark),
               ),
               const SizedBox(width: 6),
@@ -790,8 +802,8 @@ View on AgriGuide: $deepLinkUrl
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isActive 
-                      ? AppColors.textWhite 
+                  color: isActive
+                      ? AppColors.textWhite
                       : (isDark ? AppColors.textWhite : AppColors.textDark),
                 ),
               ),
