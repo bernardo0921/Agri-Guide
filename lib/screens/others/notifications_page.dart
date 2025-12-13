@@ -1,7 +1,10 @@
+// FILE 2: notifications_page.dart (Updated)
+// ============================================
 // screens/notifications_page.dart
+import 'package:agri_guide/screens/home/Navigation_pages/community/community_page.dart';
 import 'package:flutter/material.dart';
-import 'package:agri_guide/services/notifications_services/notification_service.dart';
-import 'package:agri_guide/models/notification.dart';
+import '../../models/notification.dart';
+import '../../services/notifications_services/notification_service.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -137,6 +140,26 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  /// Handle notification tap - Navigate to CommunityPage with postId
+  Future<void> _onNotificationTap(AppNotification notification) async {
+    // Mark as read first
+    await _markAsRead(notification);
+
+    if (!mounted) return;
+
+    // Import CommunityPage at the top:
+    // import '../path/to/community_page.dart';
+
+    // Navigate to CommunityPage with the postId
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CommunityPageWithPostHighlight(
+          highlightPostId: notification.postId,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -177,17 +200,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
           : _notifications.isEmpty
           ? _buildEmptyState()
           : RefreshIndicator(
-              onRefresh: _loadNotifications,
-              color: colorScheme.primary,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = _notifications[index];
-                  return _buildNotificationCard(notification);
-                },
-              ),
-            ),
+        onRefresh: _loadNotifications,
+        color: colorScheme.primary,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _notifications.length,
+          itemBuilder: (context, index) {
+            final notification = _notifications[index];
+            return _buildNotificationCard(notification);
+          },
+        ),
+      ),
     );
   }
 
@@ -211,7 +234,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
       onDismissed: (_) => _deleteNotification(notification),
       child: GestureDetector(
-        onTap: () => _markAsRead(notification),
+        onTap: () => _onNotificationTap(notification), // Updated to navigate
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
@@ -230,7 +253,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar - NO HERO WIDGET (removed to fix conflict)
+              // Avatar
               Container(
                 width: 48,
                 height: 48,
@@ -239,11 +262,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   color: colorScheme.primaryContainer,
                   image: notification.senderProfilePicture != null
                       ? DecorationImage(
-                          image: NetworkImage(
-                            notification.senderProfilePicture!,
-                          ),
-                          fit: BoxFit.cover,
-                        )
+                    image: NetworkImage(
+                      notification.senderProfilePicture!,
+                    ),
+                    fit: BoxFit.cover,
+                  )
                       : null,
                 ),
                 child: notification.senderProfilePicture == null
@@ -345,3 +368,4 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 }
+

@@ -1,12 +1,16 @@
+// FILE 1: local_notification_service.dart
+// ============================================
 // services/local_notification_service.dart
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 
+import '../../screens/others/notifications_page.dart';
+
 class LocalNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   static bool _isInitialized = false;
 
@@ -20,21 +24,21 @@ class LocalNotificationService {
 
     // Android initialization settings
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS initialization settings
     const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        );
+    DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
 
     const InitializationSettings initializationSettings =
-        InitializationSettings(
-          android: initializationSettingsAndroid,
-          iOS: initializationSettingsIOS,
-        );
+    InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
 
     await _notificationsPlugin.initialize(
       initializationSettings,
@@ -56,52 +60,31 @@ class LocalNotificationService {
     } else if (Platform.isIOS) {
       final bool? granted = await _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >()
+          IOSFlutterLocalNotificationsPlugin
+      >()
           ?.requestPermissions(alert: true, badge: true, sound: true);
       return granted ?? false;
     }
     return false;
   }
 
-  /// Handle notification tap
+  /// Handle notification tap - Navigate to NotificationsPage
   static void _onNotificationTapped(NotificationResponse response) {
-    final String? payload = response.payload;
-    if (payload != null && navigatorKey != null) {
-      debugPrint('Notification tapped with payload: $payload');
+    if (navigatorKey?.currentContext == null) return;
 
-      // Parse payload format: "post:postId" or "notification:notificationId"
-      final parts = payload.split(':');
+    final context = navigatorKey!.currentContext!;
 
-      if (parts.length == 2) {
-        final type = parts[0]; // "post" or "notification"
-        final id = parts[1]; // the ID
+    debugPrint('Notification tapped with payload: ${response.payload}');
 
-        // Navigate based on notification type
-        if (type == 'post') {
-          // Navigate to post detail screen with the post ID
-          try {
-            navigatorKey!.currentState?.pushNamed(
-              '/post_detail',
-              arguments: id,
-            );
-          } catch (e) {
-            debugPrint(
-              'Failed to navigate to post_detail from notification: $e',
-            );
-          }
-        } else if (type == 'notification') {
-          // Navigate to notifications page
-          try {
-            navigatorKey!.currentState?.pushNamed('/notifications');
-          } catch (e) {
-            debugPrint(
-              'Failed to navigate to /notifications from notification: $e',
-            );
-          }
-        }
-      }
-    }
+    // Import the NotificationsPage at the top of this file:
+    // import '../screens/notifications_page.dart';
+
+    // Navigate to NotificationsPage
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const NotificationsPage(),
+      ),
+    );
   }
 
   /// Show a notification for a new like
@@ -157,16 +140,16 @@ class LocalNotificationService {
     String? payload,
   }) async {
     const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'agriguide_channel', // channel ID
-          'AgriGuide Notifications', // channel name
-          channelDescription: 'Notifications for likes, comments, and posts',
-          importance: Importance.high,
-          priority: Priority.high,
-          showWhen: true,
-          enableVibration: true,
-          playSound: true,
-        );
+    AndroidNotificationDetails(
+      'agriguide_channel', // channel ID
+      'AgriGuide Notifications', // channel name
+      channelDescription: 'Notifications for likes, comments, and posts',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+      enableVibration: true,
+      playSound: true,
+    );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,

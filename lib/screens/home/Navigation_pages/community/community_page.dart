@@ -1,18 +1,29 @@
+// This is a wrapper that accepts a postId to highlight
 import 'package:flutter/material.dart';
 import '../../../../../models/post.dart';
 import '../../../../services/community_services/community_api_service.dart';
 import '../../../../../widgets/post_card.dart';
 import '../../../../../widgets/create_post_modal.dart';
 
-class CommunityPage extends StatefulWidget {
-  const CommunityPage({super.key});
+class CommunityPageWithPostHighlight extends StatefulWidget {
+  final int? highlightPostId;
+
+  const CommunityPageWithPostHighlight({
+    super.key,
+    this.highlightPostId,
+  });
 
   @override
-  State<CommunityPage> createState() => _CommunityPageState();
+  State<CommunityPageWithPostHighlight> createState() =>
+      _CommunityPageWithPostHighlightState();
 }
 
-class _CommunityPageState extends State<CommunityPage> {
+class _CommunityPageWithPostHighlightState
+    extends State<CommunityPageWithPostHighlight> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final Map<int, GlobalKey> _postKeys = {};
+
   List<Post> _posts = [];
   List<Post> _filteredPosts = [];
   bool _isLoading = true;
@@ -27,6 +38,7 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -42,7 +54,19 @@ class _CommunityPageState extends State<CommunityPage> {
         _posts = posts;
         _filteredPosts = posts;
         _isLoading = false;
+
+        // Create keys for each post for scrolling
+        for (var post in posts) {
+          _postKeys[post.id] = GlobalKey();
+        }
       });
+
+      // Scroll to highlighted post if specified
+      if (widget.highlightPostId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToPost(widget.highlightPostId!);
+        });
+      }
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -57,6 +81,29 @@ class _CommunityPageState extends State<CommunityPage> {
           ),
         );
       }
+    }
+  }
+
+  void _scrollToPost(int postId) {
+    final index = _filteredPosts.indexWhere((post) => post.id == postId);
+    if (index != -1) {
+      // Calculate approximate position
+      final position = index * 200.0; // Approximate height of a post card
+      _scrollController.animateTo(
+        position,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+
+      // Show a brief highlight indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('📍 Post from notification'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+        ),
+      );
     }
   }
 
@@ -152,10 +199,10 @@ class _CommunityPageState extends State<CommunityPage> {
             Expanded(
               child: _isLoading
                   ? Center(
-                      child: CircularProgressIndicator(
-                        color: colorScheme.primary,
-                      ),
-                    )
+                child: CircularProgressIndicator(
+                  color: colorScheme.primary,
+                ),
+              )
                   : _error != null
                   ? _buildErrorState()
                   : _filteredPosts.isEmpty
@@ -209,15 +256,15 @@ class _CommunityPageState extends State<CommunityPage> {
           prefixIcon: Icon(Icons.search, color: colorScheme.primary),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: theme.textTheme.bodySmall?.color,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    _filterPosts('');
-                  },
-                )
+            icon: Icon(
+              Icons.clear,
+              color: theme.textTheme.bodySmall?.color,
+            ),
+            onPressed: () {
+              _searchController.clear();
+              _filterPosts('');
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -231,19 +278,34 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget _buildPostsList() {
     final colorScheme = Theme.of(context).colorScheme;
+    final isHighlightedPost = widget.highlightPostId != null;
 
     return RefreshIndicator(
       color: colorScheme.primary,
       onRefresh: _loadPosts,
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 80),
         itemCount: _filteredPosts.length,
         itemBuilder: (context, index) {
           final post = _filteredPosts[index];
-          return PostCard(
-            key: ValueKey(post.id),
-            post: post,
-            onDelete: () => _deletePost(post),
+          final shouldHighlight = isHighlightedPost &&
+              post.id == widget.highlightPostId;
+
+          return AnimatedContainer(
+            key: _postKeys[post.id],
+            duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+              border: shouldHighlight
+                  ? Border.all(color: colorScheme.primary, width: 2)
+                  : null,
+              borderRadius: shouldHighlight ? BorderRadius.circular(12) : null,
+            ),
+            child: PostCard(
+              key: ValueKey(post.id),
+              post: post,
+              onDelete: () => _deletePost(post),
+            ),
           );
         },
       ),
@@ -252,7 +314,6 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    // final colorScheme = theme.colorScheme;
 
     return Center(
       child: Column(
