@@ -29,7 +29,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ImagePicker _imagePicker = ImagePicker();
 
-  static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com/api';
+  static const String baseUrl =
+      'https://agriguide-backend-79j2.onrender.com/api';
 
   final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
@@ -117,18 +118,45 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
   @override
   void dispose() {
+    // Dispose controllers
     _controller.dispose();
     _scrollController.dispose();
-    _ttsService.stop();
-    _sttService.dispose();
+
+    // Clear callbacks so services won't call back into this widget after dispose
+    try {
+      _ttsService.onStart = null;
+      _ttsService.onComplete = null;
+      _ttsService.onError = null;
+      _ttsService.onProgress = null;
+    } catch (_) {}
+
+    try {
+      _sttService.onStart = null;
+      _sttService.onStop = null;
+      _sttService.onPartialResult = null;
+      _sttService.onResult = null;
+      _sttService.onError = null;
+    } catch (_) {}
+
+    // Stop and dispose services (fire-and-forget; services handle safety)
+    try {
+      _ttsService.stop();
+      _ttsService.dispose();
+    } catch (_) {}
+
+    try {
+      _sttService.stopListening();
+      _sttService.dispose();
+    } catch (_) {}
+
     super.dispose();
   }
 
   void openDrawer() => _scaffoldKey.currentState?.openDrawer();
 
   String _getBackendLanguage() {
-    return AppNotifiers.languageNotifier.value == AppLanguage.english 
-        ? 'english' 
+    return AppNotifiers.languageNotifier.value == AppLanguage.english
+        ? 'english'
         : 'sesotho';
   }
 
@@ -136,12 +164,18 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     setState(() {
       if (_chatMode == ChatMode.text) {
         _chatMode = ChatMode.voice;
-        _showSnackBar('Voice mode activated', Theme.of(context).colorScheme.primary);
+        _showSnackBar(
+          'Voice mode activated',
+          Theme.of(context).colorScheme.primary,
+        );
       } else {
         _chatMode = ChatMode.text;
         _ttsService.stop();
         _sttService.stopListening();
-        _showSnackBar('Text mode activated', Theme.of(context).colorScheme.primary);
+        _showSnackBar(
+          'Text mode activated',
+          Theme.of(context).colorScheme.primary,
+        );
       }
     });
   }
@@ -193,7 +227,9 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
       String fullAIResponse = '';
 
-      await for (var event in AIService.sendMessageStream(requestData: requestData)) {
+      await for (var event in AIService.sendMessageStream(
+        requestData: requestData,
+      )) {
         if (!mounted) break;
 
         if (event['success'] == true) {
@@ -206,7 +242,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             setState(() {
               _streamingText = event['fullText'];
               if (_currentStreamingMessageIndex >= 0) {
-                _messages[_currentStreamingMessageIndex]['text'] = _streamingText;
+                _messages[_currentStreamingMessageIndex]['text'] =
+                    _streamingText;
               }
             });
             _scrollToBottom();
@@ -214,7 +251,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             fullAIResponse = event['response'];
             setState(() {
               if (_currentStreamingMessageIndex >= 0) {
-                _messages[_currentStreamingMessageIndex]['text'] = fullAIResponse;
+                _messages[_currentStreamingMessageIndex]['text'] =
+                    fullAIResponse;
                 _messages[_currentStreamingMessageIndex]['isStreaming'] = false;
               }
               _isStreaming = false;
@@ -224,7 +262,10 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             _scrollToBottom();
 
             if (_chatMode == ChatMode.voice && fullAIResponse.isNotEmpty) {
-              await _ttsService.speak(fullAIResponse, language: _getBackendLanguage());
+              await _ttsService.speak(
+                fullAIResponse,
+                language: _getBackendLanguage(),
+              );
             }
           }
         } else {
@@ -236,7 +277,9 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               _currentStreamingMessageIndex = -1;
             }
           });
-          if (mounted) _showErrorDialog(event['error'] ?? 'Failed to get response');
+          if (mounted) {
+            _showErrorDialog(event['error'] ?? 'Failed to get response');
+          }
           break;
         }
       }
@@ -285,20 +328,26 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
     if (result['success']) {
       final aiResponse = result['response'] as String;
-      
+
       setState(() {
         _messages.add({'text': aiResponse, 'isUser': false});
-        if (result['sessionId'] != null) _currentSessionId = result['sessionId'];
+        if (result['sessionId'] != null) {
+          _currentSessionId = result['sessionId'];
+        }
       });
-      
+
       _scrollToBottom();
 
       if (_chatMode == ChatMode.voice) {
         await _ttsService.speak(aiResponse, language: _getBackendLanguage());
       }
     } else {
-      setState(() => _errorMessage = result['error'] ?? 'Unknown error occurred');
-      if (mounted) _showErrorDialog(result['error'] ?? 'Failed to get response');
+      setState(
+        () => _errorMessage = result['error'] ?? 'Unknown error occurred',
+      );
+      if (mounted) {
+        _showErrorDialog(result['error'] ?? 'Failed to get response');
+      }
     }
   }
 
@@ -350,14 +399,19 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
 
     return Consumer<AuthService>(
       builder: (context, authService, _) {
-        if (authService.status == AuthStatus.unknown || !authService.isLoggedIn) {
+        if (authService.status == AuthStatus.unknown ||
+            !authService.isLoggedIn) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!authService.isLoggedIn) Navigator.pushReplacementNamed(context, '/login');
+            if (!authService.isLoggedIn) {
+              Navigator.pushReplacementNamed(context, '/login');
+            }
           });
           return Scaffold(
-            body: Center(child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-            )),
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+              ),
+            ),
           );
         }
 
@@ -366,7 +420,9 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           backgroundColor: colorScheme.surface,
           drawer: Drawer(
             child: ChatHistoryPanel(
-              onSessionSelected: (id) {/* implement */},
+              onSessionSelected: (id) {
+                /* implement */
+              },
               currentSessionId: _currentSessionId,
             ),
           ),
@@ -390,7 +446,8 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                             imageFile: msg['image'] as File?,
                             imageUrl: msg['imageUrl'] as String?,
                             isStreaming: msg['isStreaming'] ?? false,
-                            showTTSButton: !msg['isUser'] && _chatMode == ChatMode.voice,
+                            showTTSButton:
+                                !msg['isUser'] && _chatMode == ChatMode.voice,
                             isTTSSpeaking: _isTTSSpeaking,
                             onTTSToggle: () => _toggleTTSPlayback(msg['text']),
                           );
@@ -411,21 +468,34 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        boxShadow: [BoxShadow(color: colorScheme.outline.withValues(alpha: 0.1), blurRadius: 2)],
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.outline.withValues(alpha: 0.1),
+            blurRadius: 2,
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(_chatMode == ChatMode.text ? Icons.chat_bubble : Icons.mic, 
-               color: colorScheme.primary, size: 20),
+          Icon(
+            _chatMode == ChatMode.text ? Icons.chat_bubble : Icons.mic,
+            color: colorScheme.primary,
+            size: 20,
+          ),
           const SizedBox(width: 8),
-          Text(_chatMode == ChatMode.text ? 'Text Mode' : 'Voice Mode',
-               style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600)),
+          Text(
+            _chatMode == ChatMode.text ? 'Text Mode' : 'Voice Mode',
+            style: TextStyle(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(width: 12),
           Switch(
             value: _chatMode == ChatMode.voice,
             onChanged: (_) => _toggleChatMode(),
-            activeColor: colorScheme.primary,
+            activeThumbColor: colorScheme.primary,
           ),
         ],
       ),
@@ -445,8 +515,15 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Listening...', style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w600)),
-                if (_partialSTTResult.isNotEmpty) Text(_partialSTTResult, style: const TextStyle(fontSize: 12)),
+                Text(
+                  'Listening...',
+                  style: TextStyle(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (_partialSTTResult.isNotEmpty)
+                  Text(_partialSTTResult, style: const TextStyle(fontSize: 12)),
               ],
             ),
           ),
@@ -464,7 +541,12 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         children: [
           Icon(Icons.error_outline, color: Colors.red.shade700),
           const SizedBox(width: 8),
-          Expanded(child: Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700))),
+          Expanded(
+            child: Text(
+              _errorMessage!,
+              style: TextStyle(color: Colors.red.shade700),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
             onPressed: () => setState(() => _errorMessage = null),
@@ -483,13 +565,21 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
         children: [
           Image.asset('assets/images/logo.png', width: 80, height: 80),
           const SizedBox(height: 16),
-          Text(AppStrings.aiGreetings, style: Theme.of(context).textTheme.headlineMedium),
+          Text(
+            AppStrings.aiGreetings,
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
           const SizedBox(height: 8),
           Text(AppStrings.aiAdvisoryIntro, textAlign: TextAlign.center),
           const SizedBox(height: 8),
           Text(
-            _chatMode == ChatMode.voice ? 'Tap the microphone to speak' : AppStrings.aiSdvisoryIntro2,
-            style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w500),
+            _chatMode == ChatMode.voice
+                ? 'Tap the microphone to speak'
+                : AppStrings.aiSdvisoryIntro2,
+            style: TextStyle(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w500,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -509,19 +599,38 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        boxShadow: [BoxShadow(color: colorScheme.outline.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, -2))],
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.outline.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          IconButton(icon: Icon(Icons.history, color: colorScheme.primary), onPressed: openDrawer),
+          IconButton(
+            icon: Icon(Icons.history, color: colorScheme.primary),
+            onPressed: openDrawer,
+          ),
           if (_chatMode == ChatMode.text)
-            IconButton(icon: Icon(Icons.image, color: colorScheme.primary), 
-                       onPressed: (_isLoading || _isStreaming) ? null : () {/* show image dialog */}),
+            IconButton(
+              icon: Icon(Icons.image, color: colorScheme.primary),
+              onPressed: (_isLoading || _isStreaming)
+                  ? null
+                  : () {
+                      /* show image dialog */
+                    },
+            ),
           if (_chatMode == ChatMode.voice)
             IconButton(
-              icon: Icon(_isSTTListening ? Icons.stop : Icons.mic, 
-                        color: _isSTTListening ? Colors.red : colorScheme.primary),
-              onPressed: (_isLoading || _isStreaming) ? null : _toggleVoiceInput,
+              icon: Icon(
+                _isSTTListening ? Icons.stop : Icons.mic,
+                color: _isSTTListening ? Colors.red : colorScheme.primary,
+              ),
+              onPressed: (_isLoading || _isStreaming)
+                  ? null
+                  : _toggleVoiceInput,
             ),
           Expanded(
             child: TextField(
@@ -529,21 +638,36 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               onSubmitted: (_) => _sendMessage(),
               enabled: !_isLoading && !_isStreaming && !_isSTTListening,
               decoration: InputDecoration(
-                hintText: _chatMode == ChatMode.voice ? 'Tap mic or type...' : AppStrings.captionInAiChatTextBox,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
+                hintText: _chatMode == ChatMode.voice
+                    ? 'Tap mic or type...'
+                    : AppStrings.captionInAiChatTextBox,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
           const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withValues(alpha: 0.8)]),
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.primary,
+                  colorScheme.primary.withValues(alpha: 0.8),
+                ],
+              ),
               shape: BoxShape.circle,
             ),
             child: IconButton(
               icon: const Icon(Icons.send_rounded, color: Colors.white),
-              onPressed: (_isLoading || _isStreaming || _isSTTListening) ? null : _sendMessage,
+              onPressed: (_isLoading || _isStreaming || _isSTTListening)
+                  ? null
+                  : _sendMessage,
             ),
           ),
         ],
@@ -558,7 +682,8 @@ class _PulsingDot extends StatefulWidget {
   State<_PulsingDot> createState() => _PulsingDotState();
 }
 
-class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/post.dart';
-import '../services/community_services/community_api_service.dart';
-import '../widgets/post_card.dart';
-import '../core/notifiers/app_notifiers.dart';
-import '../core/language/app_strings.dart';
-import '../config/theme.dart';
+import 'package:agri_guide/models/post.dart';
+import 'package:agri_guide/services/community_services/community_api_service.dart';
+import 'package:agri_guide/widgets/post_card.dart';
+import 'package:agri_guide/core/notifiers/app_notifiers.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
+import 'package:agri_guide/config/theme.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final String postId;

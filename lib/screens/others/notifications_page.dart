@@ -1,7 +1,7 @@
 // screens/notifications_page.dart
 import 'package:flutter/material.dart';
-import '../models/notification.dart';
-import '../services/notifications_services/notification_service.dart';
+import 'package:agri_guide/services/notifications_services/notification_service.dart';
+import 'package:agri_guide/models/notification.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -30,7 +30,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final notifications = await NotificationService.getNotifications(
         unreadOnly: _showUnreadOnly,
       );
-      
+
       if (mounted) {
         setState(() {
           _notifications = notifications;
@@ -74,7 +74,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     try {
       final count = await NotificationService.markAllAsRead();
       await _loadNotifications();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$count notifications marked as read')),
@@ -97,7 +97,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Notification'),
-        content: const Text('Are you sure you want to delete this notification?'),
+        content: const Text(
+          'Are you sure you want to delete this notification?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -116,11 +118,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
       try {
         await NotificationService.deleteNotification(notification.id);
         await _loadNotifications();
-        
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Notification deleted')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Notification deleted')));
         }
       } catch (e) {
         if (mounted) {
@@ -171,23 +173,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ],
       ),
       body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: colorScheme.primary),
-            )
+          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _notifications.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadNotifications,
-                  color: colorScheme.primary,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _notifications.length,
-                    itemBuilder: (context, index) {
-                      final notification = _notifications[index];
-                      return _buildNotificationCard(notification);
-                    },
-                  ),
-                ),
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadNotifications,
+              color: colorScheme.primary,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = _notifications[index];
+                  return _buildNotificationCard(notification);
+                },
+              ),
+            ),
     );
   }
 
@@ -223,14 +223,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
             border: Border.all(
               color: notification.isRead
                   ? (isDark ? Colors.grey[800]! : Colors.grey[200]!)
-                  : colorScheme.primary.withValues(alpha: 0.3),
+                  : colorScheme.primary.withOpacity(0.3),
               width: notification.isRead ? 1 : 2,
             ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar
+              // Avatar - NO HERO WIDGET (removed to fix conflict)
               Container(
                 width: 48,
                 height: 48,
@@ -247,11 +247,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       : null,
                 ),
                 child: notification.senderProfilePicture == null
-                    ? Icon(
-                        Icons.person,
-                        color: colorScheme.primary,
-                        size: 24,
-                      )
+                    ? Icon(Icons.person, color: colorScheme.primary, size: 24)
                     : null,
               ),
               const SizedBox(width: 12),
@@ -276,9 +272,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         margin: const EdgeInsets.only(top: 4),
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.grey[900]
-                              : Colors.grey[100],
+                          color: isDark ? Colors.grey[900] : Colors.grey[100],
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -293,8 +287,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Text(
                       notification.timeAgo,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color
-                            ?.withValues(alpha: 0.7),
+                        color: theme.textTheme.bodySmall?.color?.withOpacity(
+                          0.7,
+                        ),
                       ),
                     ),
                   ],
@@ -328,7 +323,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           Icon(
             Icons.notifications_none,
             size: 64,
-            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.5),
+            color: theme.textTheme.bodySmall?.color?.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(

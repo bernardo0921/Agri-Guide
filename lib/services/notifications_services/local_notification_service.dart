@@ -80,10 +80,25 @@ class LocalNotificationService {
         // Navigate based on notification type
         if (type == 'post') {
           // Navigate to post detail screen with the post ID
-          navigatorKey!.currentState?.pushNamed('/post_detail', arguments: id);
+          try {
+            navigatorKey!.currentState?.pushNamed(
+              '/post_detail',
+              arguments: id,
+            );
+          } catch (e) {
+            debugPrint(
+              'Failed to navigate to post_detail from notification: $e',
+            );
+          }
         } else if (type == 'notification') {
           // Navigate to notifications page
-          navigatorKey!.currentState?.pushNamed('/notifications');
+          try {
+            navigatorKey!.currentState?.pushNamed('/notifications');
+          } catch (e) {
+            debugPrint(
+              'Failed to navigate to /notifications from notification: $e',
+            );
+          }
         }
       }
     }

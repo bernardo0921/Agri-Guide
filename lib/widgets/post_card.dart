@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/community_services/community_api_service.dart';
 import '../widgets/comments_bottom_sheet.dart';
-import '../screens/image_viewer_screen.dart';
+import '../screens/others/image_viewer_screen.dart';
 import '../config/theme.dart';
 import 'package:share_plus/share_plus.dart';
 

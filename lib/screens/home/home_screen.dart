@@ -1,3 +1,5 @@
+// dart
+import 'package:agri_guide/screens/others/settings_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/ai/ai_advisory_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/community/community_page.dart';
 import 'package:agri_guide/screens/home/Navigation_pages/dashboard_page.dart';
@@ -46,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // Listen to language changes to rebuild UI
     AppNotifiers.languageNotifier.addListener(_onLanguageChanged);
-    
+
     // Initialize notifications
     _initializeNotifications();
   }
@@ -55,10 +57,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppNotifiers.languageNotifier.removeListener(_onLanguageChanged);
-    
+
     // Stop notification polling
     NotificationPollingService.stopPolling();
-    
+
     super.dispose();
   }
 
@@ -83,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       // Request permissions
       final hasPermission = await LocalNotificationService.requestPermissions();
-      
+
       if (hasPermission) {
         // Start polling for notifications every 2 minutes
         await NotificationPollingService.startPolling(
@@ -107,11 +109,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       // Stop polling and clear notification history on logout
       NotificationPollingService.stopPolling();
       await NotificationPollingService.clearHistory();
-      
+
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
+              (route) => false,
         );
       }
     }
@@ -164,14 +166,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return null;
   }
 
-  /// Build AppBar actions with profile avatar
+  /// Build AppBar actions with profile avatar and settings button
   List<Widget> _buildAppBarActions(AuthService authService) {
     final profilePictureUrl = _getProfilePictureUrl(authService);
     final initials = _getInitials(authService);
 
     return [
+      // Settings button - opens device settings
+      IconButton(
+        icon: const Icon(Icons.settings),
+        tooltip: AppStrings.settings,
+        onPressed: () {
+          // Uses `app_settings` package to open device settings
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsPage()),
+          );
+        },
+      ),
+
       // Notification Badge
       const NotificationBadge(),
+
       Padding(
         padding: const EdgeInsets.only(right: 8.0),
         child: InkWell(
@@ -196,18 +212,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   : null,
               onBackgroundImageError: profilePictureUrl != null
                   ? (exception, stackTrace) {
-                      debugPrint('Error loading profile image: $exception');
-                    }
+                debugPrint('Error loading profile image: $exception');
+              }
                   : null,
               child: profilePictureUrl == null
                   ? Text(
-                      initials,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade800,
-                      ),
-                    )
+                initials,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green.shade800,
+                ),
+              )
                   : null,
             ),
           ),
@@ -218,11 +234,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   /// Get page titles based on current language
   List<String> get _pageTitles => [
-        AppStrings.dashboard,
-        AppStrings.aiAdvisory,
-        AppStrings.community,
-        AppStrings.learning,
-      ];
+    AppStrings.dashboard,
+    AppStrings.aiAdvisory,
+    AppStrings.community,
+    AppStrings.learning,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             if (mounted) {
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
+                    (route) => false,
               );
             }
           });

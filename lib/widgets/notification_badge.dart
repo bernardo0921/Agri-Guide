@@ -1,7 +1,9 @@
 // widgets/notification_badge.dart
 import 'package:flutter/material.dart';
 import '../services/notifications_services/notification_service.dart';
-import '../screens/notifications_page.dart';
+import '../screens/others/notifications_page.dart';
+import '../services/ai_services/tts_service.dart';
+import '../services/ai_services/speech_to_text_service.dart';
 
 class NotificationBadge extends StatefulWidget {
   const NotificationBadge({super.key});
@@ -22,7 +24,7 @@ class _NotificationBadgeState extends State<NotificationBadge> {
 
   Future<void> _loadUnreadCount() async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -46,13 +48,29 @@ class _NotificationBadgeState extends State<NotificationBadge> {
   }
 
   void _navigateToNotifications() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const NotificationsPage(),
-      ),
-    );
-    
+    // Stop any active TTS/STT to avoid platform callbacks during navigation
+    try {
+      await TTSService().stop();
+    } catch (_) {}
+    try {
+      await SpeechToTextService().stopListening();
+    } catch (_) {}
+
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const NotificationsPage()),
+      );
+    } catch (e, st) {
+      debugPrint('Failed to open NotificationsPage: $e\n$st');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to open notifications: $e')),
+        );
+      }
+      return;
+    }
+
     // Refresh count when returning from notifications page
     _loadUnreadCount();
   }
@@ -60,7 +78,7 @@ class _NotificationBadgeState extends State<NotificationBadge> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Stack(
       children: [
         IconButton(
@@ -77,10 +95,7 @@ class _NotificationBadgeState extends State<NotificationBadge> {
             top: 8,
             child: Container(
               padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(
-                minWidth: 18,
-                minHeight: 18,
-              ),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
               decoration: BoxDecoration(
                 color: Colors.red[600],
                 shape: BoxShape.circle,

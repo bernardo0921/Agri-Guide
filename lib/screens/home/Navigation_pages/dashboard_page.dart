@@ -9,7 +9,7 @@ import 'package:agri_guide/services/ai_services/farming_tip_service.dart';
 import 'package:agri_guide/models/post.dart';
 import 'package:agri_guide/models/tutorial.dart';
 import 'package:agri_guide/widgets/post_card.dart';
-import 'package:agri_guide/screens/settings_page.dart';
+import 'package:agri_guide/screens/others/settings_page.dart';
 import 'package:agri_guide/core/language/app_strings.dart';
 import 'package:agri_guide/core/notifiers/app_notifiers.dart';
 import 'package:provider/provider.dart';

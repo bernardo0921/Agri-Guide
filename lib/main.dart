@@ -1,10 +1,10 @@
 // lib/main.dart
-import 'package:agri_guide/screens/auth_wrapper.dart';
+import 'package:agri_guide/screens/others/auth_wrapper.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/providers/theme_provider.dart';
 import 'package:agri_guide/services/notifications_services/local_notification_service.dart';
-import 'package:agri_guide/screens/post_detail_screen.dart';
-import 'package:agri_guide/screens/notifications_page.dart';
+import 'package:agri_guide/screens/others/post_detail_screen.dart';
+import 'package:agri_guide/screens/others/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
