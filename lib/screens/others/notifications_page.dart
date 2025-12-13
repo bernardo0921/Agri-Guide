@@ -1,6 +1,3 @@
-// FILE 2: notifications_page.dart (Updated)
-// ============================================
-// screens/notifications_page.dart
 import 'package:agri_guide/screens/home/Navigation_pages/community/community_page.dart';
 import 'package:flutter/material.dart';
 import '../../models/notification.dart';
@@ -160,6 +157,91 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
+  Future<void> _deleteAllNotifications() async {
+    if (_notifications.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete All Notifications'),
+        content: const Text(
+          'Are you sure you want to delete all notifications? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await NotificationService.deleteAllNotifications();
+        await _loadNotifications();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('All notifications deleted')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete all: $e'),
+              backgroundColor: Colors.red[700],
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showOptionsMenu() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_notifications.any((n) => !n.isRead))
+              ListTile(
+                leading: Icon(Icons.done_all, color: colorScheme.primary),
+                title: const Text('Mark all as read'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _markAllAsRead();
+                },
+              ),
+            if (_notifications.isNotEmpty)
+              ListTile(
+                leading: Icon(Icons.delete_sweep, color: Colors.red[700]),
+                title: const Text('Delete all notifications'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _deleteAllNotifications();
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -186,12 +268,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
             },
             tooltip: _showUnreadOnly ? 'Show all' : 'Show unread only',
           ),
-          // Mark all as read
-          if (_notifications.any((n) => !n.isRead))
+          // More options menu
+          if (_notifications.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.done_all),
-              onPressed: _markAllAsRead,
-              tooltip: 'Mark all as read',
+              icon: const Icon(Icons.more_vert),
+              onPressed: _showOptionsMenu,
+              tooltip: 'More options',
             ),
         ],
       ),
@@ -202,13 +284,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
           : RefreshIndicator(
         onRefresh: _loadNotifications,
         color: colorScheme.primary,
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _notifications.length,
-          itemBuilder: (context, index) {
-            final notification = _notifications[index];
-            return _buildNotificationCard(notification);
-          },
+        child: Column(
+          children: [
+            // Hint banner at the top
+            _buildHintBanner(),
+            // Notifications list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = _notifications[index];
+                  return _buildNotificationCard(notification);
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -222,6 +313,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
     return Dismissible(
       key: Key(notification.id.toString()),
       direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Notification'),
+            content: const Text(
+              'Are you sure you want to delete this notification?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        );
+      },
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -230,7 +343,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
           color: Colors.red[700],
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete, color: Colors.white, size: 28),
+            SizedBox(height: 4),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
       onDismissed: (_) => _deleteNotification(notification),
       child: GestureDetector(
@@ -367,5 +494,43 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
     );
   }
-}
 
+  Widget _buildHintBanner() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark
+            ? colorScheme.primaryContainer.withValues(alpha: 0.1)
+            : colorScheme.primaryContainer.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.primary.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.swipe_left,
+            color: colorScheme.primary,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Swipe left on any notification to delete it',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

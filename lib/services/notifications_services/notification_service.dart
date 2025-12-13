@@ -1,4 +1,3 @@
-// services/notification_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +9,7 @@ class NotificationService {
 
   static String? _cachedToken;
 
-  /// Get auth token from SharedPreferences (same as AIService)
+  /// Get auth token from SharedPreferences
   static Future<String?> _getAuthToken() async {
     if (_cachedToken != null) return _cachedToken;
     final prefs = await SharedPreferences.getInstance();
@@ -18,12 +17,12 @@ class NotificationService {
     return _cachedToken;
   }
 
-  /// Get headers with Token authentication (not Bearer)
+  /// Get headers with Token authentication
   static Future<Map<String, String>> _getHeaders() async {
     final token = await _getAuthToken();
     return {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token', // Changed from 'Bearer' to 'Token'
+      'Authorization': 'Token $token',
     };
   }
 
@@ -46,18 +45,15 @@ class NotificationService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
-        
-        // Check if the response contains a 'notifications' key
+
         if (responseData.containsKey('notifications')) {
           final List<dynamic> data = responseData['notifications'];
           return data.map((json) => AppNotification.fromJson(json)).toList();
-        } 
-        // Or if it contains a 'results' key (common in paginated APIs)
+        }
         else if (responseData.containsKey('results')) {
           final List<dynamic> data = responseData['results'];
           return data.map((json) => AppNotification.fromJson(json)).toList();
         }
-        // If it's directly a list (fallback)
         else {
           return [];
         }
@@ -76,7 +72,7 @@ class NotificationService {
     try {
       final token = await _getAuthToken();
       if (token == null) {
-        return 0; // Return 0 instead of throwing error for badge
+        return 0;
       }
 
       final headers = await _getHeaders();
@@ -89,12 +85,11 @@ class NotificationService {
         final data = json.decode(response.body);
         return data['unread_count'] ?? 0;
       } else if (response.statusCode == 401) {
-        return 0; // Return 0 for unauthorized instead of throwing
+        return 0;
       } else {
         throw Exception('Failed to load unread count: ${response.statusCode}');
       }
     } catch (e) {
-      // Return 0 instead of throwing for badge display
       return 0;
     }
   }
@@ -175,6 +170,32 @@ class NotificationService {
       }
     } catch (e) {
       throw Exception('Error deleting notification: $e');
+    }
+  }
+
+  /// Delete all notifications
+  static Future<void> deleteAllNotifications() async {
+    try {
+      final token = await _getAuthToken();
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+
+      final headers = await _getHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/api/notifications/delete-all/'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 401) {
+        throw Exception('Authentication failed. Please login again.');
+      } else if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception(
+          'Failed to delete all notifications: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      throw Exception('Error deleting all notifications: $e');
     }
   }
 
