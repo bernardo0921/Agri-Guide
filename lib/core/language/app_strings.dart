@@ -918,9 +918,9 @@ class AppStrings {
   static String get aiAdvisory {
     switch (AppNotifiers.languageNotifier.value) {
       case AppLanguage.english:
-        return "AI Advisory";
+        return "Guider";
       case AppLanguage.sesotho:
-        return "Likeletso tsa AI";
+        return "Motataisi";
     }
   }
 
@@ -1591,6 +1591,33 @@ class AppStrings {
         return '$days days ago';
       case AppLanguage.sesotho:
         return 'Matsatsi a $days a fetileng';
+    }
+  }
+
+  static String get language {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Language";
+      case AppLanguage.sesotho:
+        return "Puo";
+    }
+  }
+
+  static String get selectLanguage {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Select Language";
+      case AppLanguage.sesotho:
+        return "Khetha Puo";
+    }
+  }
+
+  static String languageChangedTo(String languageName) {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Language changed to $languageName";
+      case AppLanguage.sesotho:
+        return "Puo e fetohetse ho $languageName";
     }
   }
 }

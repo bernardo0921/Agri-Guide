@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,14 +40,26 @@ class _SplashScreenState extends State<SplashScreen>
     )..repeat();
   }
 
-  void _navigateToHome() {
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) {
-        _fadeController.forward().then((_) {
-          Navigator.of(context).pushReplacementNamed('/language');
-        });
-      }
-    });
+  Future<void> _navigateToHome() async {
+    // Wait for the splash duration
+    await Future.delayed(const Duration(seconds: 4));
+
+    if (!mounted) return;
+
+    // Check whether user has already seen the language selection
+    final prefs = await SharedPreferences.getInstance();
+    final seenLanguage = prefs.getBool('seen_language') ?? false;
+
+    // Play fade animation then navigate to the appropriate screen
+    await _fadeController.forward();
+
+    if (!mounted) return;
+
+    if (seenLanguage) {
+      Navigator.of(context).pushReplacementNamed('/auth_wrapper');
+    } else {
+      Navigator.of(context).pushReplacementNamed('/language');
+    }
   }
 
   @override

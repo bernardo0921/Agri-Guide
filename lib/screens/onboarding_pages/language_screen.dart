@@ -1,5 +1,6 @@
 // lib/screens/language_screen.dart
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/language/app_language.dart';
 import '../../core/notifiers/app_notifiers.dart';
 
@@ -109,10 +110,19 @@ class _LanguageScreenState extends State<LanguageScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     // Update the language notifier
                     AppNotifiers.languageNotifier.value = _selectedLanguage;
+
+                    // Persist that the user has seen/selected language
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('seen_language', true);
+
+                    // Optionally persist language code
+                    // await prefs.setString('language_code', _selectedLanguage.code);
+
                     // Navigate to the AuthWrapper
+                    if (!mounted) return;
                     Navigator.of(context).pushReplacementNamed('/auth_wrapper');
                   },
                   style: ElevatedButton.styleFrom(
