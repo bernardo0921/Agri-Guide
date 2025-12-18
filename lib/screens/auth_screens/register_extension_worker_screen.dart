@@ -119,7 +119,9 @@ class _ExtensionWorkerRegisterScreenState
               );
 
               if (mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(context).pop();
+                // Ensure the app transitions to the authenticated UI
+                Navigator.of(context).pushNamedAndRemoveUntil('/auth_wrapper', (route) => false);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Registration Successful!'),

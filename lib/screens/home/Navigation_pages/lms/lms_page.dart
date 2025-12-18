@@ -7,6 +7,7 @@ import 'package:agri_guide/widgets/tutorial_card.dart';
 import 'package:agri_guide/config/theme.dart';
 import 'video_player_screen.dart';
 import 'my_tutorials_screen.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
 
 class LMSPageContent extends StatefulWidget {
   const LMSPageContent({super.key});
@@ -176,7 +177,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              hintText: 'Search tutorials...',
+              hintText: AppStrings.searchTutorials,
               prefixIcon: Icon(
                 Icons.search,
                 color: AppColors.textMedium,
@@ -233,7 +234,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
                       items: categoryMap.entries.map((entry) {
                         return DropdownMenuItem(
                           value: entry.key,
-                          child: Text(entry.value),
+                          child: Text(AppStrings.categoryLabel(entry.key)),
                         );
                       }).toList(),
                       onChanged: _onCategoryChanged,
@@ -246,7 +247,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
                 OutlinedButton.icon(
                   onPressed: _navigateToMyTutorials,
                   icon: const Icon(Icons.video_library, size: 18),
-                  label: const Text('My Tutorials'),
+                  label: Text(AppStrings.myTutorials),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,
                     side: BorderSide(color: AppColors.lightGreen),
@@ -289,7 +290,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Error loading tutorials',
+                AppStrings.errorLoadingTutorials,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
@@ -306,7 +307,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
               ElevatedButton.icon(
                 onPressed: _loadTutorials,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(AppStrings.retry),
               ),
             ],
           ),
@@ -328,7 +329,7 @@ class _LMSPageContentState extends State<LMSPageContent> {
               ),
               const SizedBox(height: 16),
               Text(
-                'No tutorials found',
+                AppStrings.noTutorialsFound,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
@@ -336,8 +337,8 @@ class _LMSPageContentState extends State<LMSPageContent> {
               const SizedBox(height: 8),
               Text(
                 _searchController.text.isNotEmpty || _selectedCategory != 'all'
-                    ? 'Try adjusting your search or filter'
-                    : 'Check back later for new tutorials',
+                    ? AppStrings.tryAdjustSearch
+                    : AppStrings.checkBackLater,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textMedium,

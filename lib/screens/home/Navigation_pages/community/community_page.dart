@@ -1,5 +1,7 @@
 // This is a wrapper that accepts a postId to highlight
 import 'package:flutter/material.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
+
 import '../../../../../models/post.dart';
 import '../../../../services/community_services/community_api_service.dart';
 import '../../../../../widgets/post_card.dart';
@@ -76,7 +78,7 @@ class _CommunityPageWithPostHighlightState
         final colorScheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('${AppStrings.unknownError}: $e'),
             backgroundColor: colorScheme.error,
           ),
         );
@@ -216,10 +218,7 @@ class _CommunityPageWithPostHighlightState
         backgroundColor: colorScheme.primary,
         onPressed: _openCreatePostModal,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'New Post',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
+        label: Text(AppStrings.newPost, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ),
     );
   }
@@ -249,7 +248,7 @@ class _CommunityPageWithPostHighlightState
         onChanged: _filterPosts,
         style: theme.textTheme.bodyMedium,
         decoration: InputDecoration(
-          hintText: 'Search posts, topics or farmers...',
+          hintText: AppStrings.searchPosts,
           hintStyle: theme.textTheme.bodyMedium?.copyWith(
             color: theme.textTheme.bodySmall?.color,
           ),
@@ -325,10 +324,10 @@ class _CommunityPageWithPostHighlightState
             color: theme.textTheme.bodySmall?.color,
           ),
           const SizedBox(height: 16),
-          Text('No posts found', style: theme.textTheme.titleLarge),
+          Text(AppStrings.noPostsFound, style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
-            'Try a different search term',
+            AppStrings.tryDifferentSearch,
             style: theme.textTheme.bodyMedium,
           ),
         ],
@@ -350,12 +349,12 @@ class _CommunityPageWithPostHighlightState
             color: colorScheme.error.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 16),
-          Text('Failed to load posts', style: theme.textTheme.titleLarge),
+          Text(AppStrings.failedToLoadPosts, style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              _error ?? 'Unknown error',
+              _error ?? AppStrings.unknownError,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
@@ -364,7 +363,7 @@ class _CommunityPageWithPostHighlightState
           ElevatedButton.icon(
             onPressed: _loadPosts,
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text(AppStrings.retry),
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,

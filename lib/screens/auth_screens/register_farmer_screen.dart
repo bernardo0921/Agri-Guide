@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../core/language/app_strings.dart';
 import 'verification_code_screen.dart';
+import '../../config/theme.dart';
 
 class FarmerRegisterScreen extends StatefulWidget {
   const FarmerRegisterScreen({super.key});
@@ -60,9 +61,10 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
             purpose: 'registration',
             onVerify: (code) async {
               await authService.verifyAndRegister(_formData['email'], code);
-              
+
               if (mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamedAndRemoveUntil('/auth_wrapper', (route) => false);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Welcome, Farmer! 🌾'),
@@ -222,6 +224,8 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
@@ -230,7 +234,7 @@ class _FarmerRegisterScreenState extends State<FarmerRegisterScreen> {
           prefixIcon: Icon(icon),
           border: const OutlineInputBorder(),
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
         ),
         keyboardType: keyboardType,
         obscureText: obscureText,

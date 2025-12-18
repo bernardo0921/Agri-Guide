@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:agri_guide/services/auth_service.dart';
 import 'package:agri_guide/config/theme.dart';
+import 'package:agri_guide/core/language/app_strings.dart';
 import '../../../../../services/lms_api_service.dart';
 import '../../../../../models/tutorial.dart';
 import 'video_player_screen.dart';
@@ -78,17 +79,17 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Tutorial'),
-        content: Text('Are you sure you want to delete "${tutorial.title}"?'),
+        title: Text(AppStrings.deleteTutorialTitle),
+        content: Text(AppStrings.deleteTutorialConfirm(tutorial.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppStrings.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.accentRed),
-            child: const Text('Delete'),
+            child: Text(AppStrings.delete),
           ),
         ],
       ),
@@ -114,7 +115,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Tutorial deleted successfully'),
+            content: Text(AppStrings.tutorialDeletedSuccess),
             backgroundColor: AppColors.successGreen,
           ),
         );
@@ -166,7 +167,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('My Tutorials')),
+        appBar: AppBar(title: Text(AppStrings.myTutorials)),
         body: _buildBody(),
         floatingActionButton: _isExtensionWorker ? _buildUploadButton() : null,
       ),
@@ -179,7 +180,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
       backgroundColor: AppColors.primaryGreen,
       foregroundColor: AppColors.textWhite,
       icon: const Icon(Icons.add),
-      label: const Text('Upload'),
+      label: Text(AppStrings.uploadLabel),
     );
   }
 
@@ -207,7 +208,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Error loading tutorials',
+                AppStrings.errorLoadingTutorials,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
@@ -224,7 +225,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               ElevatedButton.icon(
                 onPressed: _loadMyTutorials,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(AppStrings.retry),
               ),
             ],
           ),
@@ -246,7 +247,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'No tutorials yet',
+                AppStrings.noTutorialsYet,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: isDark ? AppColors.textWhite : AppColors.textDark,
                 ),
@@ -254,8 +255,8 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
               const SizedBox(height: 8),
               Text(
                 _isExtensionWorker
-                    ? 'Tap the Upload button to create your first tutorial'
-                    : 'You haven\'t uploaded any tutorials',
+                    ? AppStrings.uploadFirstTutorial
+                    : AppStrings.youHaventUploadedAnyTutorials,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.textMedium,
@@ -348,7 +349,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        tutorial.category,
+                        AppStrings.categoryLabel(tutorial.category),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
@@ -368,11 +369,11 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          '${tutorial.getFormattedViewCount()} views',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textMedium,
-                          ),
+                          '${tutorial.getFormattedViewCount()} ${AppStrings.viewsLabel}',
+                           style: TextStyle(
+                             fontSize: 11,
+                             color: AppColors.textMedium,
+                           ),
                         ),
                         const SizedBox(width: 12),
                         Icon(
@@ -402,7 +403,7 @@ class _MyTutorialsScreenState extends State<MyTutorialsScreen> {
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: AppColors.accentRed),
                   onPressed: () => _deleteTutorial(tutorial),
-                  tooltip: 'Delete',
+                  tooltip: AppStrings.delete,
                 ),
             ],
           ),

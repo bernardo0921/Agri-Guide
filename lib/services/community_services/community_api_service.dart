@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/post.dart';
 import '../../models/comment.dart';
+import '../notifications_services/notification_service.dart';
 
 class CommunityApiService {
   static const String baseUrl = 'https://agriguide-backend-79j2.onrender.com';
@@ -144,6 +145,10 @@ class CommunityApiService {
     }
 
     if (response.statusCode == 201) {
+      // Notify listeners that notifications may have changed (followers, mentions, etc.)
+      try {
+        NotificationService.notifyChanged();
+      } catch (_) {}
       return Post.fromJson(json.decode(response.body));
     } else {
       final error = json.decode(response.body);
@@ -164,6 +169,11 @@ class CommunityApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to toggle like: ${response.body}');
     }
+
+    // Notify listeners that notifications may have changed (likes create notifications)
+    try {
+      NotificationService.notifyChanged();
+    } catch (_) {}
   }
 
   // Delete a post
@@ -212,6 +222,12 @@ class CommunityApiService {
 
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
+
+      // Notify listeners quickly so the badge updates
+      try {
+        NotificationService.notifyChanged();
+      } catch (_) {}
+
       return Comment.fromJson(data);
     } else {
       throw Exception('Failed to add comment: ${response.body}');

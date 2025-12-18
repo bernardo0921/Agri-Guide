@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import '../../config/theme.dart';
 
 class VerificationCodeScreen extends StatefulWidget {
   final String email;
@@ -393,10 +394,10 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
                                     ),
                                     filled: true,
                                     fillColor: _isLoading
-                                        ? Colors.grey[100]
+                                        ? (Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceDark : Colors.grey[100])
                                         : _hasError
-                                        ? Colors.red[50]
-                                        : Colors.grey[50],
+                                        ? (Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceDark : Colors.red[50])
+                                        : (Theme.of(context).brightness == Brightness.dark ? AppColors.surfaceDark : Colors.grey[50]),
                                   ),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,

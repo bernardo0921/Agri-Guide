@@ -252,7 +252,7 @@ class _ProfilePageState extends State<ProfilePage>
                       CircularProgressIndicator(color: colorScheme.primary),
                       const SizedBox(height: 16),
                       Text(
-                        'Loading profile...',
+                        AppStrings.loadingProfile,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: colorScheme.primary,
                         ),
@@ -284,24 +284,24 @@ class _ProfilePageState extends State<ProfilePage>
                       // 📋 ACCOUNT DETAILS CARD
                       SliverToBoxAdapter(
                         child: _buildModernSection(
-                          'Account Details',
+                          AppStrings.accountDetails,
                           Icons.account_circle,
                           [
                             _buildModernInfoTile(
                               Icons.person_outline,
-                              'Username',
+                              AppStrings.username,
                               _profileData?['username'] ?? 'N/A',
                               colorScheme,
                             ),
                             _buildModernInfoTile(
                               Icons.email_outlined,
-                              'Email Address',
+                              AppStrings.emailAddress,
                               _profileData?['email'] ?? 'N/A',
                               colorScheme,
                             ),
                             _buildModernInfoTile(
                               Icons.phone_outlined,
-                              'Phone Number',
+                              AppStrings.phoneNumber,
                               _profileData?['phone_number'] ?? 'N/A',
                               colorScheme,
                             ),
@@ -356,7 +356,7 @@ class _ProfilePageState extends State<ProfilePage>
                               // Edit Profile Button
                               _buildModernButton(
                                 icon: Icons.edit_rounded,
-                                label: 'Edit Profile',
+                                label: AppStrings.editProfile,
                                 gradient: LinearGradient(
                                   colors: [
                                     colorScheme.primary,
@@ -383,7 +383,7 @@ class _ProfilePageState extends State<ProfilePage>
                               // Logout Button
                               _buildModernButton(
                                 icon: Icons.logout_rounded,
-                                label: 'Logout',
+                                label: AppStrings.logout,
                                 gradient: LinearGradient(
                                   colors: [
                                     colorScheme.error,

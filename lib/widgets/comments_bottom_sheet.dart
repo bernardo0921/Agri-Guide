@@ -4,6 +4,7 @@ import '../models/post.dart';
 import '../models/comment.dart';
 import '../services/community_services/community_api_service.dart';
 import './comment_card.dart';
+import '../config/theme.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
   final Post post;
@@ -144,6 +145,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -161,9 +165,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           maxChildSize: 0.95,
           builder: (context, scrollController) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.surfaceDark : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
@@ -186,22 +190,25 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   Widget _buildHeader() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        border: Border(bottom: BorderSide(color: isDark ? AppColors.borderDark : Colors.grey[200]!)),
       ),
       child: Row(
         children: [
           Text(
             'Comments (${_comments.length})',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700) ?? const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
           const Spacer(),
           IconButton(
             onPressed: () => Navigator.of(context).pop(_comments.length),
-            icon: const Icon(Icons.close),
-            style: IconButton.styleFrom(backgroundColor: Colors.grey[100]),
+            icon: Icon(Icons.close, color: theme.iconTheme.color),
+            style: IconButton.styleFrom(backgroundColor: isDark ? AppColors.borderDark : Colors.grey[100]),
           ),
         ],
       ),
@@ -227,24 +234,27 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[300]),
+          Icon(Icons.chat_bubble_outline, size: 64, color: isDark ? Colors.grey[600] : Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'No comments yet',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+              color: isDark ? AppColors.textMedium : Colors.grey[600],
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Be the first to comment!',
-            style: TextStyle(color: Colors.grey[500]),
+            style: TextStyle(color: isDark ? AppColors.textLight : Colors.grey[500]),
           ),
         ],
       ),
@@ -252,11 +262,14 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 
   Widget _buildCommentInput() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey[200]!)),
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        border: Border(top: BorderSide(color: isDark ? AppColors.borderDark : Colors.grey[200]!)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -273,9 +286,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                 controller: _commentController,
                 decoration: InputDecoration(
                   hintText: 'Write a comment...',
-                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  hintStyle: TextStyle(color: isDark ? AppColors.textMedium : Colors.grey[400]),
                   filled: true,
-                  fillColor: Colors.grey[50],
+                  fillColor: isDark ? AppColors.surfaceDark : Colors.grey[50],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
@@ -285,6 +298,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                     vertical: 12,
                   ),
                 ),
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                cursorColor: theme.colorScheme.primary,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
               ),

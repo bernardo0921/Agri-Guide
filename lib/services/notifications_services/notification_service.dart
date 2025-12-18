@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,19 @@ class NotificationService {
       'https://agriguide-backend-79j2.onrender.com';
 
   static String? _cachedToken;
+
+  // Broadcast controller to notify listeners about notification changes
+  static final StreamController<void> _changesController =
+      StreamController<void>.broadcast();
+
+  static Stream<void> get onNotificationsChanged => _changesController.stream;
+
+  /// Emit a change event (call this after creating/deleting/updating notifications locally)
+  static void notifyChanged() {
+    try {
+      if (!_changesController.isClosed) _changesController.add(null);
+    } catch (_) {}
+  }
 
   /// Get auth token from SharedPreferences
   static Future<String?> _getAuthToken() async {
@@ -49,12 +63,10 @@ class NotificationService {
         if (responseData.containsKey('notifications')) {
           final List<dynamic> data = responseData['notifications'];
           return data.map((json) => AppNotification.fromJson(json)).toList();
-        }
-        else if (responseData.containsKey('results')) {
+        } else if (responseData.containsKey('results')) {
           final List<dynamic> data = responseData['results'];
           return data.map((json) => AppNotification.fromJson(json)).toList();
-        }
-        else {
+        } else {
           return [];
         }
       } else if (response.statusCode == 401) {
@@ -115,6 +127,9 @@ class NotificationService {
           'Failed to mark notification as read: ${response.statusCode}',
         );
       }
+
+      // Notify listeners that notifications changed
+      notifyChanged();
     } catch (e) {
       throw Exception('Error marking notification as read: $e');
     }
@@ -136,6 +151,8 @@ class NotificationService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        // Notify listeners
+        notifyChanged();
         return data['count'] ?? 0;
       } else if (response.statusCode == 401) {
         throw Exception('Authentication failed. Please login again.');
@@ -168,6 +185,9 @@ class NotificationService {
           'Failed to delete notification: ${response.statusCode}',
         );
       }
+
+      // Notify listeners
+      notifyChanged();
     } catch (e) {
       throw Exception('Error deleting notification: $e');
     }
@@ -194,6 +214,9 @@ class NotificationService {
           'Failed to delete all notifications: ${response.statusCode}',
         );
       }
+
+      // Notify listeners
+      notifyChanged();
     } catch (e) {
       throw Exception('Error deleting all notifications: $e');
     }

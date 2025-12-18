@@ -1,4 +1,5 @@
 // widgets/notification_badge.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/notifications_services/notification_service.dart';
 import '../screens/others/notifications_page.dart';
@@ -15,11 +16,22 @@ class NotificationBadge extends StatefulWidget {
 class _NotificationBadgeState extends State<NotificationBadge> {
   int _unreadCount = 0;
   bool _isLoading = false;
+  StreamSubscription<void>? _subscription;
 
   @override
   void initState() {
     super.initState();
     _loadUnreadCount();
+    // Subscribe to notification change events for instant updates
+    _subscription = NotificationService.onNotificationsChanged.listen((_) {
+      _loadUnreadCount();
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUnreadCount() async {
@@ -93,24 +105,28 @@ class _NotificationBadgeState extends State<NotificationBadge> {
           Positioned(
             right: 8,
             top: 8,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              decoration: BoxDecoration(
-                color: Colors.red[600],
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  width: 1.5,
+            child: IgnorePointer(
+              // Ensure the visual badge does not block taps on the IconButton
+              ignoring: true,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                decoration: BoxDecoration(
+                  color: Colors.red[600],
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    width: 1.5,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  _unreadCount > 99 ? '99+' : _unreadCount.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
+                child: Center(
+                  child: Text(
+                    _unreadCount > 99 ? '99+' : _unreadCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

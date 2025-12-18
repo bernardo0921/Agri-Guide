@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../core/language/app_strings.dart';
 import 'role_selection_screen.dart';
 import 'verification_code_screen.dart';
+import '../../config/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,10 +48,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 await authService.verifyAndLogin(email, code, password);
 
                 if (mounted) {
+                  // Pop the verification screen then ensure the app shows the auth wrapper (which will show Home)
                   Navigator.of(context).pop(); // Pop verification screen
-                  // Navigation to Home is handled by AuthWrapper
-                }
-              } catch (e) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/auth_wrapper', (route) => false);
+                   // Navigation to Home is handled by AuthWrapper
+                 }
+               } catch (e) {
                 // 🔒 HANDLE APPROVAL ERROR
                 final errorMessage = e.toString().replaceFirst(
                   "Exception: ",
@@ -173,6 +176,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -208,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.email),
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
                     ),
                     keyboardType: TextInputType.emailAddress,
                     validator: (v) => (v!.isEmpty || !v.contains('@'))
@@ -226,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.lock),
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword

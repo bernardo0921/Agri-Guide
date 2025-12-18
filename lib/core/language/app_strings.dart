@@ -1620,4 +1620,323 @@ class AppStrings {
         return "Puo e fetohetse ho $languageName";
     }
   }
+
+  // LMS / Tutorials Strings
+  static String get searchTutorials {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Search tutorials...";
+      case AppLanguage.sesotho:
+        return "Batla lithupelo...";
+    }
+  }
+
+  static String categoryLabel(String key) {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        switch (key) {
+          case 'all':
+            return 'All';
+          case 'crops':
+            return 'Crops';
+          case 'livestock':
+            return 'Livestock';
+          case 'irrigation':
+            return 'Irrigation';
+          case 'pest_control':
+            return 'Pest Control';
+          case 'soil_management':
+            return 'Soil Management';
+          case 'harvesting':
+            return 'Harvesting';
+          case 'post_harvest':
+            return 'Post-Harvest';
+          case 'farm_equipment':
+            return 'Farm Equipment';
+          case 'marketing':
+            return 'Marketing';
+          default:
+            return key;
+        }
+      case AppLanguage.sesotho:
+        switch (key) {
+          case 'all':
+            return 'Tsohle';
+          case 'crops':
+            return 'Lihlahla';
+          case 'livestock':
+            return 'Liphoofolo';
+          case 'irrigation':
+            return 'Ho nosetsa';
+          case 'pest_control':
+            return 'Tsamaiso ea likokoana-hloko';
+          case 'soil_management':
+            return 'Tsamaiso ea mobu';
+          case 'harvesting':
+            return 'Ho bokella';
+          case 'post_harvest':
+            return 'Kamora ho bokella';
+          case 'farm_equipment':
+            return 'Lisebelisoa tsa polasi';
+          case 'marketing':
+            return 'Papatso';
+          default:
+            return key;
+        }
+    }
+  }
+
+  static String get myTutorials {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "My Tutorials";
+      case AppLanguage.sesotho:
+        return "Lithupelo tsa ka";
+    }
+  }
+
+  static String get errorLoadingTutorials {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Error loading tutorials";
+      case AppLanguage.sesotho:
+        return "Phoso ha e jarolle lithupelo";
+    }
+  }
+
+  static String get noTutorialsFound {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "No tutorials found";
+      case AppLanguage.sesotho:
+        return "Ha ho lithupelo tse fumanehang";
+    }
+  }
+
+  static String get tryAdjustSearch {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Try adjusting your search or filter";
+      case AppLanguage.sesotho:
+        return "Leka ho fetola patlo kapa sefa";
+    }
+  }
+
+  static String get checkBackLater {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Check back later for new tutorials";
+      case AppLanguage.sesotho:
+        return "Tobetsa hape hamorao bakeng sa lithupelo tse ncha";
+    }
+  }
+
+  static String get noTutorialsYet {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "No tutorials yet";
+      case AppLanguage.sesotho:
+        return "Ha ho lithupelo tse teng hajoale";
+    }
+  }
+
+  static String get uploadFirstTutorial {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Tap the Upload button to create your first tutorial";
+      case AppLanguage.sesotho:
+        return "Tobetsa konopo ea Upload ho theha thupelo ea hau ea pele";
+    }
+  }
+
+  static String get youHaventUploadedAnyTutorials {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "You haven't uploaded any tutorials";
+      case AppLanguage.sesotho:
+        return "Ha o so kenya lithupelo";
+    }
+  }
+
+  static String get deleteTutorialTitle {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Delete Tutorial";
+      case AppLanguage.sesotho:
+        return "Tlosa thupelo";
+    }
+  }
+
+  static String deleteTutorialConfirm(String title) {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Are you sure you want to delete \"$title\"?";
+      case AppLanguage.sesotho:
+        return "Na u na le bonnete ba hore u batla ho hlakola \"$title\"?";
+    }
+  }
+
+  static String get tutorialDeletedSuccess {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Tutorial deleted successfully";
+      case AppLanguage.sesotho:
+        return "Thupelo e hlakotsoe ka katleho";
+    }
+  }
+
+  // Community / Posts Strings
+  static String get searchPosts {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Search posts, topics or farmers...";
+      case AppLanguage.sesotho:
+        return "Batla lipotso, lihlooho kapa balemi...";
+    }
+  }
+
+  static String get noPostsFound {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "No posts found";
+      case AppLanguage.sesotho:
+        return "Ha ho lipotso tse fumanehang";
+    }
+  }
+
+  static String get tryDifferentSearch {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Try a different search term";
+      case AppLanguage.sesotho:
+        return "Leka polelo e fapaneng ya patlo";
+    }
+  }
+
+  static String get newPost {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "New Post";
+      case AppLanguage.sesotho:
+        return "Poso e Ntjha";
+    }
+  }
+
+  static String get failedToLoadPosts {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Failed to load posts";
+      case AppLanguage.sesotho:
+        return "Ha ho atlehe ho jarolla lipotso";
+    }
+  }
+
+  static String get postFromNotification {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "📍 Post from notification";
+      case AppLanguage.sesotho:
+        return "📍 Poso e tsoang tsebiso";
+    }
+  }
+
+  // Profile Strings
+  static String get loadingProfile {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Loading profile...";
+      case AppLanguage.sesotho:
+        return "E jarolla profileng...";
+    }
+  }
+
+  static String get uploadLabel {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return "Upload";
+      case AppLanguage.sesotho:
+        return "Kenya";
+    }
+  }
+
+  static String get posts {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Posts';
+      case AppLanguage.sesotho:
+        return 'Liposo';
+    }
+  }
+
+  static String get likes {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Likes';
+      case AppLanguage.sesotho:
+        return 'Likarabo';
+    }
+  }
+
+  static String get comments {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Comments';
+      case AppLanguage.sesotho:
+        return 'Maikutlo';
+    }
+  }
+
+  static String get viewsLabel {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'views';
+      case AppLanguage.sesotho:
+        return 'views';
+    }
+  }
+
+  static String get user {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'User';
+      case AppLanguage.sesotho:
+        return 'Mosebedisi';
+    }
+  }
+
+  static String get welcomeFarmer {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Welcome, Farmer! 🌾';
+      case AppLanguage.sesotho:
+        return 'Rea u amohela, Molemisi! 🌾';
+    }
+  }
+
+  static String get connectCommunity {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Connect with the community, share your experiences, and learn from fellow farmers!';
+      case AppLanguage.sesotho:
+        return 'Ikopanye le sechaba, arolelana boiphihlelo ba hau, ’me u ithute ho balemi ba bang!';
+    }
+  }
+
+  static String get aiTipsLabel {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'AI Tips';
+      case AppLanguage.sesotho:
+        return 'Keletso ea AI';
+    }
+  }
+
+  static String get learnLabel {
+    switch (AppNotifiers.languageNotifier.value) {
+      case AppLanguage.english:
+        return 'Learn';
+      case AppLanguage.sesotho:
+        return 'Ithute';
+    }
+  }
 }
