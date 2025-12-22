@@ -28,9 +28,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
   }
 
   Future<void> _loadSessions() async {
-    // Check if mounted before first setState
     if (!mounted) return;
-
     setState(() {
       _isLoading = true;
       _error = null;
@@ -38,26 +36,21 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
 
     try {
       final result = await AIService.getChatSessions();
-
-      // Check if mounted after async call
       if (!mounted) return;
-
       if (result['success'] == true) {
-        final sessions = result['sessions'] as List?;
+        final sessions = (result['sessions'] as List?) ?? [];
         setState(() {
-          _sessions = sessions?.cast<Map<String, dynamic>>() ?? [];
+          _sessions = sessions.cast<Map<String, dynamic>>();
           _isLoading = false;
         });
       } else {
         setState(() {
-          _error = result['error'] ?? AppStrings.failedToDeleteChat;
+          _error = result['error'] ?? AppStrings.oopsSomethingWentWrong;
           _isLoading = false;
         });
       }
     } catch (e) {
-      // Check if mounted in catch block
       if (!mounted) return;
-
       setState(() {
         _error = '${AppStrings.unknownError}: $e';
         _isLoading = false;
@@ -65,16 +58,17 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
     }
   }
 
-  void _handleSessionTap(String sessionId) {
-    if (widget.onSessionSelected != null) {
-      widget.onSessionSelected!(sessionId);
-    }
+  Future<void> _handleSessionTap(String sessionId) async {
+    final cb = widget.onSessionSelected;
+    // Close drawer/panel first if possible and wait for it to close
+    if (Navigator.canPop(context)) await Navigator.maybePop(context);
+    if (cb != null) cb(sessionId);
   }
 
-  void _handleNewChat() {
-    if (widget.onSessionSelected != null) {
-      widget.onSessionSelected!('new');
-    }
+  Future<void> _handleNewChat() async {
+    final cb = widget.onSessionSelected;
+    if (Navigator.canPop(context)) await Navigator.maybePop(context);
+    if (cb != null) cb('new');
   }
 
   Future<void> _handleDeleteSession(String sessionId, int index) async {
@@ -97,67 +91,31 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
       ),
     );
 
-    if (confirmed == true) {
-      // Check if mounted before showing snackbar
-      if (!mounted) return;
+    if (confirmed != true) return;
 
-      // Show loading indicator
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppStrings.deletingChat)),
+    );
+
+    final result = await AIService.deleteSession(sessionId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    if (result['success'] == true) {
+      setState(() => _sessions.removeAt(index));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(AppStrings.deletingChat),
-            ],
-          ),
-          duration: const Duration(seconds: 2),
-        ),
+        SnackBar(content: Text(AppStrings.chatDeletedSuccessfully)),
       );
 
-      // Call API to delete session
-      final result = await AIService.deleteSession(sessionId);
-
-      // Check if mounted after async call
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
-      if (result['success'] == true) {
-        // Remove from local list
-        setState(() {
-          _sessions.removeAt(index);
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppStrings.chatDeletedSuccessfully),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // If deleted session was active, notify parent to start new session
-        if (sessionId == widget.currentSessionId &&
-            widget.onSessionSelected != null) {
-          widget.onSessionSelected!('new');
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['error'] ?? AppStrings.failedToDeleteChat),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+      if (sessionId == widget.currentSessionId) {
+        // Inform parent to start new session
+        widget.onSessionSelected?.call('new');
       }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? AppStrings.failedToDeleteChat)),
+      );
     }
   }
 
@@ -168,93 +126,91 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green.shade700,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.history, color: Colors.white, size: 24),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      AppStrings.chatHistory,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                    onPressed: _loadSessions,
-                  ),
-                ],
-              ),
-            ),
-
-            // Content
+            _buildHeader(context),
             Expanded(child: _buildContent()),
-
-            // New Chat Button
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _handleNewChat,
-                  icon: const Icon(Icons.add_circle_outline, size: 24),
-                  label: Text(
-                    AppStrings.startNewChat,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                ),
-              ),
-            ),
+            _buildNewChatButton(context),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.shade700,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.history, color: Colors.white, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              AppStrings.chatHistory,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _loadSessions,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewChatButton(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _handleNewChat,
+          icon: const Icon(Icons.add_circle_outline, size: 24),
+          label: Text(
+            AppStrings.startNewChat,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade700,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     if (_error != null) {
       return Center(
@@ -265,37 +221,11 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
             children: [
               Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
-              Text(
-                AppStrings.oopsSomethingWentWrong,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
-                ),
-              ),
+              Text(AppStrings.oopsSomethingWentWrong, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey.shade800)),
               const SizedBox(height: 8),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-              ),
+              Text(_error!, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _loadSessions,
-                icon: const Icon(Icons.refresh),
-                label: Text(AppStrings.tryAgain),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
+              ElevatedButton.icon(onPressed: _loadSessions, icon: const Icon(Icons.refresh), label: Text(AppStrings.tryAgain))
             ],
           ),
         ),
@@ -309,30 +239,11 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.chat_bubble_outline,
-                size: 80,
-                color: Colors.grey.shade300,
-              ),
+              Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey.shade300),
               const SizedBox(height: 24),
-              Text(
-                AppStrings.noChatHistory,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade700,
-                ),
-              ),
+              Text(AppStrings.noChatHistory, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
               const SizedBox(height: 12),
-              Text(
-                AppStrings.startNewConversation,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
-                  height: 1.5,
-                ),
-              ),
+              Text(AppStrings.startNewConversation, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.grey.shade500, height: 1.5)),
             ],
           ),
         ),
@@ -359,20 +270,14 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
     final messageCount = session['message_count'] as int? ?? 0;
     final createdAt = session['created_at'] as String?;
 
-    // Truncate message if too long
-    final displayMessage = lastMessage.length > 80
-        ? '${lastMessage.substring(0, 77)}...'
-        : lastMessage;
+    final displayMessage = (lastMessage.length > 80) ? '${lastMessage.substring(0, 77)}...' : lastMessage;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isSelected ? Colors.green.shade700 : Colors.grey.shade200,
-          width: isSelected ? 2 : 1,
-        ),
+        border: Border.all(color: isSelected ? Colors.green.shade700 : Colors.grey.shade200, width: isSelected ? 2 : 1),
         boxShadow: [
           BoxShadow(
             color: isSelected ? Colors.green.shade100 : Colors.grey.shade100,
@@ -397,17 +302,13 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.green.shade700
-                            : Colors.green.shade50,
+                        color: isSelected ? Colors.green.shade700 : Colors.green.shade50,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.chat_bubble,
                         size: 20,
-                        color: isSelected
-                            ? Colors.white
-                            : Colors.green.shade700,
+                        color: isSelected ? Colors.white : Colors.green.shade700,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -420,80 +321,58 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? Colors.green.shade700
-                                  : Colors.grey.shade800,
+                              color: isSelected ? Colors.green.shade700 : Colors.grey.shade800,
                             ),
                           ),
                           if (createdAt != null)
                             Text(
                               _formatDate(createdAt),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade500,
-                              ),
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                             ),
                         ],
                       ),
                     ),
+
+                    // Message count
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.green.shade700
-                            : Colors.grey.shade100,
+                        color: isSelected ? Colors.green.shade700 : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.message,
-                            size: 14,
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.grey.shade700,
-                          ),
+                          Icon(Icons.message, size: 14, color: isSelected ? Colors.white : Colors.grey.shade700),
                           const SizedBox(width: 4),
                           Text(
                             '$messageCount',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.grey.shade700,
+                              color: isSelected ? Colors.white : Colors.grey.shade700,
                             ),
                           ),
                         ],
                       ),
                     ),
+
                     const SizedBox(width: 8),
+
+                    // Popup menu
                     PopupMenuButton<String>(
                       icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
                       onSelected: (value) {
-                        if (value == 'delete') {
-                          _handleDeleteSession(sessionId, index);
-                        }
+                        if (value == 'delete') _handleDeleteSession(sessionId, index);
                       },
                       itemBuilder: (context) => [
                         PopupMenuItem(
                           value: 'delete',
                           child: Row(
                             children: [
-                              const Icon(
-                                Icons.delete_outline,
-                                color: Colors.red,
-                                size: 20,
-                              ),
+                              const Icon(Icons.delete_outline, color: Colors.red, size: 20),
                               const SizedBox(width: 12),
-                              Text(
-                                AppStrings.delete,
-                                style: const TextStyle(color: Colors.red),
-                              ),
+                              Text(AppStrings.delete, style: const TextStyle(color: Colors.red)),
                             ],
                           ),
                         ),
@@ -519,11 +398,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                       Expanded(
                         child: Text(
                           displayMessage,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade700,
-                            height: 1.4,
-                          ),
+                          style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -536,10 +411,7 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                 if (isSelected) ...[
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
                       borderRadius: BorderRadius.circular(6),
@@ -548,20 +420,9 @@ class _ChatHistoryPanelState extends State<ChatHistoryPanel> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: Colors.green.shade700,
-                        ),
+                        Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
                         const SizedBox(width: 6),
-                        Text(
-                          AppStrings.activeSession,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green.shade700,
-                          ),
-                        ),
+                        Text(AppStrings.activeSession, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade700)),
                       ],
                     ),
                   ),

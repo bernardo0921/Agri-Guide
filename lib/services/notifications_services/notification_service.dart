@@ -14,10 +14,23 @@ class NotificationService {
   static final StreamController<void> _changesController =
       StreamController<void>.broadcast();
 
+  // New: controller to emit optimistic unread-count deltas (e.g. +1 when a new notification
+  // is created locally; -1 when one is marked read locally). This allows UI to update instantly.
+  static final StreamController<int> _deltaController =
+      StreamController<int>.broadcast();
+
   static Stream<void> get onNotificationsChanged => _changesController.stream;
+  static Stream<int> get onUnreadDelta => _deltaController.stream;
 
   /// Emit a change event (call this after creating/deleting/updating notifications locally)
-  static void notifyChanged() {
+  /// Optionally provide [delta] to immediately adjust the unread count on the client.
+  static void notifyChanged({int? delta}) {
+    try {
+      if (delta != null && !_deltaController.isClosed) {
+        _deltaController.add(delta);
+      }
+    } catch (_) {}
+
     try {
       if (!_changesController.isClosed) _changesController.add(null);
     } catch (_) {}
@@ -128,8 +141,8 @@ class NotificationService {
         );
       }
 
-      // Notify listeners that notifications changed
-      notifyChanged();
+      // Notify listeners that notifications changed and decrement unread count by 1
+      notifyChanged(delta: -1);
     } catch (e) {
       throw Exception('Error marking notification as read: $e');
     }
@@ -151,9 +164,10 @@ class NotificationService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // Notify listeners
-        notifyChanged();
-        return data['count'] ?? 0;
+        final int count = data['count'] ?? 0;
+        // Notify listeners with negative delta so UI can update instantly
+        notifyChanged(delta: -count);
+        return count;
       } else if (response.statusCode == 401) {
         throw Exception('Authentication failed. Please login again.');
       } else {
@@ -165,7 +179,8 @@ class NotificationService {
   }
 
   /// Delete a notification
-  static Future<void> deleteNotification(int notificationId) async {
+  /// [wasUnread] - if true, the deleted notification was unread and the unread count should be decremented
+  static Future<void> deleteNotification(int notificationId, {bool wasUnread = false}) async {
     try {
       final token = await _getAuthToken();
       if (token == null) {
@@ -186,8 +201,12 @@ class NotificationService {
         );
       }
 
-      // Notify listeners
-      notifyChanged();
+      // Notify listeners; if the deleted notification was unread, emit a -1 delta
+      if (wasUnread) {
+        notifyChanged(delta: -1);
+      } else {
+        notifyChanged();
+      }
     } catch (e) {
       throw Exception('Error deleting notification: $e');
     }

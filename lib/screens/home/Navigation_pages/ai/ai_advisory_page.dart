@@ -351,6 +351,61 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
     }
   }
 
+  // Pick an image from camera or gallery then send it via existing flow
+  Future<void> _pickAndSendImage() async {
+    // present options
+    final source = await showModalBottomSheet<ImageSource?>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('Cancel'),
+              onTap: () => Navigator.of(context).pop(null),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+
+      final file = File(picked.path);
+
+      setState(() {
+        _selectedImage = file;
+      });
+
+      // send immediately
+      await _sendImageMessage();
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('Failed to pick image: $e');
+      }
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -420,8 +475,94 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
           backgroundColor: colorScheme.surface,
           drawer: Drawer(
             child: ChatHistoryPanel(
-              onSessionSelected: (id) {
-                /* implement */
+              onSessionSelected: (id) async {
+                // Drawer is already closed by ChatHistoryPanel; proceed to handle selection
+
+                try {
+                  if (id == 'new') {
+                    // Start a fresh session
+                    await AIService.startNewSession();
+
+                    if (!mounted) return;
+
+                    setState(() {
+                      _currentSessionId = null;
+                      _messages.clear();
+                      _isStreaming = false;
+                      _errorMessage = null;
+                    });
+
+                    _showSnackBar(AppStrings.startNewChat, Theme.of(context).colorScheme.primary);
+                    return;
+                  }
+
+                  // Load existing session history
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = null;
+                  });
+
+                  final result = await AIService.getChatHistory(id);
+
+                  if (!mounted) return;
+
+                  if (result['success'] == true) {
+                    final history = result['history'] as List? ?? [];
+
+                    // Map backend history items to internal message format
+                    final List<Map<String, dynamic>> loaded = [];
+
+                    for (var item in history) {
+                      if (item is Map) {
+                        // Try multiple possible keys for flexibility
+                        final role = (item['role'] ?? item['sender'] ?? '')?.toString().toLowerCase();
+                        final text = (item['message'] ?? item['text'] ?? item['content'] ?? '')?.toString() ?? '';
+                        final imageUrl = item['image_url'] ?? item['image'] ?? null;
+
+                        final isUser = role == 'user' || role == 'u' || item['is_user'] == true || item['from'] == 'user';
+
+                        final msg = <String, dynamic>{
+                          'text': text,
+                          'isUser': isUser,
+                          'isStreaming': false,
+                        };
+
+                        if (imageUrl != null) msg['imageUrl'] = imageUrl;
+
+                        loaded.add(msg);
+                      }
+                    }
+
+                    // Persist session id locally
+                    await AIService.setSessionId(id);
+
+                    setState(() {
+                      _currentSessionId = id;
+                      _messages.clear();
+                      _messages.addAll(loaded);
+                      _isLoading = false;
+                    });
+
+                    // Scroll to end to show latest messages
+                    _scrollToBottom();
+                  } else {
+                    setState(() {
+                      _isLoading = false;
+                      _errorMessage = result['error'] ?? 'Failed to load session history';
+                    });
+
+                    if (mounted) {
+                      _showErrorDialog(result['error'] ?? 'Failed to load session history');
+                    }
+                  }
+                } catch (e) {
+                  if (!mounted) return;
+                  setState(() {
+                    _isLoading = false;
+                    _errorMessage = 'Failed to load session: $e';
+                  });
+                  _showErrorDialog('Failed to load session: $e');
+                }
               },
               currentSessionId: _currentSessionId,
             ),
@@ -618,9 +759,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
               icon: Icon(Icons.image, color: colorScheme.primary),
               onPressed: (_isLoading || _isStreaming)
                   ? null
-                  : () {
-                      /* show image dialog */
-                    },
+                  : _pickAndSendImage,
             ),
           if (_chatMode == ChatMode.voice)
             IconButton(

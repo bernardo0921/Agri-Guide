@@ -259,49 +259,55 @@ class _ImageViewerScreenState extends State<ImageViewerScreen>
                       maxScale: 4.0,
                       child: Hero(
                         tag: 'post_image_${widget.post.id}',
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: AppColors.primaryGreen,
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.broken_image_outlined,
-                                    size: 64,
-                                    color: AppColors.textLight,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    AppStrings.failedToLoadImage,
-                                    style: TextStyle(
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.height,
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 64,
                                       color: AppColors.textLight,
-                                      fontSize: 16,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      AppStrings.failedToLoadImage,
+                                      style: TextStyle(
+                                        color: AppColors.textLight,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
+                       ),
+                     ),
+                   ),
+                 ),
 
                 // Top Controls
                 AnimatedOpacity(

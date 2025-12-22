@@ -17,6 +17,8 @@ class _NotificationBadgeState extends State<NotificationBadge> {
   int _unreadCount = 0;
   bool _isLoading = false;
   StreamSubscription<void>? _subscription;
+  StreamSubscription<int>? _deltaSub;
+  Timer? _pollTimer; // Added: periodic poll timer
 
   @override
   void initState() {
@@ -26,11 +28,27 @@ class _NotificationBadgeState extends State<NotificationBadge> {
     _subscription = NotificationService.onNotificationsChanged.listen((_) {
       _loadUnreadCount();
     });
+
+    // Subscribe to delta events to update unread count optimistically
+    _deltaSub = NotificationService.onUnreadDelta.listen((delta) {
+      if (!mounted) return;
+      setState(() {
+        _unreadCount = (_unreadCount + delta).clamp(0, 999999);
+      });
+    });
+
+    // Start a periodic timer to refresh unread count every 1 second
+    _pollTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      _loadUnreadCount();
+    });
   }
 
   @override
   void dispose() {
     _subscription?.cancel();
+    _deltaSub?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
   }
 

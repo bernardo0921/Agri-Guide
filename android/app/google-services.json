@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "589348998956",
+    "firebase_url": "https://ideation-axis-demo-1-default-rtdb.firebaseio.com",
+    "project_id": "ideation-axis-demo-1",
+    "storage_bucket": "ideation-axis-demo-1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:589348998956:android:b6b27b2d1d6cc9382aa689",
+        "android_client_info": {
+          "package_name": "com.example.agri_guide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBK6-zEE9JxqOImCibDvxPSaYKD_k0WB0s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
