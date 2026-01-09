@@ -33,8 +33,6 @@ dependencies:
   timezone: ^0.10.1
   permission_handler: ^12.0.1
   http_parser: ^4.1.2
-  firebase_core: ^2.11.0
-  firebase_messaging: ^14.7.0
 
 dev_dependencies:
   flutter_test:
@@ -47,7 +45,6 @@ flutter:
     - family: Aller
       fonts:
         - asset: assets/fonts/Aller_Std_Rg.ttf
-        - asset: assets/fonts/Aller_Std_Bd.ttf
           weight: 700
         - asset: assets/fonts/Aller_Std_It.ttf
           style: italic

@@ -23,78 +23,81 @@ class RoleSelectionScreen extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: ValueListenableBuilder(
-            valueListenable: AppNotifiers.languageNotifier,
-            builder: (context, language, child) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Header
-                  Icon(
-                    Icons.agriculture,
-                    size: 80,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    AppStrings.joinAgriGuide,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppStrings.chooseRole,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 48),
+          child: SingleChildScrollView(
 
-                  // Farmer Card
-                  _buildRoleCard(
-                    context: context,
-                    title: AppStrings.imAFarmer,
-                    description: AppStrings.farmerDescription,
-                    icon: Icons.agriculture,
-                    iconColor: Colors.green,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (ctx) => const FarmerRegisterScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
+            child: ValueListenableBuilder(
+              valueListenable: AppNotifiers.languageNotifier,
+              builder: (context, language, child) {
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Header
+                    Icon(
+                      Icons.agriculture,
+                      size: 80,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      AppStrings.joinAgriGuide,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppStrings.chooseRole,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 48),
 
-                  // Extension Worker Card
-                  _buildRoleCard(
-                    context: context,
-                    title: AppStrings.imAnExtensionWorker,
-                    description: AppStrings.extensionWorkerDescription,
-                    icon: Icons.school,
-                    iconColor: Colors.blue,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (ctx) => const ExtensionWorkerRegisterScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
+                    // Farmer Card
+                    _buildRoleCard(
+                      context: context,
+                      title: AppStrings.imAFarmer,
+                      description: AppStrings.farmerDescription,
+                      icon: Icons.agriculture,
+                      iconColor: Colors.green,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => const FarmerRegisterScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
 
-                  // Back to Login
-                  TextButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back),
-                    label: Text(AppStrings.backToLogin),
-                  ),
-                ],
-              );
-            },
+                    // Extension Worker Card
+                    _buildRoleCard(
+                      context: context,
+                      title: AppStrings.imAnExtensionWorker,
+                      description: AppStrings.extensionWorkerDescription,
+                      icon: Icons.school,
+                      iconColor: Colors.blue,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (ctx) => const ExtensionWorkerRegisterScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Back to Login
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back),
+                      label: Text(AppStrings.backToLogin),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),

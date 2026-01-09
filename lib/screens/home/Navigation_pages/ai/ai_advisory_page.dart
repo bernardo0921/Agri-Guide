@@ -517,7 +517,7 @@ class AIAdvisoryPageState extends State<AIAdvisoryPage> {
                         // Try multiple possible keys for flexibility
                         final role = (item['role'] ?? item['sender'] ?? '')?.toString().toLowerCase();
                         final text = (item['message'] ?? item['text'] ?? item['content'] ?? '')?.toString() ?? '';
-                        final imageUrl = item['image_url'] ?? item['image'] ?? null;
+                        final imageUrl = item['image_url'] ?? item['image'];
 
                         final isUser = role == 'user' || role == 'u' || item['is_user'] == true || item['from'] == 'user';
 
